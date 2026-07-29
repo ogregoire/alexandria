@@ -1,6 +1,7 @@
 package be.imgn.alexandria.infrastructure.web;
 
 import be.imgn.alexandria.application.CatalogService;
+import be.imgn.alexandria.application.Reports;
 import be.imgn.alexandria.application.lookup.BookLookup;
 import be.imgn.alexandria.domain.agent.AgentId;
 import be.imgn.alexandria.domain.manifestation.Identifier;
@@ -94,11 +95,24 @@ public final class Editor {
             return Router.Response.html(
                     imports.review(isbn, lookup.byIsbn(isbn), request.body().checked("addItem")));
         });
+        // A rejected form comes back as HTML holding what was typed, not as an error page.
         router.post("/import/save", request -> {
             AgentResolution resolution = service.newResolution();
-            ImportPages.NewBook book = imports.read(request.body(), resolution);
-            service.saveNewBook(book.work(), book.manifestation(), book.copy(), resolution);
-            return Router.Response.seeOther("/works/" + book.work().id().value());
+            return switch (imports.read(request.body(), resolution)) {
+                case ImportPages.Outcome.Rejected(FormState state) ->
+                        Router.Response.html(imports.reviewAgain(state));
+                case ImportPages.Outcome.Book(Work work, Manifestation manifestation, var copy) -> {
+                    try {
+                        service.saveNewBook(work, manifestation, copy, resolution);
+                        yield Router.Response.seeOther("/works/" + work.id().value());
+                    } catch (IllegalArgumentException | IllegalStateException e) {
+                        FormProblems clash = new FormProblems();
+                        clash.general(e.getMessage() == null ? e.toString() : e.getMessage());
+                        yield Router.Response.html(imports.reviewAgain(
+                                FormState.submitted(request.body(), clash)));
+                    }
+                }
+            };
         });
 
         router.get("/agents", request -> Router.Response.html(agents.list()));
@@ -172,7 +186,7 @@ public final class Editor {
     }
 
     private String home() {
-        var projection = service.projection();
+        var counts = Reports.counts(service.catalog());
         String problems = service.problems().isEmpty()
                 ? "<p class=\"ok\">The catalogue is consistent.</p>"
                 : "<div class=\"error\"><h2>Problems</h2><ul>"
@@ -199,11 +213,11 @@ public final class Editor {
                    change is in the catalogue's history.</p>
                 """.formatted(
                 problems,
-                projection.count("agent"),
-                projection.count("work"),
-                projection.count("expression"),
-                projection.count("manifestation"),
-                projection.count("item")));
+                counts.get("agents"),
+                counts.get("works"),
+                counts.get("expressions"),
+                counts.get("manifestations"),
+                counts.get("items")));
     }
 
     private Router.Response asset(String file) {

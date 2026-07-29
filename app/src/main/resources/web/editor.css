@@ -138,3 +138,22 @@ form.danger button { background: none; color: var(--danger); border-color: var(-
 pre { overflow-x: auto; font-size: 0.85rem; background: color-mix(in srgb, var(--ink) 5%, transparent); padding: 0.75rem; border-radius: 3px; }
 pre.error { color: var(--danger); white-space: pre-wrap; }
 div.error { border: 1px solid var(--danger); border-radius: 3px; padding: 0.5rem 1rem; }
+div.error h2 { margin: 0.4rem 0 0.2rem; color: var(--danger); }
+div.error ul { margin: 0.4rem 0 0.6rem; padding-left: 1.2rem; }
+div.error li { font-size: 0.92rem; }
+
+/* A rejected field: the message sits under the control that caused it. */
+.field-error {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--danger);
+}
+
+label.bad > span { color: var(--danger); }
+label.bad input, label.bad select, label.bad textarea { border-color: var(--danger); }
+input[aria-invalid=true], select[aria-invalid=true], textarea[aria-invalid=true] {
+  border-color: var(--danger);
+  outline-color: var(--danger);
+}

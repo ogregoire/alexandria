@@ -22,7 +22,6 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.release>25</maven.compiler.release>
 
-    <h2.version>2.3.232</h2.version>
     <jackson.version>2.18.2</jackson.version>
     <junit.version>5.11.4</junit.version>
     <assertj.version>3.27.3</assertj.version>
@@ -41,11 +40,6 @@
         <groupId>be.imgn.alexandria</groupId>
         <artifactId>alexandria</artifactId>
         <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>${h2.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>

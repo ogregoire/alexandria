@@ -15,7 +15,8 @@ agent registry that holds each of them once, with the aliases they answer to.
 
 The catalogue is a directory of JSON files under `data/`, one file per aggregate. Those files
 are the source of truth and they live in git, so the library's history is the repository's
-history. H2 is rebuilt from them on every start and never committed.
+history. There is no database: the aggregates are read into memory at startup, and a personal
+library is small enough that nothing else is warranted.
 
 ## Using it
 
@@ -78,6 +79,19 @@ all. The form names the provider it came from, so a suggestion is always attribu
 Lookups send only the ISBN you type, only when you press the button. `--offline` disables
 them entirely and the form still works, just empty. To change the chain or drop a provider,
 edit `ChainedLookup.standard()`.
+
+### Mistakes in the form
+
+Validation is collected, not thrown. A submission that will not parse comes back as the same
+form, holding everything you typed, with each problem stated against the field that caused it
+and a summary at the top linking to each one. A missing title costs you the title, not the
+twenty fields around it.
+
+The browser also checks as you go — required, slug shape, ISBN check digit, language code,
+money format — on blur and then on every keystroke, so most mistakes surface before you
+submit. Those checks mirror the rules the domain enforces and are never the authority: the
+server parses through the same constructors either way, so turning JavaScript off costs
+immediacy and nothing else.
 
 ### Rate limits
 
@@ -207,7 +221,7 @@ genuinely that vague. `Acquisition` distinguishes `Borrowed` from the rest and a
 `Location`, `ReadingProgress`, `Carrier`, `Identifier` and `Extent` work the same way.
 
 One naming rule covers all of them: the record's simple name in kebab-case. `MassMarket` is
-`mass-market` in the JSON file, in the H2 read model and in the editor's form — the same word
+`mass-market` in the JSON file and in the editor's form — the same word
 wherever you meet it.
 
 ## Layout
@@ -217,9 +231,8 @@ data/                     YOUR catalogue: agents, works, manifestations, items �
 examples/library/         a sample catalogue to look at; never written to by default
 app/                      be.imgn.alexandria:alexandria
   domain/                 WEMI model, sealed types, invariants — no framework imports
-  application/            CatalogService: write JSON first, then rebuild the projection
+  application/            CatalogService, and the reports, over the aggregates
   infrastructure/json/    the store; Jackson is confined here, via mix-ins
-  infrastructure/h2/      the read model the reports query
   infrastructure/web/     the editor: JDK HttpServer, server-rendered forms, no framework
   site/                   the static site generator
 alexandria-maven-plugin/  the `catalog` report, run by mvn site
@@ -229,13 +242,19 @@ Jackson never appears in `domain/`. Type discriminators and ignored derived acce
 declared as mix-ins in `infrastructure/json/Mixins.java`, so the model stays free of
 serialisation concerns.
 
-## Why the files and not the database
+## Why files and no database
 
-The workflow is edit, commit, push. A binary H2 file would make every commit an opaque blob
-with no diff and no merge. Text files give you `git log -p data/items/…` and a readable
+The workflow is edit, commit, push. A binary database file would make every commit an opaque
+blob with no diff and no merge. Text files give you `git log -p data/items/…` and a readable
 history of what you read and when. The JSON is written with a fixed key order, two-space
 indent, LF endings, sorted subject sets and absent optionals omitted, so changing one field
 produces a one-line diff and saving twice produces no diff at all.
+
+There was an H2 read model here, rebuilt from the JSON on every save. It was removed: 476
+lines of schema and projection whose only remaining consumer was the reports page, while
+every list, the site generator and the search index had gone back to walking the aggregates
+directly. The four-table join the SQL kept repeating is now one `Holding` record, and the
+twelve reports are streams over it.
 
 The editor binds to loopback only and has no authentication. It edits files in a git working
 copy on your own machine; do not expose it.

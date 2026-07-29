@@ -28,8 +28,7 @@ import java.util.stream.Stream;
 
 /**
  * The catalogue as a directory of JSON files — one file per aggregate root, named after
- * its id. This is the source of truth: H2 is a projection of it, and git history is the
- * catalogue's history.
+ * its id. These files are the catalogue, and git history is its history.
  *
  * <p>The whole catalogue is held in memory. A personal library is thousands of records at
  * most, so paying for indexes or lazy loading would buy nothing.

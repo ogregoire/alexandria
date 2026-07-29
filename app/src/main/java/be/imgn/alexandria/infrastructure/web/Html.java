@@ -48,6 +48,107 @@ public final class Html {
                 """.formatted(escape(title), breadcrumb, body);
     }
 
+    // ---------------------------------------------------------- state-driven fields
+    //
+    // These read their value and their problem from a FormState, so one call site renders
+    // both a fresh form and the same form coming back after rejection. Everything the import
+    // form shows goes through here.
+
+    /**
+     * A field carrying its own error message.
+     *
+     * @param constraint a client-side rule for {@code editor.js} — "required", "slug",
+     *                   "isbn", "language", or several separated by a space
+     */
+    public static String input(FormState state, String name, String label, String type, String constraint) {
+        return labelled(state, name, label, """
+                <input type="%s" name="%s" value="%s"%s%s>
+                """.formatted(
+                escape(type), escape(name), escape(state.value(name)),
+                constraint == null || constraint.isBlank() ? "" : " data-check=\"" + escape(constraint) + "\"",
+                invalid(state, name)));
+    }
+
+    public static String input(FormState state, String name, String label, String type) {
+        return input(state, name, label, type, null);
+    }
+
+    public static String suggest(FormState state, String name, String label, String listId, String constraint) {
+        return labelled(state, name, label, """
+                <input type="text" name="%s" value="%s" list="%s" autocomplete="off"%s%s>
+                """.formatted(
+                escape(name), escape(state.value(name)), escape(listId),
+                constraint == null || constraint.isBlank() ? "" : " data-check=\"" + escape(constraint) + "\"",
+                invalid(state, name)));
+    }
+
+    public static String choice(FormState state, String name, String label,
+                                Map<String, String> options, String fallback) {
+        String selected = state.valueOr(name, fallback);
+        String body = options.entrySet().stream()
+                .map(option -> "<option value=\"%s\"%s>%s</option>".formatted(
+                        escape(option.getKey()),
+                        option.getKey().equals(selected) ? " selected" : "",
+                        escape(option.getValue())))
+                .collect(Collectors.joining("\n      "));
+        return labelled(state, name, label,
+                "<select name=\"%s\"%s>\n      %s\n    </select>\n"
+                        .formatted(escape(name), invalid(state, name), body));
+    }
+
+    public static String area(FormState state, String name, String label) {
+        return labelled(state, name, label, """
+                <textarea name="%s" rows="3"%s>%s</textarea>
+                """.formatted(escape(name), invalid(state, name), escape(state.value(name))));
+    }
+
+    /** Wraps a control in its label and, when the field was rejected, its reason. */
+    private static String labelled(FormState state, String name, String label, String control) {
+        String problem = state.problemAt(name)
+                .map(message -> "<strong class=\"field-error\" id=\"%s-error\">%s</strong>"
+                        .formatted(escape(name), escape(message)))
+                .orElse("");
+        return """
+                <label%s><span>%s</span>%s%s</label>
+                """.formatted(
+                state.problemAt(name).isPresent() ? " class=\"bad\"" : "",
+                escape(label), control, problem);
+    }
+
+    private static String invalid(FormState state, String name) {
+        return state.problemAt(name).isPresent()
+                ? " aria-invalid=\"true\" aria-errormessage=\"" + escape(name) + "-error\""
+                : "";
+    }
+
+    /** The summary at the top of a rejected form, linking to each field that needs attention. */
+    public static String problemSummary(FormState state, Map<String, String> fieldLabels) {
+        if (!state.hasProblems()) {
+            return "";
+        }
+        String general = state.problems().generalProblems().stream()
+                .map(problem -> "<li>" + escape(problem) + "</li>")
+                .collect(Collectors.joining());
+        String fields = fieldLabels.entrySet().stream()
+                .filter(entry -> state.problemAt(entry.getKey()).isPresent())
+                .map(entry -> "<li><a href=\"#\" data-focus=\"%s\">%s</a> — %s</li>".formatted(
+                        escape(entry.getKey()),
+                        escape(entry.getValue()),
+                        escape(state.problemAt(entry.getKey()).orElseThrow())))
+                .collect(Collectors.joining());
+        String orphans = state.problems().orphanedBeyond(List.copyOf(fieldLabels.keySet())).stream()
+                .map(problem -> "<li>" + escape(problem) + "</li>")
+                .collect(Collectors.joining());
+        int count = state.problems().count();
+        return """
+                <div class="error" role="alert">
+                  <h2>%d thing%s to fix</h2>
+                  <p class="hint">Everything you typed is still here. Correct these and save again.</p>
+                  <ul>%s%s%s</ul>
+                </div>
+                """.formatted(count, count == 1 ? "" : "s", general, fields, orphans);
+    }
+
     /**
      * A text field that completes against a datalist but still accepts anything typed —
      * which is exactly the "match what exists, allow something new" behaviour the agent

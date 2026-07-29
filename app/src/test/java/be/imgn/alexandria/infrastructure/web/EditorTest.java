@@ -8,7 +8,6 @@ import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.item.Location;
 import be.imgn.alexandria.domain.work.WorkId;
-import be.imgn.alexandria.infrastructure.h2.H2Projection;
 import be.imgn.alexandria.infrastructure.json.JsonCatalog;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,22 +33,19 @@ class EditorTest {
     private final HttpClient client = HttpClient.newHttpClient();
 
     private JsonCatalog catalog;
-    private H2Projection projection;
     private Editor editor;
     private String base;
 
     @BeforeEach
     void start(@TempDir Path root) {
         catalog = CatalogFixture.writeInto(root);
-        projection = H2Projection.inMemory();
-        editor = new Editor(new CatalogService(catalog, projection));
+        editor = new Editor(new CatalogService(catalog));
         base = "http://127.0.0.1:" + editor.start(0);
     }
 
     @AfterEach
     void stop() {
         editor.stop();
-        projection.close();
     }
 
     @Test

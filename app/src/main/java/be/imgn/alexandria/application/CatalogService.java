@@ -14,7 +14,6 @@ import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.ExpressionId;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.domain.work.WorkId;
-import be.imgn.alexandria.infrastructure.h2.H2Projection;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,27 +21,22 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * The application service the editor talks to. It owns the one rule the web layer must not
- * be trusted with: a write goes to the JSON files first, and only then is the H2 read model
- * rebuilt from them. The files are the catalogue; the database is a consequence.
+ * The application service the editor talks to.
+ *
+ * <p>It owns the checks the web layer must not be trusted with: that a reference points at
+ * something real, that an identifier is not already taken, and that nothing is deleted while
+ * something still names it. Writes go straight to the JSON files, which are the catalogue.
  */
 public final class CatalogService {
 
     private final Catalog catalog;
-    private final H2Projection projection;
 
-    public CatalogService(Catalog catalog, H2Projection projection) {
+    public CatalogService(Catalog catalog) {
         this.catalog = catalog;
-        this.projection = projection;
-        refresh();
     }
 
     public Catalog catalog() {
         return catalog;
-    }
-
-    public H2Projection projection() {
-        return projection;
     }
 
     public AgentDirectory directory() {
@@ -52,10 +46,6 @@ public final class CatalogService {
     /** A fresh resolver over the current registry, for reading one form. */
     public AgentResolution newResolution() {
         return new AgentResolution(directory());
-    }
-
-    public void refresh() {
-        projection.rebuildFrom(catalog);
     }
 
     // -------------------------------------------------------------- agents
@@ -69,7 +59,6 @@ public final class CatalogService {
                     "'" + name + "' already belongs to " + clash.name() + " (" + clash.id() + ")");
         }));
         catalog.save(agent);
-        refresh();
     }
 
     public void deleteAgent(AgentId id) {
@@ -79,7 +68,6 @@ public final class CatalogService {
                     "cannot delete " + id + ": still referenced by " + String.join(", ", blocked));
         }
         catalog.deleteAgent(id);
-        refresh();
     }
 
     // -------------------------------------------------- bibliographic saves
@@ -91,7 +79,6 @@ public final class CatalogService {
     public void save(Work work, AgentResolution resolution) {
         register(resolution);
         catalog.save(work);
-        refresh();
     }
 
     public void save(Manifestation manifestation, AgentResolution resolution) {
@@ -102,7 +89,6 @@ public final class CatalogService {
         }
         register(resolution);
         catalog.save(manifestation);
-        refresh();
     }
 
     public void save(Item item) {
@@ -110,7 +96,6 @@ public final class CatalogService {
             throw new IllegalArgumentException("no such manifestation: " + item.embodiedIn());
         }
         catalog.save(item);
-        refresh();
     }
 
     /**
@@ -141,7 +126,6 @@ public final class CatalogService {
         catalog.save(work);
         catalog.save(manifestation);
         copy.ifPresent(catalog::save);
-        refresh();
     }
 
     private void register(AgentResolution resolution) {
@@ -164,7 +148,6 @@ public final class CatalogService {
                     "cannot delete " + id + ": still embodied by " + String.join(", ", blocked));
         }
         catalog.deleteWork(id);
-        refresh();
     }
 
     public void deleteManifestation(ManifestationId id) {
@@ -174,12 +157,10 @@ public final class CatalogService {
                     "cannot delete " + id + ": still held as " + String.join(", ", blocked));
         }
         catalog.deleteManifestation(id);
-        refresh();
     }
 
     public void deleteItem(ItemId id) {
         catalog.deleteItem(id);
-        refresh();
     }
 
     // ------------------------------------------------------------- queries

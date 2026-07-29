@@ -3,7 +3,6 @@ package be.imgn.alexandria;
 import be.imgn.alexandria.application.CatalogService;
 import be.imgn.alexandria.application.lookup.BookLookup;
 import be.imgn.alexandria.domain.catalog.ReferentialIntegrity;
-import be.imgn.alexandria.infrastructure.h2.H2Projection;
 import be.imgn.alexandria.infrastructure.json.JsonCatalog;
 import be.imgn.alexandria.infrastructure.lookup.ChainedLookup;
 import be.imgn.alexandria.infrastructure.web.Editor;
@@ -18,7 +17,7 @@ import java.util.Optional;
  * Entry point for the local editor.
  *
  * <pre>
- *   alexandria [--data DIR] [--db FILE] [--port N] [--no-browser] [--offline]
+ *   alexandria [--data DIR] [--port N] [--no-browser] [--offline]
  *              [--contact you@example.org]
  *   alexandria --site DIR [--data DIR]
  * </pre>
@@ -42,32 +41,29 @@ public final class Alexandria {
             System.out.println("warning: " + violation);
         }
 
-        try (H2Projection projection = H2Projection.at(arguments.database())) {
-            CatalogService service = new CatalogService(catalog, projection);
-            BookLookup lookup = arguments.offline()
-                    ? BookLookup.offline()
-                    : ChainedLookup.standard(arguments.contact());
-            Editor editor = new Editor(service, lookup);
-            int port = editor.start(arguments.port());
-            String url = "http://127.0.0.1:" + port + "/";
+        CatalogService service = new CatalogService(catalog);
+        BookLookup lookup = arguments.offline()
+                ? BookLookup.offline()
+                : ChainedLookup.standard(arguments.contact());
+        Editor editor = new Editor(service, lookup);
+        int port = editor.start(arguments.port());
+        String url = "http://127.0.0.1:" + port + "/";
 
-            Runtime.getRuntime().addShutdownHook(new Thread(editor::stop));
-            System.out.println("Alexandria is editing " + arguments.data().toAbsolutePath());
-            System.out.println("  " + url);
-            System.out.println("Press Ctrl-C to stop.");
-            if (arguments.openBrowser()) {
-                openBrowser(url);
-            }
-            Thread.currentThread().join();
+        Runtime.getRuntime().addShutdownHook(new Thread(editor::stop));
+        System.out.println("Alexandria is editing " + arguments.data().toAbsolutePath());
+        System.out.println("  " + url);
+        System.out.println("Press Ctrl-C to stop.");
+        if (arguments.openBrowser()) {
+            openBrowser(url);
         }
+        Thread.currentThread().join();
     }
 
-    private record Arguments(Path data, Path database, int port, boolean openBrowser, Path site,
+    private record Arguments(Path data, int port, boolean openBrowser, Path site,
                              boolean offline, Optional<String> contact) {
 
         static Arguments parse(String[] args) {
             Path data = Path.of("data");
-            Path database = Path.of("target", "catalog");
             int port = 4242;
             boolean openBrowser = true;
             Path site = null;
@@ -77,7 +73,6 @@ public final class Alexandria {
             for (int i = 0; i < args.length; i++) {
                 switch (args[i]) {
                     case "--data" -> data = Path.of(next(args, ++i, "--data"));
-                    case "--db" -> database = Path.of(next(args, ++i, "--db"));
                     case "--port" -> port = Integer.parseInt(next(args, ++i, "--port"));
                     case "--site" -> site = Path.of(next(args, ++i, "--site"));
                     case "--no-browser" -> openBrowser = false;
@@ -86,7 +81,7 @@ public final class Alexandria {
                     default -> throw new IllegalArgumentException("unknown option " + args[i]);
                 }
             }
-            return new Arguments(data, database, port, openBrowser, site, offline,
+            return new Arguments(data, port, openBrowser, site, offline,
                     Optional.ofNullable(contact).filter(value -> !value.isBlank()));
         }
 

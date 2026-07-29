@@ -10,7 +10,6 @@ import be.imgn.alexandria.domain.manifestation.Identifier;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
 import be.imgn.alexandria.domain.shared.Language;
 import be.imgn.alexandria.domain.work.WorkId;
-import be.imgn.alexandria.infrastructure.h2.H2Projection;
 import be.imgn.alexandria.infrastructure.json.JsonCatalog;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,22 +50,19 @@ class ImportPagesTest {
             .build();
 
     private JsonCatalog catalog;
-    private H2Projection projection;
     private Editor editor;
     private String base;
 
     @BeforeEach
     void start(@TempDir Path root) {
         catalog = CatalogFixture.writeInto(root);
-        projection = H2Projection.inMemory();
-        editor = new Editor(new CatalogService(catalog, projection), stub(QUIXOTE));
+        editor = new Editor(new CatalogService(catalog), stub(QUIXOTE));
         base = "http://127.0.0.1:" + editor.start(0);
     }
 
     @AfterEach
     void stop() {
         editor.stop();
-        projection.close();
     }
 
     private static BookLookup stub(BookDraft draft) {
@@ -188,15 +184,110 @@ class ImportPagesTest {
     }
 
     @Test
-    void refusesToOverwriteAWorkThatAlreadyExists() throws Exception {
+    void refusesToOverwriteAWorkThatAlreadyExistsWithoutLosingTheForm() throws Exception {
         post("/import/save", filledForm(false));
         HttpResponse<String> second = post("/import/save", filledForm(false));
 
-        assertThat(second.statusCode()).isEqualTo(400);
-        assertThat(second.body()).contains("already exists");
+        assertThat(second.statusCode()).as("the form comes back, it is not an error page").isEqualTo(200);
+        assertThat(second.body())
+                .contains("already exists")
+                .as("and still holds everything that was typed")
+                .contains("value=\"Don Quijote de la Mancha\"")
+                .contains("value=\"cervantes-don-quijote\"");
+    }
+
+    // ------------------------------------------------- problems shown in the form
+
+    @Test
+    void keepsEveryOtherFieldWhenOneIsMissing() throws Exception {
+        Map<String, String> form = filledForm(false);
+        form.remove("title.main");
+
+        HttpResponse<String> response = post("/import/save", form);
+
+        assertThat(response.statusCode()).as("not a 400 error page").isEqualTo(200);
+        assertThat(response.body())
+                .as("the problem is named against its field")
+                .contains("thing to fix")
+                .as("and nothing else has to be retyped")
+                .contains("value=\"cervantes-don-quijote\"")
+                .contains("value=\"grossman-en\"")
+                .contains("value=\"quixote-ecco-2003\"")
+                .contains("value=\"Miguel de Cervantes\"")
+                .contains("value=\"Edith Grossman\"")
+                .contains("value=\"Ecco\"")
+                .contains("value=\"940\"");
+        assertThat(catalog.work(WorkId.of("cervantes-don-quijote"))).isEmpty();
+    }
+
+    @Test
+    void reportsEveryProblemAtOnceRatherThanTheFirst() throws Exception {
+        Map<String, String> form = filledForm(false);
+        form.remove("title.main");
+        form.put("id", "Not A Slug");
+        form.put("expressions[0].language", "englishe");
+
+        String page = post("/import/save", form).body();
+
+        assertThat(page).contains("3 things to fix");
+        assertThat(page)
+                .as("each problem sits with its own field")
+                .contains("Work identifier")
+                .contains("Title")
+                .contains("Language code");
+    }
+
+    @Test
+    void marksTheOffendingFieldForAssistiveTechnology() throws Exception {
+        Map<String, String> form = filledForm(false);
+        form.put("id", "Not A Slug");
+
+        String page = post("/import/save", form).body();
+
+        assertThat(page)
+                .contains("aria-invalid=\"true\"")
+                .contains("aria-errormessage=\"id-error\"")
+                .contains("id=\"id-error\"");
+    }
+
+    @Test
+    void keepsTheChosenVariantOfASumTypeWhenSomethingElseFails() throws Exception {
+        Map<String, String> form = filledForm(true);
+        form.remove("title.main");
+        form.put("item.acquisition.type", "purchased");
+        form.put("item.acquisition.purchased.date", "2020-05-01");
+        form.put("item.acquisition.purchased.price", "12.00 EUR");
+
+        String page = post("/import/save", form).body();
+
+        assertThat(page)
+                .contains("value=\"purchased\" selected")
+                .contains("value=\"2020-05-01\"")
+                .contains("value=\"12.00 EUR\"");
+    }
+
+    @Test
+    void keepsTheCopyCheckboxTickedAcrossARejection() throws Exception {
+        Map<String, String> form = filledForm(true);
+        form.remove("title.main");
+
+        String page = post("/import/save", form).body();
+
+        assertThat(page).contains("name=\"addItem\" value=\"yes\" checked");
+    }
+
+    @Test
+    void declaresTheClientSideChecksTheBrowserShouldApply() throws Exception {
+        String page = post("/import", Map.of("isbn", "9780060188702")).body();
+
+        assertThat(page)
+                .contains("data-check=\"required slug\"")
+                .contains("data-check=\"required language\"")
+                .contains("data-check=\"isbn\"");
     }
 
     /** The review form as a user would submit it after checking the prefilled values. */
+    /** Mutable on purpose: the tests break one field at a time. */
     private static Map<String, String> filledForm(boolean withItem) {
         Map<String, String> form = new LinkedHashMap<>();
         form.put("id", "cervantes-don-quijote");

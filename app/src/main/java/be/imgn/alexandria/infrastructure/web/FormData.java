@@ -102,6 +102,24 @@ public final class FormData {
         return optional(key).isPresent();
     }
 
+    /** Every field with its first value — what a form needs to redisplay itself. */
+    public Map<String, String> flat() {
+        Map<String, String> flat = new LinkedHashMap<>();
+        values.forEach((key, value) -> flat.put(key, value.isEmpty() ? "" : value.getFirst()));
+        return flat;
+    }
+
+    /** Only the fields submitted more than once, such as a group of checkboxes. */
+    public Map<String, List<String>> multiValued() {
+        Map<String, List<String>> many = new LinkedHashMap<>();
+        values.forEach((key, value) -> {
+            if (value.size() > 1) {
+                many.put(key, List.copyOf(value));
+            }
+        });
+        return many;
+    }
+
     /** Scopes to one element of a repeating group: {@code creators[2].}. */
     public FormData at(String group, int index) {
         String prefix = group + "[" + index + "].";
@@ -119,7 +137,7 @@ public final class FormData {
         int highest = -1;
         for (String key : values.keySet()) {
             if (key.startsWith(group + "[")) {
-                int close = key.indexOf(']');
+                int close = key.indexOf(']', group.length() + 1);
                 if (close > 0) {
                     highest = Math.max(highest, Integer.parseInt(key.substring(group.length() + 1, close)));
                 }

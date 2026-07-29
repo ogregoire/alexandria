@@ -24,8 +24,9 @@ Rules that follow from this:
 - Automated tests use `@TempDir`. They must never touch `data/` or `examples/`.
 - Before writing to any path that holds user content, check whose it is. When unsure, ask.
 
-Same reasoning applies to `target/catalog.mv.db`: derived, disposable, gitignored. The JSON
-files are the catalogue; H2 is a consequence of them.
+There is no database. An H2 read model was removed once its only consumer was the reports
+page; the joining lives in `application/Holding` and the reports are streams. Do not
+reintroduce a projection without a consumer that genuinely needs one.
 
 ## Build
 
@@ -33,7 +34,7 @@ Java 25 or newer, enforced against the JVM Maven itself runs on — the app is l
 `exec:java`, so that JVM is the one it runs on.
 
 ```sh
-./mvnw verify                    # 51 tests
+./mvnw verify                    # 101 tests
 ./mvnw install && ./mvnw site    # two commands, never `install site` in one
 ```
 
@@ -86,8 +87,23 @@ entities disabled. Do not relax that.
 - **Do not use the superpowers skills** on this project.
 
 One naming rule spans every layer: a sum-type variant is its record's simple name in
-kebab-case. `MassMarket` is `mass-market` in the JSON file, in the H2 column and in the
-editor's form. `VariantNames` is the single source of it.
+kebab-case. `MassMarket` is `mass-market` in the JSON file and in the editor's form.
+`VariantNames` is the single source of it.
+
+## Forms
+
+Validation is gathered, never thrown at the user. `FormProblems.read` runs each parse, files
+the rejection against the field that caused it, and carries on, so one submission reports
+every problem at once. `FormState` then re-renders the form from what was submitted — a
+rejected form must never lose typing.
+
+The import form renders entirely through the `FormState`-driven helpers (`Html.input`,
+`Html.choice`, `SumTypeForms.render`). The Work, Manifestation and Item edit pages still use
+the older domain-object renderers in `VariantForms` and so still lose input on error; migrate
+them to `FormState` rather than extending the old path.
+
+`editor.js` mirrors the domain rules for immediate feedback via `data-check`. It is a
+courtesy, not the authority — keep the server check whenever you add a client one.
 
 ## Model shape
 

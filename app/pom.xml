@@ -12,7 +12,7 @@
 
   <artifactId>alexandria</artifactId>
   <name>Alexandria :: Catalogue</name>
-  <description>WEMI domain model, JSON store, H2 projection, local editor and site generator</description>
+  <description>WEMI domain model, JSON store, local editor, ISBN lookup and site generator</description>
 
   <dependencies>
     <dependency>
@@ -26,10 +26,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
     </dependency>
 
     <dependency>
