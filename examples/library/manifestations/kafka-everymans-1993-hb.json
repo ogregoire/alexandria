@@ -1,0 +1,31 @@
+{
+  "id" : "kafka-everymans-1993-hb",
+  "embodies" : [
+    "kafka-die-verwandlung/muir-en",
+    "kafka-der-prozess/muir-en"
+  ],
+  "title" : {
+    "main" : "The Complete Novels"
+  },
+  "publisher" : "everymans-library",
+  "published" : {
+    "type" : "year",
+    "value" : 1993
+  },
+  "carrier" : {
+    "type" : "hardcover"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9781857151046"
+  },
+  "extent" : {
+    "type" : "volumes",
+    "count" : 1,
+    "pagesTotal" : 1024
+  },
+  "series" : {
+    "name" : "Everyman's Library",
+    "number" : "83"
+  }
+}

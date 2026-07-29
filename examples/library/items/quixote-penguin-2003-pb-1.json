@@ -1,0 +1,18 @@
+{
+  "id" : "quixote-penguin-2003-pb-1",
+  "embodiedIn" : "quixote-penguin-2003-pb",
+  "acquisition" : {
+    "type" : "gift",
+    "date" : "2021-12-25",
+    "from" : "Marie"
+  },
+  "location" : {
+    "type" : "lent-to",
+    "person" : "Thomas",
+    "since" : "2025-09-03"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "FINE"
+}

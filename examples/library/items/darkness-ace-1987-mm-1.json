@@ -1,0 +1,21 @@
+{
+  "id" : "darkness-ace-1987-mm-1",
+  "embodiedIn" : "darkness-ace-1987-mm",
+  "acquisition" : {
+    "type" : "inherited",
+    "date" : "2015-06-01",
+    "from" : "my father"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "study",
+    "position" : "shelf 1"
+  },
+  "reading" : {
+    "type" : "reading",
+    "since" : "2026-07-02",
+    "page" : 148
+  },
+  "condition" : "FAIR",
+  "notes" : "Yellowed, previous owner's name on the flyleaf."
+}

@@ -1,0 +1,26 @@
+{
+  "id" : "darkness-recorded-2012-audio",
+  "embodies" : [
+    "le-guin-the-left-hand-of-darkness/narrated-en"
+  ],
+  "title" : {
+    "main" : "The Left Hand of Darkness"
+  },
+  "publisher" : "recorded-books",
+  "published" : {
+    "type" : "year",
+    "value" : 2012
+  },
+  "carrier" : {
+    "type" : "audiobook",
+    "medium" : "download"
+  },
+  "identifier" : {
+    "type" : "asin",
+    "value" : "B008FQ3G6M"
+  },
+  "extent" : {
+    "type" : "playtime",
+    "duration" : "PT9H38M"
+  }
+}

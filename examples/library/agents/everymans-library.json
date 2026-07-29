@@ -1,0 +1,11 @@
+{
+  "id" : "everymans-library",
+  "kind" : {
+    "type" : "organisation"
+  },
+  "name" : "Everyman's Library",
+  "sortName" : "Everyman's Library",
+  "aliases" : [
+    "Everyman"
+  ]
+}

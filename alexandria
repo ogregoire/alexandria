@@ -1,0 +1,17 @@
+#!/bin/sh
+# Compiles the catalogue app and opens the editor in a browser.
+#
+#   ./alexandria                 edit data/ at http://127.0.0.1:4242
+#   ./alexandria --port 8080     use another port
+#   ./alexandria --no-browser    do not open a browser
+#   ./alexandria --site out/     render the static site and exit
+#
+# Everything runs through ./mvnw: Maven decides the JVM, works out what needs recompiling
+# and assembles the runtime classpath from the POM. Arguments are passed on the exec
+# plugin's command line, so paths containing spaces are not supported here — use
+# `./mvnw -pl :alexandria compile exec:java -Dexec.args="..."` directly for those.
+set -eu
+
+cd "$(dirname "$0")"
+
+exec ./mvnw -q -pl :alexandria compile exec:java -Dexec.args="$*"

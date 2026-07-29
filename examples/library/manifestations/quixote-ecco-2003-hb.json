@@ -1,0 +1,25 @@
+{
+  "id" : "quixote-ecco-2003-hb",
+  "embodies" : [
+    "cervantes-don-quixote/grossman-en"
+  ],
+  "title" : {
+    "main" : "Don Quixote"
+  },
+  "publisher" : "ecco",
+  "published" : {
+    "type" : "year",
+    "value" : 2003
+  },
+  "carrier" : {
+    "type" : "hardcover"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9780060188702"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 940
+  }
+}

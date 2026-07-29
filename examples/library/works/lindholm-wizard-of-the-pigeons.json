@@ -1,0 +1,40 @@
+{
+  "id" : "lindholm-wizard-of-the-pigeons",
+  "title" : {
+    "main" : "Wizard of the Pigeons"
+  },
+  "creators" : [
+    {
+      "agent" : "robin-hobb",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Megan Lindholm"
+    }
+  ],
+  "form" : {
+    "type" : "novel"
+  },
+  "created" : {
+    "type" : "year",
+    "value" : 1986
+  },
+  "subjects" : [
+    "fantasy",
+    "urban fantasy"
+  ],
+  "expressions" : [
+    {
+      "id" : "lindholm-wizard-of-the-pigeons/original-en",
+      "kind" : {
+        "type" : "original"
+      },
+      "language" : "en",
+      "contributors" : [ ],
+      "realised" : {
+        "type" : "year",
+        "value" : 1986
+      }
+    }
+  ]
+}

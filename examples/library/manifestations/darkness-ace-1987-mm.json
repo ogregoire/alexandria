@@ -1,0 +1,25 @@
+{
+  "id" : "darkness-ace-1987-mm",
+  "embodies" : [
+    "le-guin-the-left-hand-of-darkness/original-en"
+  ],
+  "title" : {
+    "main" : "The Left Hand of Darkness"
+  },
+  "publisher" : "ace-books",
+  "published" : {
+    "type" : "year",
+    "value" : 1987
+  },
+  "carrier" : {
+    "type" : "mass-market"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9780441478125"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 304
+  }
+}

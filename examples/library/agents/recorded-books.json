@@ -1,0 +1,9 @@
+{
+  "id" : "recorded-books",
+  "kind" : {
+    "type" : "organisation"
+  },
+  "name" : "Recorded Books",
+  "sortName" : "Recorded Books",
+  "aliases" : [ ]
+}

@@ -1,0 +1,29 @@
+{
+  "id" : "quixote-penguin-2003-pb",
+  "embodies" : [
+    "cervantes-don-quixote/rutherford-en"
+  ],
+  "title" : {
+    "main" : "Don Quixote"
+  },
+  "publisher" : "penguin-books",
+  "published" : {
+    "type" : "year",
+    "value" : 2003
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9780142437230"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 1056
+  },
+  "series" : {
+    "name" : "Penguin Classics"
+  },
+  "editionStatement" : 2
+}

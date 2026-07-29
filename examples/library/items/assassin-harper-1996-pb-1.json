@@ -1,0 +1,20 @@
+{
+  "id" : "assassin-harper-1996-pb-1",
+  "embodiedIn" : "assassin-harper-1996-pb",
+  "acquisition" : {
+    "type" : "purchased",
+    "date" : "2020-08-09",
+    "price" : "9.99 EUR"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "study",
+    "position" : "shelf 2"
+  },
+  "reading" : {
+    "type" : "finished",
+    "on" : "2020-09-01",
+    "rating" : 4
+  },
+  "condition" : "GOOD"
+}

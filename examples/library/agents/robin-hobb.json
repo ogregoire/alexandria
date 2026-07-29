@@ -1,0 +1,11 @@
+{
+  "id" : "robin-hobb",
+  "kind" : {
+    "type" : "person"
+  },
+  "name" : "Robin Hobb",
+  "sortName" : "Hobb, Robin",
+  "aliases" : [
+    "Megan Lindholm"
+  ]
+}

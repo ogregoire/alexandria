@@ -1,0 +1,40 @@
+{
+  "id" : "hobb-assassins-apprentice",
+  "title" : {
+    "main" : "Assassin's Apprentice"
+  },
+  "creators" : [
+    {
+      "agent" : "robin-hobb",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Robin Hobb"
+    }
+  ],
+  "form" : {
+    "type" : "novel"
+  },
+  "created" : {
+    "type" : "year",
+    "value" : 1995
+  },
+  "subjects" : [
+    "fantasy",
+    "the realm of the elderlings"
+  ],
+  "expressions" : [
+    {
+      "id" : "hobb-assassins-apprentice/original-en",
+      "kind" : {
+        "type" : "original"
+      },
+      "language" : "en",
+      "contributors" : [ ],
+      "realised" : {
+        "type" : "year",
+        "value" : 1995
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "id" : "ecco",
+  "kind" : {
+    "type" : "organisation"
+  },
+  "name" : "Ecco",
+  "sortName" : "Ecco",
+  "aliases" : [ ]
+}

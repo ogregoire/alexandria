@@ -1,0 +1,21 @@
+{
+  "id" : "annals-penguin-1996-pb-borrowed",
+  "embodiedIn" : "annals-penguin-1996-pb",
+  "acquisition" : {
+    "type" : "borrowed",
+    "from" : "Hugo",
+    "since" : "2026-05-12",
+    "due" : "2026-08-12"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "desk"
+  },
+  "reading" : {
+    "type" : "reading",
+    "since" : "2026-06-01",
+    "page" : 88
+  },
+  "condition" : "GOOD",
+  "notes" : "Hugo's copy — give it back."
+}

@@ -1,0 +1,12 @@
+{
+  "id" : "penguin-books",
+  "kind" : {
+    "type" : "organisation"
+  },
+  "name" : "Penguin Books",
+  "sortName" : "Penguin Books",
+  "aliases" : [
+    "Penguin",
+    "Penguin Classics"
+  ]
+}

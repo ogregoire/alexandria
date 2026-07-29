@@ -1,0 +1,9 @@
+{
+  "id" : "john-rutherford",
+  "kind" : {
+    "type" : "person"
+  },
+  "name" : "John Rutherford",
+  "sortName" : "Rutherford, John",
+  "aliases" : [ ]
+}

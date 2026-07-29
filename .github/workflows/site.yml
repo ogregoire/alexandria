@@ -1,0 +1,53 @@
+name: Publish the catalogue
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      - name: Verify
+        run: ./mvnw --batch-mode verify
+
+      # The catalogue report comes from a plugin built in this same reactor, so it has to
+      # be in the local repository before the site lifecycle can resolve it. Two steps, not
+      # `install site` in one command.
+      - name: Install
+        run: ./mvnw --batch-mode install -DskipTests
+
+      - name: Generate the site
+        run: ./mvnw --batch-mode site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

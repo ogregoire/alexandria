@@ -1,0 +1,61 @@
+{
+  "id" : "le-guin-the-left-hand-of-darkness",
+  "title" : {
+    "main" : "The Left Hand of Darkness"
+  },
+  "creators" : [
+    {
+      "agent" : "ursula-k-le-guin",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Ursula K. Le Guin"
+    }
+  ],
+  "form" : {
+    "type" : "novel"
+  },
+  "created" : {
+    "type" : "year",
+    "value" : 1969
+  },
+  "subjects" : [
+    "gender",
+    "hainish cycle",
+    "science fiction"
+  ],
+  "expressions" : [
+    {
+      "id" : "le-guin-the-left-hand-of-darkness/original-en",
+      "kind" : {
+        "type" : "original"
+      },
+      "language" : "en",
+      "contributors" : [ ],
+      "realised" : {
+        "type" : "year",
+        "value" : 1969
+      }
+    },
+    {
+      "id" : "le-guin-the-left-hand-of-darkness/narrated-en",
+      "kind" : {
+        "type" : "narration"
+      },
+      "language" : "en",
+      "contributors" : [
+        {
+          "agent" : "george-guidall",
+          "role" : {
+            "type" : "narrator"
+          },
+          "publishedAs" : "George Guidall"
+        }
+      ],
+      "realised" : {
+        "type" : "year",
+        "value" : 2012
+      }
+    }
+  ]
+}

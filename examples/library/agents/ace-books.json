@@ -1,0 +1,9 @@
+{
+  "id" : "ace-books",
+  "kind" : {
+    "type" : "organisation"
+  },
+  "name" : "Ace Books",
+  "sortName" : "Ace Books",
+  "aliases" : [ ]
+}

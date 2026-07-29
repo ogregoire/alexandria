@@ -1,0 +1,49 @@
+{
+  "id" : "kafka-der-prozess",
+  "title" : {
+    "main" : "Der Prozess"
+  },
+  "creators" : [
+    {
+      "agent" : "franz-kafka",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Franz Kafka"
+    }
+  ],
+  "form" : {
+    "type" : "novel"
+  },
+  "created" : {
+    "type" : "circa",
+    "value" : 1925
+  },
+  "subjects" : [
+    "law",
+    "modernism"
+  ],
+  "expressions" : [
+    {
+      "id" : "kafka-der-prozess/muir-en",
+      "kind" : {
+        "type" : "translation",
+        "from" : "de"
+      },
+      "language" : "en",
+      "contributors" : [
+        {
+          "agent" : "willa-and-edwin-muir",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "Willa and Edwin Muir"
+        }
+      ],
+      "realised" : {
+        "type" : "year",
+        "value" : 1937
+      }
+    }
+  ]
+}

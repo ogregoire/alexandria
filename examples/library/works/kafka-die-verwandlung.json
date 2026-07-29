@@ -1,0 +1,61 @@
+{
+  "id" : "kafka-die-verwandlung",
+  "title" : {
+    "main" : "Die Verwandlung"
+  },
+  "creators" : [
+    {
+      "agent" : "franz-kafka",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Franz Kafka"
+    }
+  ],
+  "form" : {
+    "type" : "novella"
+  },
+  "created" : {
+    "type" : "year",
+    "value" : 1915
+  },
+  "subjects" : [
+    "alienation",
+    "modernism"
+  ],
+  "expressions" : [
+    {
+      "id" : "kafka-die-verwandlung/original-de",
+      "kind" : {
+        "type" : "original"
+      },
+      "language" : "de",
+      "contributors" : [ ],
+      "realised" : {
+        "type" : "year",
+        "value" : 1915
+      }
+    },
+    {
+      "id" : "kafka-die-verwandlung/muir-en",
+      "kind" : {
+        "type" : "translation",
+        "from" : "de"
+      },
+      "language" : "en",
+      "contributors" : [
+        {
+          "agent" : "willa-and-edwin-muir",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "Willa and Edwin Muir"
+        }
+      ],
+      "realised" : {
+        "type" : "year",
+        "value" : 1933
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "id" : "assassin-harper-1996-pb",
+  "embodies" : [
+    "hobb-assassins-apprentice/original-en"
+  ],
+  "title" : {
+    "main" : "Assassin's Apprentice"
+  },
+  "publisher" : "harpercollins",
+  "published" : {
+    "type" : "year",
+    "value" : 1996
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9780553573398"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 464
+  },
+  "series" : {
+    "name" : "The Farseer Trilogy"
+  }
+}

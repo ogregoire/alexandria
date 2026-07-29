@@ -1,0 +1,22 @@
+{
+  "id" : "quixote-ecco-2003-hb-1",
+  "embodiedIn" : "quixote-ecco-2003-hb",
+  "acquisition" : {
+    "type" : "purchased",
+    "date" : "2019-04-12",
+    "price" : "28.50 EUR",
+    "from" : "De Slegte"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "living room",
+    "position" : "shelf 3"
+  },
+  "reading" : {
+    "type" : "finished",
+    "on" : "2020-01-06",
+    "rating" : 5
+  },
+  "condition" : "VERY_GOOD",
+  "notes" : "Spine sunned; otherwise crisp."
+}

@@ -1,0 +1,85 @@
+{
+  "id" : "cervantes-don-quixote",
+  "title" : {
+    "main" : "Don Quixote",
+    "subtitle" : "The Ingenious Gentleman of La Mancha"
+  },
+  "creators" : [
+    {
+      "agent" : "miguel-de-cervantes",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Miguel de Cervantes"
+    }
+  ],
+  "form" : {
+    "type" : "novel"
+  },
+  "created" : {
+    "type" : "between",
+    "from" : 1605,
+    "to" : 1615
+  },
+  "subjects" : [
+    "chivalry",
+    "satire",
+    "spain"
+  ],
+  "expressions" : [
+    {
+      "id" : "cervantes-don-quixote/original-es",
+      "kind" : {
+        "type" : "original"
+      },
+      "language" : "es",
+      "contributors" : [ ],
+      "realised" : {
+        "type" : "year",
+        "value" : 1605
+      }
+    },
+    {
+      "id" : "cervantes-don-quixote/grossman-en",
+      "kind" : {
+        "type" : "translation",
+        "from" : "es"
+      },
+      "language" : "en",
+      "contributors" : [
+        {
+          "agent" : "edith-grossman",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "Edith Grossman"
+        }
+      ],
+      "realised" : {
+        "type" : "year",
+        "value" : 2003
+      }
+    },
+    {
+      "id" : "cervantes-don-quixote/rutherford-en",
+      "kind" : {
+        "type" : "translation",
+        "from" : "es"
+      },
+      "language" : "en",
+      "contributors" : [
+        {
+          "agent" : "john-rutherford",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "John Rutherford"
+        }
+      ],
+      "realised" : {
+        "type" : "year",
+        "value" : 2000
+      }
+    }
+  ]
+}

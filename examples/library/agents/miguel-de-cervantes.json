@@ -1,0 +1,12 @@
+{
+  "id" : "miguel-de-cervantes",
+  "kind" : {
+    "type" : "person"
+  },
+  "name" : "Miguel de Cervantes",
+  "sortName" : "Cervantes, Miguel de",
+  "aliases" : [
+    "Cervantes",
+    "Cervantes Saavedra"
+  ]
+}

@@ -1,0 +1,85 @@
+:root {
+  --ink: #1c1a17;
+  --paper: #faf8f4;
+  --rule: #ded7ca;
+  --muted: #6f6759;
+  --accent: #7a3b2e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #ece7de;
+    --paper: #16150f;
+    --rule: #3a352d;
+    --muted: #9c9486;
+    --accent: #d99178;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 17px/1.6 ui-serif, Georgia, "Iowan Old Style", serif;
+}
+
+main { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+
+h1 { font-weight: 500; font-size: 1.9rem; letter-spacing: -0.01em; margin: 0 0 0.35rem; }
+h3 { font-weight: 600; font-size: 1rem; margin: 0 0 0.4rem; }
+
+a { color: var(--accent); }
+
+.lede, .meta, .count, .hint { color: var(--muted); font-size: 0.92rem; }
+.meta { margin: 0 0 1.5rem; }
+.crumb { font-size: 0.85rem; margin: 0 0 1.5rem; }
+
+#q {
+  width: 100%;
+  margin: 1.5rem 0 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+}
+
+.count { margin: 0 0 1.5rem; }
+
+.entries { list-style: none; padding: 0; margin: 0; }
+
+.entry { padding: 1rem 0; border-top: 1px solid var(--rule); }
+.entry .title { font-size: 1.1rem; text-decoration: none; }
+.entry .title:hover { text-decoration: underline; }
+.entry p { margin: 0.2rem 0 0; }
+.holdings { color: var(--muted); font-size: 0.85rem; }
+
+.subjects { margin: 0 0 2rem; }
+.tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+}
+
+.expression { border-top: 1px solid var(--rule); padding: 1.25rem 0 0.5rem; }
+.contributors { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.6rem; }
+
+.edition { border-left: 2px solid var(--rule); padding: 0.1rem 0 0.1rem 1rem; margin: 0 0 1rem; }
+.imprint { margin: 0; font-size: 0.95rem; }
+.series, .copy, .none { color: var(--muted); font-size: 0.88rem; margin: 0.15rem 0 0; }
+
+.empty { color: var(--muted); padding: 2rem 0; }
+
+.as { border-top: 1px solid var(--rule); padding: 1.25rem 0 0.25rem; }
+.as h2 { font-weight: 500; font-size: 1.15rem; margin: 0 0 0.6rem; }
+.works { list-style: none; padding: 0; margin: 0; }
+.works li { padding: 0.3rem 0; }
+.detail { color: var(--muted); font-size: 0.85rem; }

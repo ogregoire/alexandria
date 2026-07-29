@@ -1,0 +1,19 @@
+{
+  "id" : "darkness-recorded-2012-audio-1",
+  "embodiedIn" : "darkness-recorded-2012-audio",
+  "acquisition" : {
+    "type" : "purchased",
+    "date" : "2022-02-14",
+    "price" : "14.99 EUR"
+  },
+  "location" : {
+    "type" : "device",
+    "name" : "phone"
+  },
+  "reading" : {
+    "type" : "finished",
+    "on" : "2022-03-20",
+    "rating" : 4
+  },
+  "condition" : "AS_NEW"
+}

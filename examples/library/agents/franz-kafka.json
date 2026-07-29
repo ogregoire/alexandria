@@ -1,0 +1,11 @@
+{
+  "id" : "franz-kafka",
+  "kind" : {
+    "type" : "person"
+  },
+  "name" : "Franz Kafka",
+  "sortName" : "Kafka, Franz",
+  "aliases" : [
+    "Kafka"
+  ]
+}

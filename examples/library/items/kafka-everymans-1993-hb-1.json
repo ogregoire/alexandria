@@ -1,0 +1,22 @@
+{
+  "id" : "kafka-everymans-1993-hb-1",
+  "embodiedIn" : "kafka-everymans-1993-hb",
+  "acquisition" : {
+    "type" : "purchased",
+    "date" : "2018-11-03",
+    "price" : "32.00 EUR",
+    "from" : "Passa Porta"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "living room",
+    "position" : "shelf 1"
+  },
+  "reading" : {
+    "type" : "abandoned",
+    "on" : "2019-02-08",
+    "atPage" : 212,
+    "why" : "Read Die Verwandlung, stalled on Der Prozess."
+  },
+  "condition" : "FINE"
+}

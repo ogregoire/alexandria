@@ -1,0 +1,49 @@
+{
+  "id" : "tacitus-annales",
+  "title" : {
+    "main" : "Annales"
+  },
+  "creators" : [
+    {
+      "agent" : "tacitus",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Tacitus"
+    }
+  ],
+  "form" : {
+    "type" : "nonfiction"
+  },
+  "created" : {
+    "type" : "circa",
+    "value" : 117
+  },
+  "subjects" : [
+    "history",
+    "rome"
+  ],
+  "expressions" : [
+    {
+      "id" : "tacitus-annales/grant-en",
+      "kind" : {
+        "type" : "translation",
+        "from" : "la"
+      },
+      "language" : "en",
+      "contributors" : [
+        {
+          "agent" : "michael-grant",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "Michael Grant"
+        }
+      ],
+      "realised" : {
+        "type" : "year",
+        "value" : 1956
+      }
+    }
+  ]
+}

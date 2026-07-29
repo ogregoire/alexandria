@@ -1,0 +1,140 @@
+:root {
+  --ink: #1c1a17;
+  --paper: #faf8f4;
+  --rule: #d9d2c5;
+  --muted: #6b6459;
+  --accent: #7a3b2e;
+  --danger: #8c2f2f;
+  --ok: #2f6b45;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #ece7de;
+    --paper: #171614;
+    --rule: #3a352d;
+    --muted: #9c9486;
+    --accent: #d99178;
+    --danger: #e08a8a;
+    --ok: #8fce9f;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.55 ui-serif, Georgia, "Iowan Old Style", serif;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  align-items: baseline;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.brand {
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+nav { display: flex; gap: 1.25rem; }
+nav a { color: var(--muted); text-decoration: none; }
+nav a:hover { color: var(--accent); }
+
+main { max-width: 62rem; margin: 0 auto; padding: 1.5rem; }
+
+h1 { font-weight: 600; font-size: 1.6rem; margin: 0.5rem 0 1rem; }
+h2 { font-weight: 600; font-size: 1.1rem; }
+
+.crumb { color: var(--muted); font-size: 0.85rem; margin: 0 0 0.5rem; }
+.crumb a, a { color: var(--accent); }
+
+.hint { color: var(--muted); font-size: 0.9rem; }
+.ok { color: var(--ok); }
+.broken { color: var(--danger); }
+
+.scroll { overflow-x: auto; }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.45rem 0.75rem 0.45rem 0; border-bottom: 1px solid var(--rule); }
+th { font-weight: 600; color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+fieldset {
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1rem 1.25rem 1.25rem;
+  margin: 0 0 1.25rem;
+}
+
+fieldset.nested { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+legend { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0 0.4rem; }
+
+label { display: block; margin: 0 0 0.75rem; }
+label > span { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.2rem; }
+
+input[type=text], input[type=date], input[type=number], select, textarea {
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+input[readonly] { color: var(--muted); }
+
+label.check { display: flex; gap: 0.5rem; align-items: baseline; margin-bottom: 0.35rem; }
+label.check input { width: auto; }
+label.check span { margin: 0; font-size: 0.95rem; color: var(--ink); }
+
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0 1rem; }
+
+.sum { margin-bottom: 0.75rem; }
+.sum .variant { border-style: dashed; margin: 0.35rem 0 0; padding: 0.75rem 1rem 0.25rem; }
+.sum .variant:empty { display: none; }
+
+button, .button {
+  display: inline-block;
+  padding: 0.45rem 1.1rem;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--paper);
+  font: inherit;
+  font-size: 0.95rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+form.danger { margin-top: 2rem; }
+form.danger button { background: none; color: var(--danger); border-color: var(--danger); }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.tile {
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1rem;
+  text-decoration: none;
+  color: var(--ink);
+}
+.tile strong { display: block; font-size: 1.8rem; font-weight: 600; }
+.tile span { color: var(--muted); font-size: 0.85rem; }
+
+.reports { list-style: none; padding: 0; }
+.reports li { padding: 0.5rem 0; border-bottom: 1px solid var(--rule); }
+.reports span { display: block; }
+
+pre { overflow-x: auto; font-size: 0.85rem; background: color-mix(in srgb, var(--ink) 5%, transparent); padding: 0.75rem; border-radius: 3px; }
+pre.error { color: var(--danger); white-space: pre-wrap; }
+div.error { border: 1px solid var(--danger); border-radius: 3px; padding: 0.5rem 1rem; }

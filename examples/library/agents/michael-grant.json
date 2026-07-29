@@ -1,0 +1,9 @@
+{
+  "id" : "michael-grant",
+  "kind" : {
+    "type" : "person"
+  },
+  "name" : "Michael Grant",
+  "sortName" : "Grant, Michael",
+  "aliases" : [ ]
+}

@@ -1,0 +1,28 @@
+{
+  "id" : "annals-penguin-1996-pb",
+  "embodies" : [
+    "tacitus-annales/grant-en"
+  ],
+  "title" : {
+    "main" : "The Annals of Imperial Rome"
+  },
+  "publisher" : "penguin-books",
+  "published" : {
+    "type" : "year",
+    "value" : 1996
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9780140440607"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 464
+  },
+  "series" : {
+    "name" : "Penguin Classics"
+  }
+}

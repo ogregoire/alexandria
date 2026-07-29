@@ -1,0 +1,9 @@
+{
+  "id" : "harpercollins",
+  "kind" : {
+    "type" : "organisation"
+  },
+  "name" : "HarperCollins",
+  "sortName" : "HarperCollins",
+  "aliases" : [ ]
+}
