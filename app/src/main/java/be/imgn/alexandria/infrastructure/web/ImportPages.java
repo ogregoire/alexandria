@@ -36,6 +36,7 @@ import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.ExpressionId;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.domain.work.WorkId;
+import be.imgn.alexandria.infrastructure.Template;
 
 /**
  * Adding a book from its ISBN.
@@ -110,68 +111,161 @@ final class ImportPages {
     private String form(FormState state, String provenance) {
         AgentDirectory agents = service.directory();
 
-        return Html.page("Check and save", Html.link("/import", "Add from ISBN") + " / Check", """
+        return Html.page(
+                "Check and save",
+                Html.link("/import", "Add from ISBN") + " / Check",
+                Template.of("""
                 <h1>Check and save</h1>
-                %s
-                %s
-                %s
+                {provenance}
+                {problems}
+                {agentList}
                 <form method="post" action="/import/save" novalidate>
-                  %s
+                  {isbn}
                   <fieldset><legend>Work — the text itself, in any language</legend>
-                    %s%s%s%s%s%s
+                    {workId}
+                    {workTitle}
+                    {workSubtitle}
+                    {workForm}
+                    {workCreated}
+                    {workSubjects}
                   </fieldset>
-                  %s
+                  {creators}
                   <fieldset><legend>Expression — this language, this translation</legend>
-                    %s%s%s%s%s
+                    {expressionId}
+                    {expressionLanguage}
+                    {expressionKind}
+                    {expressionRealised}
+                    {expressionContributors}
                   </fieldset>
                   <fieldset><legend>Manifestation — this edition</legend>
-                    %s%s%s%s%s%s%s%s%s%s
+                    {editionId}
+                    {editionTitle}
+                    {editionPublisher}
+                    {editionPublisherKind}
+                    {editionPublished}
+                    {editionCarrier}
+                    {editionIdentifier}
+                    {editionExtent}
+                    {editionSeries}
+                    {editionSeriesNumber}
                   </fieldset>
                   <fieldset><legend>Item — your copy</legend>
-                    <label class="check"><input type="checkbox" name="addItem" value="yes"%s>
+                    <label class="check"><input type="checkbox" name="addItem" value="yes"{addItemChecked}>
                       <span>Record a copy of this edition</span></label>
-                    %s%s%s%s%s%s
+                    {itemId}
+                    {itemAcquisition}
+                    {itemLocation}
+                    {itemReading}
+                    {itemCondition}
+                    {itemNotes}
                   </fieldset>
                   <button type="submit">Save the book</button>
                 </form>
-                """.formatted(
-                provenance,
-                Html.problemSummary(state, fieldLabels()),
-                Html.datalist(VariantForms.AGENT_LIST, agents.suggestions()),
-                WorkPages.hidden("isbn", state.value("isbn")),
-                Html.input(state, "id", "Work identifier (slug)", "text", "required slug"),
-                Html.input(state, "title.main", "Title in the original language", "text", "required"),
-                Html.input(state, "title.subtitle", "Subtitle", "text"),
-                SumTypeForms.render(state, "form", "Form", SumTypeForms.WORK_FORM),
-                SumTypeForms.render(state, "created", "First published", SumTypeForms.DATE),
-                Html.input(state, "subjects", "Subjects (comma separated)", "text"),
-                contributors(state, "creators", "Author", agents),
-                Html.input(state, "expressions[0].id", "Expression identifier (slug)", "text", "required slug"),
-                Html.input(state, "expressions[0].language", "Language code", "text", "required language"),
-                SumTypeForms.render(state, "expressions[0].kind", "Kind", SumTypeForms.EXPRESSION_KIND),
-                SumTypeForms.render(
-                        state,
-                        "expressions[0].realised",
-                        "Realised — when this text or translation was made",
-                        SumTypeForms.DATE),
-                contributors(state, "expressions[0].contributors", "Translator and others", agents),
-                Html.input(state, "manifestation.id", "Edition identifier (slug)", "text", "required slug"),
-                Html.input(state, "manifestation.title.main", "Title on this edition", "text"),
-                Html.suggest(state, "manifestation.publisher", "Publisher", VariantForms.AGENT_LIST, null),
-                Html.choice(state, "manifestation.publisherKind", "If new", VariantForms.agentKinds(), "organisation"),
-                SumTypeForms.render(state, "manifestation.published", "Printed", SumTypeForms.DATE),
-                SumTypeForms.render(state, "manifestation.carrier", "Carrier", SumTypeForms.CARRIER),
-                SumTypeForms.render(state, "manifestation.identifier", "Identifier", SumTypeForms.IDENTIFIER),
-                SumTypeForms.render(state, "manifestation.extent", "Extent", SumTypeForms.EXTENT),
-                Html.input(state, "manifestation.series.name", "Series", "text"),
-                Html.input(state, "manifestation.series.number", "Series number", "text"),
-                state.checked("addItem") ? " checked" : "",
-                Html.input(state, "item.id", "Copy identifier (slug, blank to derive)", "text", "slug"),
-                SumTypeForms.render(state, "item.acquisition", "Acquired", SumTypeForms.ACQUISITION),
-                SumTypeForms.render(state, "item.location", "Location", SumTypeForms.LOCATION),
-                SumTypeForms.render(state, "item.reading", "Reading", SumTypeForms.READING),
-                Html.choice(state, "item.condition", "Condition", SumTypeForms.conditions(), Condition.UNGRADED.name()),
-                Html.area(state, "item.notes", "Notes")));
+                """)
+                        .withMarkup("provenance", provenance)
+                        .withMarkup("problems", Html.problemSummary(state, fieldLabels()))
+                        .withMarkup("agentList", Html.datalist(VariantForms.AGENT_LIST, agents.suggestions()))
+                        .withMarkup("isbn", WorkPages.hidden("isbn", state.value("isbn")))
+                        .withMarkup(
+                                "workId", Html.input(state, "id", "Work identifier (slug)", "text", "required slug"))
+                        .withMarkup(
+                                "workTitle",
+                                Html.input(state, "title.main", "Title in the original language", "text", "required"))
+                        .withMarkup("workSubtitle", Html.input(state, "title.subtitle", "Subtitle", "text"))
+                        .withMarkup("workForm", SumTypeForms.render(state, "form", "Form", SumTypeForms.WORK_FORM))
+                        .withMarkup(
+                                "workCreated",
+                                SumTypeForms.render(state, "created", "First published", SumTypeForms.DATE))
+                        .withMarkup("workSubjects", Html.input(state, "subjects", "Subjects (comma separated)", "text"))
+                        .withMarkup("creators", contributors(state, "creators", "Author", agents))
+                        .withMarkup(
+                                "expressionId",
+                                Html.input(
+                                        state,
+                                        "expressions[0].id",
+                                        "Expression identifier (slug)",
+                                        "text",
+                                        "required slug"))
+                        .withMarkup(
+                                "expressionLanguage",
+                                Html.input(
+                                        state, "expressions[0].language", "Language code", "text", "required language"))
+                        .withMarkup(
+                                "expressionKind",
+                                SumTypeForms.render(state, "expressions[0].kind", "Kind", SumTypeForms.EXPRESSION_KIND))
+                        .withMarkup(
+                                "expressionRealised",
+                                SumTypeForms.render(
+                                        state,
+                                        "expressions[0].realised",
+                                        "Realised — when this text or translation was made",
+                                        SumTypeForms.DATE))
+                        .withMarkup(
+                                "expressionContributors",
+                                contributors(state, "expressions[0].contributors", "Translator and others", agents))
+                        .withMarkup(
+                                "editionId",
+                                Html.input(
+                                        state,
+                                        "manifestation.id",
+                                        "Edition identifier (slug)",
+                                        "text",
+                                        "required slug"))
+                        .withMarkup(
+                                "editionTitle",
+                                Html.input(state, "manifestation.title.main", "Title on this edition", "text"))
+                        .withMarkup(
+                                "editionPublisher",
+                                Html.suggest(
+                                        state, "manifestation.publisher", "Publisher", VariantForms.AGENT_LIST, null))
+                        .withMarkup(
+                                "editionPublisherKind",
+                                Html.choice(
+                                        state,
+                                        "manifestation.publisherKind",
+                                        "If new",
+                                        VariantForms.agentKinds(),
+                                        "organisation"))
+                        .withMarkup(
+                                "editionPublished",
+                                SumTypeForms.render(state, "manifestation.published", "Printed", SumTypeForms.DATE))
+                        .withMarkup(
+                                "editionCarrier",
+                                SumTypeForms.render(state, "manifestation.carrier", "Carrier", SumTypeForms.CARRIER))
+                        .withMarkup(
+                                "editionIdentifier",
+                                SumTypeForms.render(
+                                        state, "manifestation.identifier", "Identifier", SumTypeForms.IDENTIFIER))
+                        .withMarkup(
+                                "editionExtent",
+                                SumTypeForms.render(state, "manifestation.extent", "Extent", SumTypeForms.EXTENT))
+                        .withMarkup("editionSeries", Html.input(state, "manifestation.series.name", "Series", "text"))
+                        .withMarkup(
+                                "editionSeriesNumber",
+                                Html.input(state, "manifestation.series.number", "Series number", "text"))
+                        .withMarkup("addItemChecked", state.checked("addItem") ? " checked" : "")
+                        .withMarkup(
+                                "itemId",
+                                Html.input(state, "item.id", "Copy identifier (slug, blank to derive)", "text", "slug"))
+                        .withMarkup(
+                                "itemAcquisition",
+                                SumTypeForms.render(state, "item.acquisition", "Acquired", SumTypeForms.ACQUISITION))
+                        .withMarkup(
+                                "itemLocation",
+                                SumTypeForms.render(state, "item.location", "Location", SumTypeForms.LOCATION))
+                        .withMarkup(
+                                "itemReading",
+                                SumTypeForms.render(state, "item.reading", "Reading", SumTypeForms.READING))
+                        .withMarkup(
+                                "itemCondition",
+                                Html.choice(
+                                        state,
+                                        "item.condition",
+                                        "Condition",
+                                        SumTypeForms.conditions(),
+                                        Condition.UNGRADED.name()))
+                        .withMarkup("itemNotes", Html.area(state, "item.notes", "Notes"))
+                        .render());
     }
 
     /** A repeating group of name-plus-role rows, always with a spare row at the end. */

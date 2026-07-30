@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import be.imgn.alexandria.infrastructure.Escape;
+import be.imgn.alexandria.infrastructure.Template;
 
 /** Minimal HTML assembly. Everything user-supplied goes through {@link #escape}. */
 public final class Html {
@@ -16,13 +17,13 @@ public final class Html {
     }
 
     public static String page(String title, String breadcrumb, String body) {
-        return """
+        return Template.of("""
                 <!doctype html>
                 <html lang="en">
                 <head>
                   <meta charset="utf-8">
                   <meta name="viewport" content="width=device-width, initial-scale=1">
-                  <title>%s — Alexandria</title>
+                  <title>{title} — Alexandria</title>
                   <link rel="stylesheet" href="/assets/editor.css">
                 </head>
                 <body>
@@ -38,8 +39,8 @@ public final class Html {
                     </nav>
                   </header>
                   <main>
-                    <p class="crumb">%s</p>
-                    %s
+                    <p class="crumb">{breadcrumb}</p>
+                    {body}
                   </main>
                   <footer class="foot">
                     <p>Saving writes a JSON file under your data directory · commit it and the
@@ -48,7 +49,11 @@ public final class Html {
                   <script src="/assets/editor.js"></script>
                 </body>
                 </html>
-                """.formatted(escape(title), breadcrumb, body);
+                """)
+                .with("title", title)
+                .withMarkup("breadcrumb", breadcrumb)
+                .withMarkup("body", body)
+                .render();
     }
 
     // ---------------------------------------------------------- state-driven fields

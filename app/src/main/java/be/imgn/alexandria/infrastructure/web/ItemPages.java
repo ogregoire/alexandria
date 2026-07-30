@@ -9,6 +9,7 @@ import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
 import be.imgn.alexandria.domain.shared.Note;
+import be.imgn.alexandria.infrastructure.Template;
 
 /** Browsing and editing the Item aggregate — the copy you actually own. */
 final class ItemPages {
@@ -66,46 +67,68 @@ final class ItemPages {
                 </form>
                 """.formatted(Html.escape(id));
 
-        return Html.page(heading, Html.link("/items", "Items") + " / " + Html.escape(heading), """
-                <h1>%s</h1>
-                <form method="post" action="/items/%s">
+        return Html.page(
+                heading,
+                Html.link("/items", "Items") + " / " + Html.escape(heading),
+                Template.of("""
+                <h1>{heading}</h1>
+                <form method="post" action="/items/{action}">
                   <fieldset><legend>Copy</legend>
-                    %s
-                    %s
-                    %s
-                    %s
+                    {id}
+                    {edition}
+                    {condition}
+                    {notes}
                   </fieldset>
-                  <fieldset><legend>Provenance</legend>%s</fieldset>
-                  <fieldset><legend>Whereabouts</legend>%s</fieldset>
-                  <fieldset><legend>Reading</legend>%s</fieldset>
+                  <fieldset><legend>Provenance</legend>{acquisition}</fieldset>
+                  <fieldset><legend>Whereabouts</legend>{location}</fieldset>
+                  <fieldset><legend>Reading</legend>{reading}</fieldset>
                   <button type="submit">Save</button>
                 </form>
-                %s
-                """.formatted(
-                Html.escape(heading),
-                Html.escape(id.isEmpty() ? "new" : id),
-                item == null
-                        ? Html.textField("id", "Identifier (slug)", "")
-                        : WorkPages.readOnly("Identifier", id) + WorkPages.hidden("id", id),
-                Html.select(
-                        "manifestation",
-                        "Edition",
-                        editions,
-                        item == null
-                                ? editions.keySet().iterator().next()
-                                : item.embodiedIn().value()),
-                Html.select(
-                        "condition",
-                        "Condition",
-                        VariantForms.conditions(),
-                        item == null
-                                ? Condition.UNGRADED.name()
-                                : item.condition().name()),
-                Html.textArea("notes", "Notes", item == null ? "" : item.notes().text()),
-                VariantForms.acquisition("acquisition", "Acquired", item == null ? null : item.acquisition()),
-                VariantForms.location("location", "Location", item == null ? null : item.location()),
-                VariantForms.reading("reading", "Progress", item == null ? null : item.reading()),
-                deleteButton));
+                {delete}
+                """)
+                        .with("heading", heading)
+                        .with("action", id.isEmpty() ? "new" : id)
+                        .withMarkup(
+                                "id",
+                                item == null
+                                        ? Html.textField("id", "Identifier (slug)", "")
+                                        : WorkPages.readOnly("Identifier", id) + WorkPages.hidden("id", id))
+                        .withMarkup(
+                                "edition",
+                                Html.select(
+                                        "manifestation",
+                                        "Edition",
+                                        editions,
+                                        item == null
+                                                ? editions.keySet().iterator().next()
+                                                : item.embodiedIn().value()))
+                        .withMarkup(
+                                "condition",
+                                Html.select(
+                                        "condition",
+                                        "Condition",
+                                        VariantForms.conditions(),
+                                        item == null
+                                                ? Condition.UNGRADED.name()
+                                                : item.condition().name()))
+                        .withMarkup(
+                                "notes",
+                                Html.textArea(
+                                        "notes",
+                                        "Notes",
+                                        item == null ? "" : item.notes().text()))
+                        .withMarkup(
+                                "acquisition",
+                                VariantForms.acquisition(
+                                        "acquisition", "Acquired", item == null ? null : item.acquisition()))
+                        .withMarkup(
+                                "location",
+                                VariantForms.location("location", "Location", item == null ? null : item.location()))
+                        .withMarkup(
+                                "reading",
+                                VariantForms.reading("reading", "Progress", item == null ? null : item.reading()))
+                        .withMarkup("delete", deleteButton)
+                        .render());
     }
 
     Item read(FormData form) {

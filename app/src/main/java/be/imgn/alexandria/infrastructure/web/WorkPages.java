@@ -20,6 +20,7 @@ import be.imgn.alexandria.domain.work.ExpressionKind;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.domain.work.WorkForm;
 import be.imgn.alexandria.domain.work.WorkId;
+import be.imgn.alexandria.infrastructure.Template;
 
 /** Browsing and editing the Work aggregate, Expressions included. */
 final class WorkPages {
@@ -80,48 +81,72 @@ final class WorkPages {
                 </form>
                 """.formatted(Html.escape(id));
 
-        return Html.page(heading, Html.link("/works", "Works") + " / " + Html.escape(heading), """
-                <h1>%s</h1>
-                %s
-                <form method="post" action="/works/%s">
+        return Html.page(
+                heading,
+                Html.link("/works", "Works") + " / " + Html.escape(heading),
+                Template.of("""
+                <h1>{heading}</h1>
+                {agentList}
+                <form method="post" action="/works/{action}">
                   <fieldset><legend>Work</legend>
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
+                    {id}
+                    {title}
+                    {subtitle}
+                    {form}
+                    {created}
+                    {subjects}
                   </fieldset>
-                  %s
+                  {creators}
                   <fieldset><legend>Expressions</legend>
                     <p class="hint">One per language, translation, abridgement or narration.
                        Leave the identifier blank to skip a row.</p>
-                    %s
+                    {expressions}
                   </fieldset>
                   <button type="submit">Save</button>
                 </form>
-                %s
-                """.formatted(
-                Html.escape(heading),
-                Html.datalist(VariantForms.AGENT_LIST, agents.suggestions()),
-                Html.escape(id.isEmpty() ? "new" : id),
-                work == null
-                        ? Html.textField("id", "Identifier (slug)", "")
-                        : readOnly("Identifier", id) + hidden("id", id),
-                Html.textField(
-                        "title.main", "Title", work == null ? "" : work.title().main()),
-                Html.textField(
-                        "title.subtitle",
-                        "Subtitle",
-                        work != null && work.title() instanceof Title.Subtitled(var ignored, String subtitle)
-                                ? subtitle
-                                : ""),
-                VariantForms.workForm("form", "Form", work == null ? WorkForm.NOVEL : work.form()),
-                VariantForms.date("created", "Created", work == null ? BibliographicDate.UNKNOWN : work.created()),
-                Html.textField("subjects", "Subjects (comma separated)", subjects),
-                VariantForms.contributions("creators", "Creators", work == null ? List.of() : work.creators(), agents),
-                expressions,
-                deleteButton));
+                {delete}
+                """)
+                        .with("heading", heading)
+                        .withMarkup("agentList", Html.datalist(VariantForms.AGENT_LIST, agents.suggestions()))
+                        .with("action", id.isEmpty() ? "new" : id)
+                        .withMarkup(
+                                "id",
+                                work == null
+                                        ? Html.textField("id", "Identifier (slug)", "")
+                                        : readOnly("Identifier", id) + hidden("id", id))
+                        .withMarkup(
+                                "title",
+                                Html.textField(
+                                        "title.main",
+                                        "Title",
+                                        work == null ? "" : work.title().main()))
+                        .withMarkup(
+                                "subtitle",
+                                Html.textField(
+                                        "title.subtitle",
+                                        "Subtitle",
+                                        work != null
+                                                        && work.title()
+                                                                instanceof Title.Subtitled(var ignored, String subtitle)
+                                                ? subtitle
+                                                : ""))
+                        .withMarkup(
+                                "form",
+                                VariantForms.workForm("form", "Form", work == null ? WorkForm.NOVEL : work.form()))
+                        .withMarkup(
+                                "created",
+                                VariantForms.date(
+                                        "created",
+                                        "Created",
+                                        work == null ? BibliographicDate.UNKNOWN : work.created()))
+                        .withMarkup("subjects", Html.textField("subjects", "Subjects (comma separated)", subjects))
+                        .withMarkup(
+                                "creators",
+                                VariantForms.contributions(
+                                        "creators", "Creators", work == null ? List.of() : work.creators(), agents))
+                        .withMarkup("expressions", expressions.toString())
+                        .withMarkup("delete", deleteButton)
+                        .render());
     }
 
     private String expressionFields(int index, Expression expression, AgentDirectory agents) {

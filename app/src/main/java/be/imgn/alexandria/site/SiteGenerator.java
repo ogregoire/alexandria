@@ -33,6 +33,7 @@ import be.imgn.alexandria.domain.shared.TitleFormat;
 import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.infrastructure.Escape;
+import be.imgn.alexandria.infrastructure.Template;
 import be.imgn.alexandria.infrastructure.VariantNames;
 
 /**
@@ -163,20 +164,22 @@ public final class SiteGenerator {
                 .distinct()
                 .collect(Collectors.joining(", "));
 
-        return new Row(filing(edition.title().main()), """
-                <li class="entry" data-id="edition:%s">
-                  <a class="title" href="editions/%s.html">%s</a>
-                  <p class="meta">%s · %s</p>
-                  <p class="holdings">%s%s</p>
-                </li>
-                """.formatted(
-                        Escape.html(edition.id().value()),
-                        Escape.html(edition.id().value()),
-                        Escape.html(titleOf(edition)),
-                        byline.isEmpty() ? "Anonymous" : Escape.html(byline),
-                        Escape.html(edition.imprint(agents)),
-                        original.isEmpty() ? "" : Escape.html(original) + " · ",
-                        Escape.html(copiesSummary(edition))));
+        return new Row(
+                filing(edition.title().main()),
+                Template.of("""
+                        <li class="entry" data-id="edition:{id}">
+                          <a class="title" href="editions/{id}.html">{title}</a>
+                          <p class="meta">{byline} · {imprint}</p>
+                          <p class="holdings">{original}{copies}</p>
+                        </li>
+                        """)
+                        .with("id", edition.id().value())
+                        .with("title", titleOf(edition))
+                        .with("byline", byline.isEmpty() ? "Anonymous" : byline)
+                        .with("imprint", edition.imprint(agents))
+                        .withMarkup("original", original.isEmpty() ? "" : Escape.html(original) + " · ")
+                        .with("copies", copiesSummary(edition))
+                        .render());
     }
 
     /** The works an edition embodies — several, when it is an omnibus. */
@@ -540,28 +543,35 @@ public final class SiteGenerator {
             return "<p class=\"none\">No edition held.</p>";
         }
         return editions.stream()
-                .map(edition -> """
-                <div class="edition">
-                  <p class="edition-title"><a href="../editions/%s.html">%s</a></p>
-                  <p class="imprint">%s%s</p>
-                  %s
-                  %s
-                </div>
-                """.formatted(
-                        Escape.html(edition.id().value()),
+                .map(edition -> Template.of("""
+                        <div class="edition">
+                          <p class="edition-title"><a href="../editions/{id}.html">{title}</a></p>
+                          <p class="imprint">{imprint}{identifier}</p>
+                          {series}
+                          {copies}
+                        </div>
+                        """)
+                        .with("id", edition.id().value())
                         // The edition's own title, which is the one fact about it the work page
                         // could not otherwise show: a translation is usually sold under a name
                         // the work never had, and naming the link after the imprint hid it.
-                        Escape.html(titleOf(edition)),
-                        Escape.html(edition.imprint(agents)),
-                        edition.identifier().display().isEmpty()
-                                ? ""
-                                : " · " + Escape.html(edition.identifier().display()),
-                        edition.series().display().isEmpty()
-                                ? ""
-                                : "<p class=\"series\">"
-                                        + Escape.html(edition.series().display()) + "</p>",
-                        copiesOf(edition)))
+                        .with("title", titleOf(edition))
+                        .with("imprint", edition.imprint(agents))
+                        .withMarkup(
+                                "identifier",
+                                edition.identifier().display().isEmpty()
+                                        ? ""
+                                        : " · "
+                                                + Escape.html(
+                                                        edition.identifier().display()))
+                        .withMarkup(
+                                "series",
+                                edition.series().display().isEmpty()
+                                        ? ""
+                                        : "<p class=\"series\">"
+                                                + Escape.html(edition.series().display()) + "</p>")
+                        .withMarkup("copies", copiesOf(edition))
+                        .render())
                 .collect(Collectors.joining());
     }
 
@@ -745,41 +755,39 @@ public final class SiteGenerator {
      *     record keeps the {@code h1} — headings stay in order either way.
      */
     private String shell(String title, String root, String body, boolean wordmarkLeads) {
-        return """
+        String wordmark = wordmarkLeads ? "h1" : "p";
+        return Template.of("""
                 <!doctype html>
                 <html lang="en">
                 <head>
                   <meta charset="utf-8">
                   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-                  <title>%s — Alexandria</title>
-                  <link rel="stylesheet" href="%s/catalog.css">
+                  <title>{title} — Alexandria</title>
+                  <link rel="stylesheet" href="{root}/catalog.css">
                   <!-- In the head and not deferred: the script's first line marks the document
                        so the stylesheet can hide the list before it is ever painted. -->
-                  <script src="%s/catalog.js"></script>
+                  <script src="{root}/catalog.js"></script>
                 </head>
                 <body>
                   <header class="mast">
-                    <%s class="mast-name"><a href="%s/index.html">Alexandria</a></%s>
+                    <{wordmark} class="mast-name"><a href="{root}/index.html">Alexandria</a></{wordmark}>
                     <hr class="mast-rule" aria-hidden="true">
                   </header>
                   <main>
-                %s
+                {body}
                   </main>
                   <footer class="colophon">
                     <p>A personal catalogue after IFLA-LRM, kept as JSON and rendered without a
-                       database. <a href="%s/statistics.html">What is in it</a>.</p>
+                       database. <a href="{root}/statistics.html">What is in it</a>.</p>
                   </footer>
                 </body>
                 </html>
-                """.formatted(
-                        Escape.html(title),
-                        root,
-                        root,
-                        wordmarkLeads ? "h1" : "p",
-                        root,
-                        wordmarkLeads ? "h1" : "p",
-                        body,
-                        root);
+                """)
+                .with("title", title)
+                .withMarkup("root", root)
+                .withMarkup("wordmark", wordmark)
+                .withMarkup("body", body)
+                .render();
     }
 
     private String holdingsSummary(Work work) {

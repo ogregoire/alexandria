@@ -20,6 +20,7 @@ import be.imgn.alexandria.domain.manifestation.Series;
 import be.imgn.alexandria.domain.shared.BibliographicDate;
 import be.imgn.alexandria.domain.shared.Title;
 import be.imgn.alexandria.domain.work.ExpressionId;
+import be.imgn.alexandria.infrastructure.Template;
 import be.imgn.alexandria.infrastructure.VariantNames;
 
 /** Browsing and editing the Manifestation aggregate — the edition level. */
@@ -81,117 +82,148 @@ final class ManifestationPages {
                 """.formatted(Html.escape(id));
 
         return Html.page(
-                heading, Html.link("/manifestations", "Manifestations") + " / " + Html.escape(heading), """
-                <h1>%s</h1>
-                %s
-                <form method="post" action="/manifestations/%s">
+                heading,
+                Html.link("/manifestations", "Manifestations") + " / " + Html.escape(heading),
+                Template.of("""
+                <h1>{heading}</h1>
+                {agentList}
+                <form method="post" action="/manifestations/{action}">
                   <fieldset><legend>Edition</legend>
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
+                    {id}
+                    {title}
+                    {subtitle}
+                    {publisher}
+                    {publisherKind}
+                    {published}
+                    {carrier}
+                    {identifier}
+                    {extent}
+                    {series}
+                    {seriesNumber}
+                    {edition}
                   </fieldset>
                   <fieldset><legend>Expressions embodied</legend>
                     <p class="hint">More than one for an omnibus or a bilingual edition.</p>
-                    %s
+                    {expressions}
                   </fieldset>
                   <button type="submit">Save</button>
                 </form>
-                %s
-                """.formatted(
-                        Html.escape(heading),
-                        Html.datalist(VariantForms.AGENT_LIST, agents.suggestions()),
-                        Html.escape(id.isEmpty() ? "new" : id),
-                        manifestation == null
-                                ? Html.textField("id", "Identifier (slug)", "")
-                                : WorkPages.readOnly("Identifier", id) + WorkPages.hidden("id", id),
-                        Html.textField(
-                                "title.main",
-                                "Title",
+                {delete}
+                """)
+                        .with("heading", heading)
+                        .withMarkup("agentList", Html.datalist(VariantForms.AGENT_LIST, agents.suggestions()))
+                        .with("action", id.isEmpty() ? "new" : id)
+                        .withMarkup(
+                                "id",
                                 manifestation == null
-                                        ? ""
-                                        : manifestation.title().main()),
-                        Html.textField(
-                                "title.subtitle",
-                                "Subtitle",
-                                manifestation != null
-                                                && manifestation.title()
-                                                        instanceof Title.Subtitled(var ignored, String subtitle)
-                                        ? subtitle
-                                        : ""),
-                        Html.suggestField(
+                                        ? Html.textField("id", "Identifier (slug)", "")
+                                        : WorkPages.readOnly("Identifier", id) + WorkPages.hidden("id", id))
+                        .withMarkup(
+                                "title",
+                                Html.textField(
+                                        "title.main",
+                                        "Title",
+                                        manifestation == null
+                                                ? ""
+                                                : manifestation.title().main()))
+                        .withMarkup(
+                                "subtitle",
+                                Html.textField(
+                                        "title.subtitle",
+                                        "Subtitle",
+                                        manifestation != null
+                                                        && manifestation.title()
+                                                                instanceof Title.Subtitled(var ignored, String subtitle)
+                                                ? subtitle
+                                                : ""))
+                        .withMarkup(
                                 "publisher",
-                                "Publisher",
-                                manifestation == null
-                                        ? ""
-                                        : manifestation
-                                                .publisher()
-                                                .agent()
-                                                .map(agents::nameOf)
-                                                .orElse(""),
-                                VariantForms.AGENT_LIST),
-                        Html.select(
+                                Html.suggestField(
+                                        "publisher",
+                                        "Publisher",
+                                        manifestation == null
+                                                ? ""
+                                                : manifestation
+                                                        .publisher()
+                                                        .agent()
+                                                        .map(agents::nameOf)
+                                                        .orElse(""),
+                                        VariantForms.AGENT_LIST))
+                        .withMarkup(
                                 "publisherKind",
-                                "If new",
-                                VariantForms.agentKinds(),
-                                manifestation == null
-                                        ? "organisation"
-                                        : manifestation
-                                                .publisher()
-                                                .agent()
-                                                .flatMap(agents::find)
-                                                .map(agent -> VariantNames.of(agent.kind()))
-                                                .orElse("organisation")),
-                        VariantForms.date(
+                                Html.select(
+                                        "publisherKind",
+                                        "If new",
+                                        VariantForms.agentKinds(),
+                                        manifestation == null
+                                                ? "organisation"
+                                                : manifestation
+                                                        .publisher()
+                                                        .agent()
+                                                        .flatMap(agents::find)
+                                                        .map(agent -> VariantNames.of(agent.kind()))
+                                                        .orElse("organisation")))
+                        .withMarkup(
                                 "published",
-                                "Published",
-                                manifestation == null ? BibliographicDate.UNKNOWN : manifestation.published()),
-                        VariantForms.carrier(
+                                VariantForms.date(
+                                        "published",
+                                        "Published",
+                                        manifestation == null ? BibliographicDate.UNKNOWN : manifestation.published()))
+                        .withMarkup(
                                 "carrier",
-                                "Carrier",
-                                manifestation == null ? Carrier.PAPERBACK : manifestation.carrier()),
-                        VariantForms.identifier(
+                                VariantForms.carrier(
+                                        "carrier",
+                                        "Carrier",
+                                        manifestation == null ? Carrier.PAPERBACK : manifestation.carrier()))
+                        .withMarkup(
                                 "identifier",
-                                "Identifier",
-                                manifestation == null ? Identifier.NONE : manifestation.identifier()),
-                        VariantForms.extent(
+                                VariantForms.identifier(
+                                        "identifier",
+                                        "Identifier",
+                                        manifestation == null ? Identifier.NONE : manifestation.identifier()))
+                        .withMarkup(
                                 "extent",
-                                "Extent",
-                                manifestation == null ? Extent.UNSPECIFIED : manifestation.extent()),
-                        Html.textField(
-                                "series.name",
-                                "Series",
-                                manifestation == null
-                                        ? ""
-                                        : switch (manifestation.series()) {
-                                            case Series.Standalone() -> "";
-                                            case Series.Unnumbered(String name) -> name;
-                                            case Series.Numbered(String name, var ignored) -> name;
-                                        }),
-                        Html.textField(
-                                "series.number",
-                                "Series number",
-                                manifestation == null
-                                        ? ""
-                                        : manifestation.series()
-                                                        instanceof Series.Numbered(var ignoredName, String number)
-                                                ? number
-                                                : ""),
-                        Html.numberField(
+                                VariantForms.extent(
+                                        "extent",
+                                        "Extent",
+                                        manifestation == null ? Extent.UNSPECIFIED : manifestation.extent()))
+                        .withMarkup(
+                                "series",
+                                Html.textField(
+                                        "series.name",
+                                        "Series",
+                                        manifestation == null
+                                                ? ""
+                                                : switch (manifestation.series()) {
+                                                    case Series.Standalone() -> "";
+                                                    case Series.Unnumbered(String name) -> name;
+                                                    case Series.Numbered(String name, var ignored) -> name;
+                                                }))
+                        .withMarkup(
+                                "seriesNumber",
+                                Html.textField(
+                                        "series.number",
+                                        "Series number",
+                                        manifestation == null
+                                                ? ""
+                                                : manifestation.series()
+                                                                instanceof
+                                                                Series.Numbered(var ignoredName, String number)
+                                                        ? number
+                                                        : ""))
+                        .withMarkup(
                                 "edition",
-                                "Edition number",
-                                manifestation == null
-                                        ? ""
-                                        : manifestation.editionStatement().stored()),
-                        expressionCheckboxes(chosen),
-                        deleteButton));
+                                Html.numberField(
+                                        "edition",
+                                        "Edition number",
+                                        manifestation == null
+                                                ? ""
+                                                : manifestation
+                                                        .editionStatement()
+                                                        .stored()))
+                        .withMarkup("expressions", expressionCheckboxes(chosen))
+                        .withMarkup("delete", deleteButton)
+                        .render());
     }
 
     private String expressionCheckboxes(List<String> chosen) {

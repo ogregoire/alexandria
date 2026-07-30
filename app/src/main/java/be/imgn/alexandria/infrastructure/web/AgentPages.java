@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import be.imgn.alexandria.application.CatalogService;
 import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentId;
+import be.imgn.alexandria.infrastructure.Template;
 import be.imgn.alexandria.infrastructure.VariantNames;
 
 /**
@@ -64,37 +65,51 @@ final class AgentPages {
                 </form>
                 """.formatted(Html.escape(id));
 
-        return Html.page(heading, Html.link("/agents", "Agents") + " / " + Html.escape(heading), """
-                <h1>%s</h1>
-                <form method="post" action="/agents/%s">
+        return Html.page(
+                heading,
+                Html.link("/agents", "Agents") + " / " + Html.escape(heading),
+                Template.of("""
+                <h1>{heading}</h1>
+                <form method="post" action="/agents/{action}">
                   <fieldset><legend>Agent</legend>
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
+                    {id}
+                    {name}
+                    {sortName}
+                    {kind}
+                    {aliases}
                   </fieldset>
                   <button type="submit">Save</button>
                 </form>
-                %s
-                %s
-                """.formatted(
-                Html.escape(heading),
-                Html.escape(id.isEmpty() ? "new" : id),
-                agent == null
-                        ? Html.textField("id", "Identifier (slug, blank to derive from the name)", "")
-                        : WorkPages.readOnly("Identifier", id) + WorkPages.hidden("id", id),
-                Html.textField("name", "Name", agent == null ? "" : agent.name()),
-                Html.textField("sortName", "Files under", agent == null ? "" : agent.sortName()),
-                Html.select(
-                        "kind",
-                        "Kind",
-                        VariantForms.agentKinds(),
-                        agent == null ? "person" : VariantNames.of(agent.kind())),
-                Html.textArea(
-                        "aliases", "Aliases, one per line", agent == null ? "" : String.join("\n", agent.aliases())),
-                references,
-                deleteButton));
+                {references}
+                {delete}
+                """)
+                        .with("heading", heading)
+                        .with("action", id.isEmpty() ? "new" : id)
+                        .withMarkup(
+                                "id",
+                                agent == null
+                                        ? Html.textField("id", "Identifier (slug, blank to derive from the name)", "")
+                                        : WorkPages.readOnly("Identifier", id) + WorkPages.hidden("id", id))
+                        .withMarkup("name", Html.textField("name", "Name", agent == null ? "" : agent.name()))
+                        .withMarkup(
+                                "sortName",
+                                Html.textField("sortName", "Files under", agent == null ? "" : agent.sortName()))
+                        .withMarkup(
+                                "kind",
+                                Html.select(
+                                        "kind",
+                                        "Kind",
+                                        VariantForms.agentKinds(),
+                                        agent == null ? "person" : VariantNames.of(agent.kind())))
+                        .withMarkup(
+                                "aliases",
+                                Html.textArea(
+                                        "aliases",
+                                        "Aliases, one per line",
+                                        agent == null ? "" : String.join("\n", agent.aliases())))
+                        .withMarkup("references", references)
+                        .withMarkup("delete", deleteButton)
+                        .render());
     }
 
     /**
