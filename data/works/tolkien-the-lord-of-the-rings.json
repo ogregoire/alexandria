@@ -1,0 +1,55 @@
+{
+  "id" : "tolkien-the-lord-of-the-rings",
+  "title" : {
+    "main" : "The Lord of the Rings"
+  },
+  "creators" : [
+    {
+      "agent" : "tolkien-john-ronald-reuel",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Tolkien, John Ronald Reuel"
+    }
+  ],
+  "form" : {
+    "type" : "novel"
+  },
+  "created" : {
+    "type" : "between",
+    "from" : 1937,
+    "to" : 1949
+  },
+  "subjects" : [ ],
+  "expressions" : [
+    {
+      "id" : "tolkien-the-lord-of-the-rings/lauzon-fr",
+      "kind" : {
+        "type" : "translation",
+        "from" : "en"
+      },
+      "language" : "fr",
+      "contributors" : [
+        {
+          "agent" : "lauzon-daniel",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "Lauzon, Daniel"
+        },
+        {
+          "agent" : "tolkien-john-ronald-reuel",
+          "role" : {
+            "type" : "illustrator"
+          },
+          "publishedAs" : "Tolkien, John Ronald Reuel"
+        }
+      ],
+      "realised" : {
+        "type" : "between",
+        "from" : 2014,
+        "to" : 2016
+      }
+    }
+  ]
+}

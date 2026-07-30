@@ -1,0 +1,18 @@
+{
+  "id" : "lotr-bourgois-2023-illustree-1",
+  "embodiedIn" : "lotr-bourgois-2023-illustree",
+  "acquisition" : {
+    "type" : "gift",
+    "date" : "2025-09-23",
+    "from" : "Émeline"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1",
+    "position" : "1"
+  },
+  "reading" : {
+    "type" : "finished"
+  },
+  "condition" : "AS_NEW"
+}

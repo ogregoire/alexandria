@@ -1,0 +1,25 @@
+{
+  "id" : "lotr-bourgois-2023-illustree",
+  "embodies" : [
+    "tolkien-the-lord-of-the-rings/lauzon-fr"
+  ],
+  "title" : {
+    "main" : "Le Seigneur des anneaux"
+  },
+  "publisher" : "christian-bourgois-editeur",
+  "published" : {
+    "type" : "exact",
+    "date" : "2023-10-19"
+  },
+  "carrier" : {
+    "type" : "hardcover"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782267050356"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 1383
+  }
+}
