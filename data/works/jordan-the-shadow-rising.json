@@ -1,0 +1,49 @@
+{
+  "id" : "jordan-the-shadow-rising",
+  "title" : {
+    "main" : "The Shadow Rising"
+  },
+  "creators" : [
+    {
+      "agent" : "robert-jordan",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Robert Jordan"
+    }
+  ],
+  "form" : {
+    "type" : "novel"
+  },
+  "created" : {
+    "type" : "year",
+    "value" : 1992
+  },
+  "subjects" : [
+    "fantasy",
+    "the Wheel of Time"
+  ],
+  "expressions" : [
+    {
+      "id" : "jordan-the-shadow-rising/malle-fr",
+      "kind" : {
+        "type" : "translation",
+        "from" : "en"
+      },
+      "language" : "fr",
+      "contributors" : [
+        {
+          "agent" : "jean-claude-malle",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "Jean-Claude Mallé"
+        }
+      ],
+      "realised" : {
+        "type" : "year",
+        "value" : 2012
+      }
+    }
+  ]
+}

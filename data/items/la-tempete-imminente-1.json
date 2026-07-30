@@ -1,0 +1,15 @@
+{
+  "id" : "la-tempete-imminente-1",
+  "embodiedIn" : "la-tempete-imminente-bragelonne-2021",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

@@ -1,0 +1,29 @@
+{
+  "id" : "le-dragon-reincarne-bragelonne-2012",
+  "embodies" : [
+    "jordan-the-dragon-reborn/malle-fr"
+  ],
+  "title" : {
+    "main" : "Le Dragon réincarné"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2012
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782352945864"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 860
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "3"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id" : "le-poignard-des-reves-bragelonne-2021",
+  "embodies" : [
+    "jordan-knife-of-dreams/malle-fr"
+  ],
+  "title" : {
+    "main" : "Le Poignard des rêves"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2021
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9791028119393"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 909
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "11"
+  }
+}

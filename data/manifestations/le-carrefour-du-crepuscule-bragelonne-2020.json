@@ -1,0 +1,29 @@
+{
+  "id" : "le-carrefour-du-crepuscule-bragelonne-2020",
+  "embodies" : [
+    "jordan-crossroads-of-twilight/malle-fr"
+  ],
+  "title" : {
+    "main" : "Le Carrefour du crépuscule"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2020
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9791028107192"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 740
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "10"
+  }
+}

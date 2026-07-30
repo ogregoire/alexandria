@@ -1,0 +1,29 @@
+{
+  "id" : "le-coeur-de-l-hiver-bragelonne-2018",
+  "embodies" : [
+    "jordan-winter-s-heart/malle-fr"
+  ],
+  "title" : {
+    "main" : "Le Cœur de l'hiver"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2018
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9791028105617"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 664
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "9"
+  }
+}

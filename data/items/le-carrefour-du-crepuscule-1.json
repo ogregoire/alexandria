@@ -1,0 +1,15 @@
+{
+  "id" : "le-carrefour-du-crepuscule-1",
+  "embodiedIn" : "le-carrefour-du-crepuscule-bragelonne-2020",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

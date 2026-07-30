@@ -1,0 +1,49 @@
+{
+  "id" : "jordan-lord-of-chaos",
+  "title" : {
+    "main" : "Lord of Chaos"
+  },
+  "creators" : [
+    {
+      "agent" : "robert-jordan",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Robert Jordan"
+    }
+  ],
+  "form" : {
+    "type" : "novel"
+  },
+  "created" : {
+    "type" : "year",
+    "value" : 1994
+  },
+  "subjects" : [
+    "fantasy",
+    "the Wheel of Time"
+  ],
+  "expressions" : [
+    {
+      "id" : "jordan-lord-of-chaos/malle-fr",
+      "kind" : {
+        "type" : "translation",
+        "from" : "en"
+      },
+      "language" : "fr",
+      "contributors" : [
+        {
+          "agent" : "jean-claude-malle",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "Jean-Claude Mallé"
+        }
+      ],
+      "realised" : {
+        "type" : "year",
+        "value" : 2014
+      }
+    }
+  ]
+}

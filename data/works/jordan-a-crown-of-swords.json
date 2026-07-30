@@ -1,0 +1,49 @@
+{
+  "id" : "jordan-a-crown-of-swords",
+  "title" : {
+    "main" : "A Crown of Swords"
+  },
+  "creators" : [
+    {
+      "agent" : "robert-jordan",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Robert Jordan"
+    }
+  ],
+  "form" : {
+    "type" : "novel"
+  },
+  "created" : {
+    "type" : "year",
+    "value" : 1996
+  },
+  "subjects" : [
+    "fantasy",
+    "the Wheel of Time"
+  ],
+  "expressions" : [
+    {
+      "id" : "jordan-a-crown-of-swords/malle-fr",
+      "kind" : {
+        "type" : "translation",
+        "from" : "en"
+      },
+      "language" : "fr",
+      "contributors" : [
+        {
+          "agent" : "jean-claude-malle",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "Jean-Claude Mallé"
+        }
+      ],
+      "realised" : {
+        "type" : "year",
+        "value" : 2015
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id" : "le-chemin-des-dagues-1",
+  "embodiedIn" : "le-chemin-des-dagues-bragelonne-2016",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

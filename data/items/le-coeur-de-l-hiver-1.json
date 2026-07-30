@@ -1,0 +1,15 @@
+{
+  "id" : "le-coeur-de-l-hiver-1",
+  "embodiedIn" : "le-coeur-de-l-hiver-bragelonne-2018",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

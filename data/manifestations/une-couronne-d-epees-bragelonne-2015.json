@@ -1,0 +1,29 @@
+{
+  "id" : "une-couronne-d-epees-bragelonne-2015",
+  "embodies" : [
+    "jordan-a-crown-of-swords/malle-fr"
+  ],
+  "title" : {
+    "main" : "Une couronne d'épées"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2015
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782352948797"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 779
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "7"
+  }
+}

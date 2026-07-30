@@ -1,0 +1,15 @@
+{
+  "id" : "le-poignard-des-reves-1",
+  "embodiedIn" : "le-poignard-des-reves-bragelonne-2021",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

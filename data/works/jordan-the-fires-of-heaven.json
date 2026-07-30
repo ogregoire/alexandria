@@ -1,0 +1,49 @@
+{
+  "id" : "jordan-the-fires-of-heaven",
+  "title" : {
+    "main" : "The Fires of Heaven"
+  },
+  "creators" : [
+    {
+      "agent" : "robert-jordan",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Robert Jordan"
+    }
+  ],
+  "form" : {
+    "type" : "novel"
+  },
+  "created" : {
+    "type" : "year",
+    "value" : 1993
+  },
+  "subjects" : [
+    "fantasy",
+    "the Wheel of Time"
+  ],
+  "expressions" : [
+    {
+      "id" : "jordan-the-fires-of-heaven/malle-fr",
+      "kind" : {
+        "type" : "translation",
+        "from" : "en"
+      },
+      "language" : "fr",
+      "contributors" : [
+        {
+          "agent" : "jean-claude-malle",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "Jean-Claude Mallé"
+        }
+      ],
+      "realised" : {
+        "type" : "year",
+        "value" : 2013
+      }
+    }
+  ]
+}

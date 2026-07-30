@@ -1,0 +1,29 @@
+{
+  "id" : "les-feux-du-ciel-bragelonne-2013",
+  "embodies" : [
+    "jordan-the-fires-of-heaven/malle-fr"
+  ],
+  "title" : {
+    "main" : "Les Feux du ciel"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2013
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782352946649"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 884
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "5"
+  }
+}

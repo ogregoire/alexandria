@@ -1,0 +1,15 @@
+{
+  "id" : "les-feux-du-ciel-1",
+  "embodiedIn" : "les-feux-du-ciel-bragelonne-2013",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

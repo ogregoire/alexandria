@@ -1,0 +1,29 @@
+{
+  "id" : "le-chemin-des-dagues-bragelonne-2016",
+  "embodies" : [
+    "jordan-the-path-of-daggers/malle-fr"
+  ],
+  "title" : {
+    "main" : "Le Chemin des dagues"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2016
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9791028100551"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 636
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "8"
+  }
+}

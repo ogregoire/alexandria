@@ -1,0 +1,15 @@
+{
+  "id" : "le-dragon-reincarne-1",
+  "embodiedIn" : "le-dragon-reincarne-bragelonne-2012",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

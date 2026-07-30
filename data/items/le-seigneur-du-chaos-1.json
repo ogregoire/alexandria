@@ -1,0 +1,15 @@
+{
+  "id" : "le-seigneur-du-chaos-1",
+  "embodiedIn" : "le-seigneur-du-chaos-bragelonne-2014",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

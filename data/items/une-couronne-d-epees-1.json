@@ -1,0 +1,15 @@
+{
+  "id" : "une-couronne-d-epees-1",
+  "embodiedIn" : "une-couronne-d-epees-bragelonne-2015",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

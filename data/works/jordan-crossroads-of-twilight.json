@@ -1,0 +1,49 @@
+{
+  "id" : "jordan-crossroads-of-twilight",
+  "title" : {
+    "main" : "Crossroads of Twilight"
+  },
+  "creators" : [
+    {
+      "agent" : "robert-jordan",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Robert Jordan"
+    }
+  ],
+  "form" : {
+    "type" : "novel"
+  },
+  "created" : {
+    "type" : "year",
+    "value" : 2003
+  },
+  "subjects" : [
+    "fantasy",
+    "the Wheel of Time"
+  ],
+  "expressions" : [
+    {
+      "id" : "jordan-crossroads-of-twilight/malle-fr",
+      "kind" : {
+        "type" : "translation",
+        "from" : "en"
+      },
+      "language" : "fr",
+      "contributors" : [
+        {
+          "agent" : "jean-claude-malle",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "Jean-Claude Mallé"
+        }
+      ],
+      "realised" : {
+        "type" : "year",
+        "value" : 2020
+      }
+    }
+  ]
+}

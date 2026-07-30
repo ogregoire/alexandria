@@ -1,0 +1,29 @@
+{
+  "id" : "la-tempete-imminente-bragelonne-2021",
+  "embodies" : [
+    "jordan-the-gathering-storm/malle-fr"
+  ],
+  "title" : {
+    "main" : "La Tempête imminente"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2021
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9791028118327"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 883
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "12"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id" : "la-grande-quete-bragelonne-2012",
+  "embodies" : [
+    "jordan-the-great-hunt/malle-fr"
+  ],
+  "title" : {
+    "main" : "La Grande Quête"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2012
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782352945574"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 862
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "2"
+  }
+}

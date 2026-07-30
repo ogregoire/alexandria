@@ -1,0 +1,15 @@
+{
+  "id" : "un-lever-de-tenebres-1",
+  "embodiedIn" : "un-lever-de-tenebres-bragelonne-2012",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

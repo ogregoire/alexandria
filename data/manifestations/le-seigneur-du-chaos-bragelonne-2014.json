@@ -1,0 +1,29 @@
+{
+  "id" : "le-seigneur-du-chaos-bragelonne-2014",
+  "embodies" : [
+    "jordan-lord-of-chaos/malle-fr"
+  ],
+  "title" : {
+    "main" : "Le Seigneur du chaos"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2014
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782352947844"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 1006
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "6"
+  }
+}

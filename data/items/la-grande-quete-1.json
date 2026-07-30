@@ -1,0 +1,15 @@
+{
+  "id" : "la-grande-quete-1",
+  "embodiedIn" : "la-grande-quete-bragelonne-2012",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

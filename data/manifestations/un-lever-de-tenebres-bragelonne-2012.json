@@ -1,0 +1,29 @@
+{
+  "id" : "un-lever-de-tenebres-bragelonne-2012",
+  "embodies" : [
+    "jordan-the-shadow-rising/malle-fr"
+  ],
+  "title" : {
+    "main" : "Un lever de ténèbres"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2012
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782352946090"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 982
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "4"
+  }
+}
