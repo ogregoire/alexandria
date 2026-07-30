@@ -320,7 +320,7 @@ final class ImportPages {
 
         Optional<WorkId> workId = problems.read("id", () -> WorkId.of(form.required("id")));
         Optional<Title> workTitle = problems.read(
-                "title.main", () -> new Title(form.required("title.main"), form.optional("title.subtitle")));
+                "title.main", () -> Title.of(form.required("title.main"), form.orEmpty("title.subtitle")));
         var created = problems.read("created.type", () -> VariantForms.readDate(form, "created"));
         var workForm = problems.read("form.type", () -> VariantForms.readWorkForm(form, "form"));
         var creators = problems.read("creators", () -> VariantForms.readContributions(form, "creators", agents));
@@ -359,7 +359,7 @@ final class ImportPages {
                                         edition.optional("publisherKind").orElse("organisation")))));
         Optional<Series> series = edition.optional("series.name")
                 .flatMap(name -> problems.read(
-                        "manifestation.series.name", () -> new Series(name, edition.optional("series.number"))));
+                        "manifestation.series.name", () -> Series.of(name, edition.orEmpty("series.number"))));
 
         if (problems.any()
                 || workId.isEmpty()
@@ -401,10 +401,10 @@ final class ImportPages {
                 () -> new Manifestation(
                         editionId.get(),
                         List.of(expressionId),
-                        new Title(
+                        Title.of(
                                 edition.optional("title.main")
                                         .orElse(workTitle.map(Title::main).orElse("Untitled")),
-                                edition.optional("title.subtitle")),
+                                edition.orEmpty("title.subtitle")),
                         publisher,
                         published.get(),
                         carrier.get(),

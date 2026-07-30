@@ -109,7 +109,9 @@ final class WorkPages {
                 Html.textField(
                         "title.subtitle",
                         "Subtitle",
-                        work == null ? "" : work.title().subtitle().orElse("")),
+                        work != null && work.title() instanceof Title.Subtitled(var ignored, String subtitle)
+                                ? subtitle
+                                : ""),
                 VariantForms.workForm("form", "Form", work == null ? WorkForm.NOVEL : work.form()),
                 VariantForms.date("created", "Created", work == null ? BibliographicDate.UNKNOWN : work.created()),
                 Html.textField("subjects", "Subjects (comma separated)", subjects),
@@ -181,7 +183,7 @@ final class WorkPages {
 
         return new Work(
                 id,
-                new Title(form.required("title.main"), form.optional("title.subtitle")),
+                Title.of(form.required("title.main"), form.orEmpty("title.subtitle")),
                 VariantForms.readContributions(form, "creators", agents),
                 VariantForms.readWorkForm(form, "form"),
                 VariantForms.readDate(form, "created"),

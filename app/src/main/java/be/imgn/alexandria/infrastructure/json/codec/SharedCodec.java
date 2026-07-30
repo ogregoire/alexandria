@@ -25,11 +25,18 @@ final class SharedCodec {
     // -------------------------------------------------------------------- title
 
     static void title(JsonOut out, Title title) {
-        out.text("main", title.main()).text("subtitle", title.subtitle());
+        switch (title) {
+            case Title.Plain(String main) -> out.text("main", main);
+            case Title.Subtitled(String main, String subtitle) ->
+                out.text("main", main).text("subtitle", subtitle);
+        }
     }
 
     static Title title(JsonIn in) {
-        return new Title(in.text("main"), in.optionalText("subtitle"));
+        String main = in.text("main");
+        return in.optionalText("subtitle")
+                .<Title>map(subtitle -> new Title.Subtitled(main, subtitle))
+                .orElseGet(() -> new Title.Plain(main));
     }
 
     // --------------------------------------------------------------------- date

@@ -29,6 +29,7 @@ import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.shared.Contribution;
 import be.imgn.alexandria.domain.shared.Role;
+import be.imgn.alexandria.domain.shared.TitleFormat;
 import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.infrastructure.Escape;
@@ -128,6 +129,23 @@ public final class SiteGenerator {
                 """.formatted(rows), true);
     }
 
+    /**
+     * An edition's title, punctuated for the language it was printed in — French holds a space before the colon that
+     * separates a subtitle, English closes it up. The language is the one the expression it embodies is in.
+     *
+     * <p>A work's title gets the cataloguing form instead: nothing in the model records what language a work is in, and
+     * guessing would be worse than the neutral punctuation the standard prescribes for exactly this reason.
+     */
+    private String titleOf(Manifestation edition) {
+        Locale locale = edition.embodies().stream()
+                .map(reference -> catalog.work(reference.work()).flatMap(work -> work.expression(reference)))
+                .flatMap(Optional::stream)
+                .findFirst()
+                .map(expression -> Locale.forLanguageTag(expression.language().code()))
+                .orElse(Locale.ROOT);
+        return TitleFormat.display(edition.title(), locale);
+    }
+
     /** One line of the index, carrying the key it files under. */
     private record Row(String filing, String html) {}
 
@@ -140,8 +158,8 @@ public final class SiteGenerator {
         List<Work> behind = worksBehind(edition);
         String byline = behind.stream().map(Work::byline).distinct().collect(Collectors.joining(", "));
         String original = behind.stream()
-                .map(work -> work.title().full())
-                .filter(title -> !title.equals(edition.title().full()))
+                .map(work -> TitleFormat.isbd(work.title()))
+                .filter(title -> !title.equals(titleOf(edition)))
                 .distinct()
                 .collect(Collectors.joining(", "));
 
@@ -154,7 +172,7 @@ public final class SiteGenerator {
                 """.formatted(
                         Escape.html(edition.id().value()),
                         Escape.html(edition.id().value()),
-                        Escape.html(edition.title().full()),
+                        Escape.html(titleOf(edition)),
                         byline.isEmpty() ? "Anonymous" : Escape.html(byline),
                         Escape.html(edition.imprint(agents)),
                         original.isEmpty() ? "" : Escape.html(original) + " · ",
@@ -336,7 +354,7 @@ public final class SiteGenerator {
                                 </li>
                                 """.formatted(
                                         Escape.html(work.id().value()),
-                                        Escape.html(work.title().full()),
+                                        Escape.html(TitleFormat.isbd(work.title())),
                                         Escape.html(expression.describe()))))
                         .orElse(""))
                 .collect(Collectors.joining());
@@ -386,7 +404,7 @@ public final class SiteGenerator {
                   %s
                 </section>
                 """.formatted(
-                        Escape.html(edition.title().full()),
+                        Escape.html(titleOf(edition)),
                         byline.isEmpty() ? "Anonymous" : byline,
                         facts,
                         edition.embodies().size() == 1 ? "What it is" : "What it collects",
@@ -429,7 +447,7 @@ public final class SiteGenerator {
                 %s
                 %s
                 """.formatted(
-                        Escape.html(work.title().full()),
+                        Escape.html(TitleFormat.isbd(work.title())),
                         bylineLinks(work),
                         Escape.html(work.created().display()),
                         Escape.html(work.form().label()),
@@ -454,7 +472,7 @@ public final class SiteGenerator {
                               <span class="detail">%s · %s</span></li>
                             """.formatted(
                                     Escape.html(credit.work().id().value()),
-                                    Escape.html(credit.work().title().full()),
+                                    Escape.html(TitleFormat.isbd(credit.work().title())),
                                     Escape.html(credit.role().label()
                                             + credit.realisation()
                                                     .map(language -> " · " + language)
@@ -484,7 +502,7 @@ public final class SiteGenerator {
                     <li><a href="../editions/%s.html">%s</a> <span class="detail">%s</span></li>
                     """.formatted(
                                     Escape.html(edition.id().value()),
-                                    Escape.html(edition.title().full()),
+                                    Escape.html(titleOf(edition)),
                                     Escape.html(edition.imprint(agents))))
                     .collect(Collectors.joining());
             sections.append("""
@@ -529,7 +547,7 @@ public final class SiteGenerator {
                         // The edition's own title, which is the one fact about it the work page
                         // could not otherwise show: a translation is usually sold under a name
                         // the work never had, and naming the link after the imprint hid it.
-                        Escape.html(edition.title().full()),
+                        Escape.html(titleOf(edition)),
                         Escape.html(edition.imprint(agents)),
                         edition.identifier().display().isEmpty()
                                 ? ""
@@ -583,7 +601,7 @@ public final class SiteGenerator {
         String editionEntries = catalog.manifestations().stream()
                 .map(edition -> {
                     Set<String> terms = new LinkedHashSet<>();
-                    terms.add(edition.title().full());
+                    terms.add(titleOf(edition));
                     edition.publisher().ifPresent(publisher -> addAgent(terms, publisher));
                     edition.series().ifPresent(s -> terms.add(s.display()));
                     terms.add(edition.identifier().display());
@@ -591,7 +609,7 @@ public final class SiteGenerator {
                     terms.add(edition.published().display());
                     for (var reference : edition.embodies()) {
                         catalog.work(reference.work()).ifPresent(work -> {
-                            terms.add(work.title().full());
+                            terms.add(TitleFormat.isbd(work.title()));
                             terms.add(work.byline());
                             terms.add(work.form().label());
                             terms.add(work.created().display());
@@ -610,15 +628,15 @@ public final class SiteGenerator {
                     });
                     return """
                     {"id":%s,"title":%s,"text":%s}""".formatted(
-                            json("edition:" + edition.id().value()),
-                            // The work's title counts as a heading match too: someone searching
-                            // "The Eye of the World" means this book, whatever the cover calls it.
-                            json((edition.title().full() + " "
-                                            + worksBehind(edition).stream()
-                                                    .map(work -> work.title().full())
-                                                    .collect(Collectors.joining(" ")))
-                                    .toLowerCase(Locale.ROOT)),
-                            json(String.join(" ", terms).toLowerCase(Locale.ROOT)));
+                                    json("edition:" + edition.id().value()),
+                                    // The work's title counts as a heading match too: someone searching
+                                    // "The Eye of the World" means this book, whatever the cover calls it.
+                                    json((titleOf(edition) + " "
+                                                    + worksBehind(edition).stream()
+                                                            .map(work -> TitleFormat.isbd(work.title()))
+                                                            .collect(Collectors.joining(" ")))
+                                            .toLowerCase(Locale.ROOT)),
+                                    json(String.join(" ", terms).toLowerCase(Locale.ROOT)));
                 })
                 .collect(Collectors.joining(",\n  "));
 
@@ -632,12 +650,11 @@ public final class SiteGenerator {
                     terms.add(standingOf(agent));
                     // The titles they are credited on, so "who translated the Ring" reaches the person too.
                     catalog.creditsOf(agent.id()).forEach(credit -> {
-                        terms.add(credit.work().title().full());
+                        terms.add(TitleFormat.isbd(credit.work().title()));
                         terms.add(credit.publishedAs());
                         credit.realisation().ifPresent(terms::add);
                     });
-                    catalog.publishedBy(agent.id())
-                            .forEach(edition -> terms.add(edition.title().full()));
+                    catalog.publishedBy(agent.id()).forEach(edition -> terms.add(titleOf(edition)));
                     return """
                     {"id":%s,"title":%s,"text":%s}""".formatted(
                                     json("agent:" + agent.id().value()),

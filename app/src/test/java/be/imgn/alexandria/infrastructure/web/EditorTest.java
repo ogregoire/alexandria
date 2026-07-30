@@ -29,6 +29,7 @@ import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.item.Location;
 import be.imgn.alexandria.domain.item.ReadingProgress;
+import be.imgn.alexandria.domain.shared.TitleFormat;
 import be.imgn.alexandria.domain.work.WorkId;
 import be.imgn.alexandria.infrastructure.json.JsonCatalog;
 
@@ -83,7 +84,7 @@ class EditorTest {
         assertThat(response.statusCode()).isEqualTo(303);
         var agents = catalog.directory();
         var saved = catalog.work(WorkId.of("tolkien-the-hobbit")).orElseThrow();
-        assertThat(saved.title().full()).isEqualTo("The Hobbit : There and Back Again");
+        assertThat(TitleFormat.isbd(saved.title())).isEqualTo("The Hobbit : There and Back Again");
         assertThat(saved.byline()).isEqualTo("J. R. R. Tolkien");
         assertThat(saved.subjects()).containsExactly("fantasy", "quests");
         assertThat(saved.expressions())

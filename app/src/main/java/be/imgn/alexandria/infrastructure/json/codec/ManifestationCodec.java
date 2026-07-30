@@ -140,11 +140,18 @@ public final class ManifestationCodec {
     // ------------------------------------------------------------------- series
 
     private static void series(JsonOut out, Series series) {
-        out.text("name", series.name()).text("number", series.number());
+        switch (series) {
+            case Series.Unnumbered(String name) -> out.text("name", name);
+            case Series.Numbered(String name, String number) ->
+                out.text("name", name).text("number", number);
+        }
     }
 
     private static Series series(JsonIn in) {
-        return new Series(in.text("name"), in.optionalText("number"));
+        String name = in.text("name");
+        return in.optionalText("number")
+                .<Series>map(number -> new Series.Numbered(name, number))
+                .orElseGet(() -> new Series.Unnumbered(name));
     }
 
     static Optional<Series> maybeSeries(JsonIn in) {
