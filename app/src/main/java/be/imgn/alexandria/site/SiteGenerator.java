@@ -519,12 +519,17 @@ public final class SiteGenerator {
         return editions.stream()
                 .map(edition -> """
                 <div class="edition">
-                  <p class="imprint"><a href="../editions/%s.html">%s</a>%s</p>
+                  <p class="edition-title"><a href="../editions/%s.html">%s</a></p>
+                  <p class="imprint">%s%s</p>
                   %s
                   %s
                 </div>
                 """.formatted(
                         Escape.html(edition.id().value()),
+                        // The edition's own title, which is the one fact about it the work page
+                        // could not otherwise show: a translation is usually sold under a name
+                        // the work never had, and naming the link after the imprint hid it.
+                        Escape.html(edition.title().full()),
                         Escape.html(edition.imprint(agents)),
                         edition.identifier().display().isEmpty()
                                 ? ""

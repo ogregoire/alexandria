@@ -17,7 +17,9 @@ import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.item.Location;
 import be.imgn.alexandria.domain.item.ReadingProgress;
+import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.shared.Title;
 import be.imgn.alexandria.infrastructure.json.JsonCatalog;
 
 class SiteGeneratorTest {
@@ -116,6 +118,32 @@ class SiteGeneratorTest {
         assertThat(Files.readString(output.resolve("works/cervantes-don-quixote.html")))
                 .as("a reader looking at a book is not told how many books there are")
                 .doesNotContain("expressions ·");
+    }
+
+    @Test
+    void namesTheEditionOnTheWorkPageWhenItWasSoldUnderAnotherTitle(@TempDir Path root, @TempDir Path output)
+            throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+        Manifestation original = CatalogFixture.manifestation();
+        catalog.save(new Manifestation(
+                original.id(),
+                original.embodies(),
+                Title.of("El Ingenioso Hidalgo"),
+                original.publisher(),
+                original.published(),
+                original.carrier(),
+                original.identifier(),
+                original.extent(),
+                original.series(),
+                original.editionStatement()));
+
+        new SiteGenerator(catalog).generateInto(output);
+
+        assertThat(Files.readString(output.resolve("works/cervantes-don-quixote.html")))
+                .as("the name it was sold under is the one fact about an edition the work page cannot otherwise show")
+                .contains("El Ingenioso Hidalgo")
+                .as("and the imprint stays, as the detail beneath it")
+                .contains("Ecco, 2003. hardcover, 940 pp.");
     }
 
     @Test
