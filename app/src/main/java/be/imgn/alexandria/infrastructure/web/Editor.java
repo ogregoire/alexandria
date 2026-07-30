@@ -20,6 +20,7 @@ import be.imgn.alexandria.application.Reports;
 import be.imgn.alexandria.application.lookup.BookLookup;
 import be.imgn.alexandria.domain.agent.AgentId;
 import be.imgn.alexandria.domain.agent.AgentResolution;
+import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.manifestation.Identifier;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
@@ -80,6 +81,22 @@ public final class Editor {
         }
     }
 
+    /**
+     * Saving a freshly imported book, whether or not a copy came with it. A clash with something already catalogued
+     * comes back as the same form holding what was typed, not as an error page — the import form's whole promise is
+     * that nothing has to be entered twice.
+     */
+    private Router.Response saving(Router.Request request, ImportPages imports, Work work, Runnable save) {
+        try {
+            save.run();
+            return Router.Response.seeOther("/works/" + work.id().value());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            FormProblems clash = new FormProblems();
+            clash.general(e.getMessage() == null ? e.toString() : e.getMessage());
+            return Router.Response.html(imports.reviewAgain(FormState.submitted(request.body(), clash)));
+        }
+    }
+
     private void routes() {
         router.get("/", request -> Router.Response.html(home()));
 
@@ -103,16 +120,10 @@ public final class Editor {
             AgentResolution resolution = service.newResolution();
             return switch (imports.read(request.body(), resolution)) {
                 case ImportPages.Outcome.Rejected(FormState state) -> Router.Response.html(imports.reviewAgain(state));
-                case ImportPages.Outcome.Book(Work work, Manifestation manifestation, var copy) -> {
-                    try {
-                        service.saveNewBook(work, manifestation, copy, resolution);
-                        yield Router.Response.seeOther("/works/" + work.id().value());
-                    } catch (IllegalArgumentException | IllegalStateException e) {
-                        FormProblems clash = new FormProblems();
-                        clash.general(e.getMessage() == null ? e.toString() : e.getMessage());
-                        yield Router.Response.html(imports.reviewAgain(FormState.submitted(request.body(), clash)));
-                    }
-                }
+                case ImportPages.Outcome.Book(Work work, Manifestation manifestation) ->
+                    saving(request, imports, work, () -> service.saveNewBook(work, manifestation, resolution));
+                case ImportPages.Outcome.HeldBook(Work work, Manifestation manifestation, Item copy) ->
+                    saving(request, imports, work, () -> service.saveNewBook(work, manifestation, copy, resolution));
             };
         });
 

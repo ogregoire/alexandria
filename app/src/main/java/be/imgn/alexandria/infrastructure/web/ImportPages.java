@@ -307,10 +307,14 @@ final class ImportPages {
 
     // ------------------------------------------------------------- reading
 
-    /** Either the four aggregates, or every reason the form cannot become them. */
+    /** Either the aggregates the form became, or every reason it could not. */
     sealed interface Outcome {
 
-        record Book(Work work, Manifestation manifestation, Optional<Item> copy) implements Outcome {}
+        /** The work, the edition embodying it, and no copy: the book is catalogued but not held. */
+        record Book(Work work, Manifestation manifestation) implements Outcome {}
+
+        /** The same, plus the copy on the shelf. */
+        record HeldBook(Work work, Manifestation manifestation, Item copy) implements Outcome {}
 
         record Rejected(FormState state) implements Outcome {}
     }
@@ -435,7 +439,8 @@ final class ImportPages {
         if (problems.any() || work.isEmpty() || manifestation.isEmpty()) {
             return new Outcome.Rejected(FormState.submitted(form, problems));
         }
-        return new Outcome.Book(work.get(), manifestation.get(), copy);
+        return copy.<Outcome>map(held -> new Outcome.HeldBook(work.get(), manifestation.get(), held))
+                .orElseGet(() -> new Outcome.Book(work.get(), manifestation.get()));
     }
 
     // --------------------------------------------------- id suggestions

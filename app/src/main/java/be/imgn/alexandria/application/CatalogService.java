@@ -107,23 +107,33 @@ public final class CatalogService {
      * leaves records that reference only things already on disk. There is no transaction across four files; ordering is
      * what keeps the catalogue readable if the process dies mid-save.
      */
-    public void saveNewBook(Work work, Manifestation manifestation, Optional<Item> copy, AgentResolution resolution) {
+    /** A book catalogued without a copy on the shelf. */
+    public void saveNewBook(Work work, Manifestation manifestation, AgentResolution resolution) {
+        refuseClashes(work, manifestation);
+        register(resolution);
+        catalog.save(work);
+        catalog.save(manifestation);
+    }
+
+    /** The same, and the copy held. */
+    public void saveNewBook(Work work, Manifestation manifestation, Item copy, AgentResolution resolution) {
+        refuseClashes(work, manifestation);
+        if (catalog.item(copy.id()).isPresent()) {
+            throw new IllegalArgumentException("an item with id " + copy.id() + " already exists");
+        }
+        register(resolution);
+        catalog.save(work);
+        catalog.save(manifestation);
+        catalog.save(copy);
+    }
+
+    private void refuseClashes(Work work, Manifestation manifestation) {
         if (catalog.work(work.id()).isPresent()) {
             throw new IllegalArgumentException("a work with id " + work.id() + " already exists");
         }
         if (catalog.manifestation(manifestation.id()).isPresent()) {
             throw new IllegalArgumentException("a manifestation with id " + manifestation.id() + " already exists");
         }
-        copy.ifPresent(item -> {
-            if (catalog.item(item.id()).isPresent()) {
-                throw new IllegalArgumentException("an item with id " + item.id() + " already exists");
-            }
-        });
-
-        register(resolution);
-        catalog.save(work);
-        catalog.save(manifestation);
-        copy.ifPresent(catalog::save);
     }
 
     private void register(AgentResolution resolution) {
