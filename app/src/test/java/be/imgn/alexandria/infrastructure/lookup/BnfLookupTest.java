@@ -25,7 +25,9 @@ class BnfLookupTest {
 
     @Test
     void dropsThePlaceFromThePublisher() {
-        assertThat(lookUp().publisher()).as("from \"Gallimard (Paris)\"").contains("Gallimard");
+        assertThat(lookUp().publisher().orElse(null))
+                .as("from \"Gallimard (Paris)\"")
+                .isEqualTo("Gallimard");
     }
 
     @Test
@@ -37,15 +39,19 @@ class BnfLookupTest {
     void readsTheExtentAndSeriesOutOfFreeText() {
         BookDraft draft = lookUp();
 
-        assertThat(draft.pages()).as("from \"1 volume 191 p ; 18 cm\"").contains(191);
-        assertThat(draft.series()).as("from \"Collection : Folio ; 2\"").contains("Folio");
-        assertThat(draft.seriesNumber()).contains("2");
+        assertThat(draft.pages().orElse(null))
+                .as("from \"1 volume 191 p ; 18 cm\"")
+                .isEqualTo(191);
+        assertThat(draft.series().orElse(null))
+                .as("from \"Collection : Folio ; 2\"")
+                .isEqualTo("Folio");
+        assertThat(draft.seriesNumber().orElse(null)).isEqualTo("2");
     }
 
     @Test
     void convertsTheBibliographicLanguageCode() {
-        assertThat(lookUp().language())
-                .hasValueSatisfying(language -> assertThat(language.code()).isEqualTo("fr"));
+        assertThat(lookUp().language().orElse(null))
+                .satisfies(language -> assertThat(language.code()).isEqualTo("fr"));
     }
 
     /**

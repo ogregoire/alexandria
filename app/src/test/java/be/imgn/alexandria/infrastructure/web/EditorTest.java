@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -30,6 +29,7 @@ import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.item.Location;
 import be.imgn.alexandria.domain.item.ReadingProgress;
 import be.imgn.alexandria.domain.shared.EventDate;
+import be.imgn.alexandria.domain.shared.Note;
 import be.imgn.alexandria.domain.shared.TitleFormat;
 import be.imgn.alexandria.domain.work.WorkId;
 import be.imgn.alexandria.infrastructure.json.JsonCatalog;
@@ -220,7 +220,7 @@ class EditorTest {
                 Location.shelf("desk"),
                 ReadingProgress.UNREAD,
                 Condition.GOOD,
-                Optional.empty());
+                Note.NOTHING);
         catalog.save(borrowed);
 
         String page = get("/items/borrowed-copy").body();

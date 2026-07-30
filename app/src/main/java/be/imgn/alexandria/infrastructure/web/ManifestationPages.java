@@ -58,8 +58,12 @@ final class ManifestationPages {
                 List.of("Title", "Publisher", "Published", "Carrier", "Identifier", "Expressions", "Copies"), rows)));
     }
 
-    String edit(Optional<Manifestation> existing) {
-        Manifestation manifestation = existing.orElse(null);
+    /** A blank form for a record that does not exist yet. */
+    String edit() {
+        return edit((Manifestation) null);
+    }
+
+    String edit(Manifestation manifestation) {
         AgentDirectory agents = service.directory();
         String heading = manifestation == null
                 ? "New manifestation"

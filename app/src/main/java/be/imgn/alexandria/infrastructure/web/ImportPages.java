@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import be.imgn.alexandria.application.CatalogService;
 import be.imgn.alexandria.application.lookup.BookDraft;
 import be.imgn.alexandria.application.lookup.BookLookup;
+import be.imgn.alexandria.application.lookup.Suggested;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentId;
 import be.imgn.alexandria.domain.agent.AgentResolution;
@@ -28,6 +29,7 @@ import be.imgn.alexandria.domain.manifestation.ManifestationId;
 import be.imgn.alexandria.domain.manifestation.Publisher;
 import be.imgn.alexandria.domain.manifestation.Series;
 import be.imgn.alexandria.domain.shared.Language;
+import be.imgn.alexandria.domain.shared.Note;
 import be.imgn.alexandria.domain.shared.Slug;
 import be.imgn.alexandria.domain.shared.Title;
 import be.imgn.alexandria.domain.work.Expression;
@@ -84,12 +86,18 @@ final class ImportPages {
     }
 
     /** The form after a lookup: suggested values, nothing wrong yet. */
-    String review(Identifier isbn, Optional<BookDraft> found, boolean addItem) {
-        String provenance = found.map(draft -> "<p class=\"ok\">Prefilled from " + Html.escape(draft.source())
-                        + ". Check every field before saving.</p>")
-                .orElse("<p class=\"error\">No catalogue had this ISBN. "
-                        + "The form is empty — fill it in by hand.</p>");
-        return form(FormState.prefilled(prefill(isbn, found, addItem)), provenance);
+    /** The form after a lookup found nothing: empty, and saying so. */
+    String review(Identifier isbn, boolean addItem) {
+        return form(
+                FormState.prefilled(prefill(isbn, null, addItem)),
+                "<p class=\"error\">No catalogue had this ISBN. The form is empty — fill it in by hand.</p>");
+    }
+
+    String review(Identifier isbn, BookDraft found, boolean addItem) {
+        return form(
+                FormState.prefilled(prefill(isbn, found, addItem)),
+                "<p class=\"ok\">Prefilled from " + Html.escape(found.source())
+                        + ". Check every field before saving.</p>");
     }
 
     /** The same form after rejection: what was typed, and what is wrong with it. */
@@ -225,8 +233,12 @@ final class ImportPages {
 
     // ------------------------------------------------------------- prefilling
 
-    /** A lookup result flattened into the exact field names the form renders. */
-    private static Map<String, String> prefill(Identifier isbn, Optional<BookDraft> found, boolean addItem) {
+    /**
+     * A lookup result flattened into the exact field names the form renders.
+     *
+     * @param found what a provider reported, or null when none had the ISBN
+     */
+    private static Map<String, String> prefill(Identifier isbn, BookDraft found, boolean addItem) {
         Map<String, String> values = new LinkedHashMap<>();
         String digits = isbn.isbnDigits().orElse("");
         values.put("isbn", digits);
@@ -239,10 +251,10 @@ final class ImportPages {
         }
         values.put("item.condition", Condition.UNGRADED.name());
 
-        if (found.isEmpty()) {
+        if (found == null) {
             return values;
         }
-        BookDraft draft = found.get();
+        BookDraft draft = found;
         // Providers hand out filing forms; a form field wants the form a title page uses.
         String author = draft.authors().stream()
                 .findFirst()
@@ -259,11 +271,13 @@ final class ImportPages {
 
         values.put("id", suggestWorkId(author, draft.workTitle()));
         values.put("title.main", draft.workTitle());
-        draft.subtitle().ifPresent(subtitle -> values.put("title.subtitle", subtitle));
-        draft.originalYear().ifPresent(year -> {
+        if (draft.subtitle() instanceof Suggested.Given(String subtitle)) {
+            values.put("title.subtitle", subtitle);
+        }
+        if (draft.originalYear() instanceof Suggested.Given(Integer year)) {
             values.put("created.type", "year");
             values.put("created.year.value", String.valueOf(year));
-        });
+        }
         if (!author.isBlank()) {
             values.put("creators[0].name", author);
             values.put("creators[0].kind", "person");
@@ -279,10 +293,10 @@ final class ImportPages {
         // translation's date is its own and no provider reports it — left blank rather than
         // guessed at from the printing in hand.
         if (!translated) {
-            draft.originalYear().ifPresent(year -> {
+            if (draft.originalYear() instanceof Suggested.Given(Integer year)) {
                 values.put("expressions[0].realised.type", "year");
                 values.put("expressions[0].realised.year.value", String.valueOf(year));
-            });
+            }
         }
         if (!translator.isBlank()) {
             values.put("expressions[0].contributors[0].name", translator);
@@ -292,18 +306,24 @@ final class ImportPages {
 
         values.put("manifestation.id", suggestManifestationId(draft, draft.title()));
         values.put("manifestation.title.main", draft.title());
-        draft.publisher().ifPresent(publisher -> values.put("manifestation.publisher", publisher));
+        if (draft.publisher() instanceof Suggested.Given(String publisher)) {
+            values.put("manifestation.publisher", publisher);
+        }
         values.put("manifestation.publisherKind", "organisation");
-        draft.publishedYear().ifPresent(year -> {
+        if (draft.publishedYear() instanceof Suggested.Given(Integer year)) {
             values.put("manifestation.published.type", "year");
             values.put("manifestation.published.year.value", String.valueOf(year));
-        });
-        draft.pages().ifPresent(pages -> {
+        }
+        if (draft.pages() instanceof Suggested.Given(Integer pages)) {
             values.put("manifestation.extent.type", "pages");
             values.put("manifestation.extent.pages.count", String.valueOf(pages));
-        });
-        draft.series().ifPresent(series -> values.put("manifestation.series.name", series));
-        draft.seriesNumber().ifPresent(number -> values.put("manifestation.series.number", number));
+        }
+        if (draft.series() instanceof Suggested.Given(String series)) {
+            values.put("manifestation.series.name", series);
+        }
+        if (draft.seriesNumber() instanceof Suggested.Given(String number)) {
+            values.put("manifestation.series.number", number);
+        }
         return values;
     }
 
@@ -433,7 +453,7 @@ final class ImportPages {
                             VariantForms.readLocation(item, "location"),
                             VariantForms.readReading(item, "reading"),
                             Condition.valueOf(item.optional("condition").orElse(Condition.UNGRADED.name())),
-                            item.optional("notes")));
+                            Note.of(item.orEmpty("notes"))));
             if (copy.isEmpty()) {
                 return new Outcome.Rejected(FormState.submitted(form, problems));
             }
@@ -479,10 +499,12 @@ final class ImportPages {
     private static String suggestManifestationId(BookDraft draft, String title) {
         List<String> parts = new ArrayList<>();
         Slug.candidate(title).ifPresent(parts::add);
-        draft.publisher()
-                .flatMap(publisher -> filingSlug(publisher, NameForm::ofOrganisation))
-                .ifPresent(parts::add);
-        draft.publishedYear().ifPresent(year -> parts.add(String.valueOf(year)));
+        if (draft.publisher() instanceof Suggested.Given(String publisher)) {
+            filingSlug(publisher, NameForm::ofOrganisation).ifPresent(parts::add);
+        }
+        if (draft.publishedYear() instanceof Suggested.Given(Integer year)) {
+            parts.add(String.valueOf(year));
+        }
         return String.join("-", parts);
     }
 

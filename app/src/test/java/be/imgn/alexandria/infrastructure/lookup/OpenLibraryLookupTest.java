@@ -28,7 +28,7 @@ class OpenLibraryLookupTest {
         BookDraft draft = lookUpQuixote();
 
         assertThat(draft.title()).isEqualTo("Don Quixote");
-        assertThat(draft.originalTitle()).contains("Don Quijote de la Mancha");
+        assertThat(draft.originalTitle().orElse(null)).isEqualTo("Don Quijote de la Mancha");
         assertThat(draft.workTitle()).isEqualTo("Don Quijote de la Mancha");
     }
 
@@ -37,7 +37,7 @@ class OpenLibraryLookupTest {
         BookDraft draft = lookUpQuixote();
 
         assertThat(draft.authors()).containsExactly("Miguel de Cervantes Saavedra");
-        assertThat(draft.publisher()).contains("Ecco");
+        assertThat(draft.publisher().orElse(null)).isEqualTo("Ecco");
     }
 
     @Test
@@ -52,8 +52,8 @@ class OpenLibraryLookupTest {
     void separatesTheEditionYearFromTheWorksFirstPublication() {
         BookDraft draft = lookUpQuixote();
 
-        assertThat(draft.publishedYear()).contains(2003);
-        assertThat(draft.originalYear()).contains(1896);
+        assertThat(draft.publishedYear().orElse(null)).isEqualTo(2003);
+        assertThat(draft.originalYear().orElse(null)).isEqualTo(1896);
     }
 
     @Test
@@ -64,8 +64,8 @@ class OpenLibraryLookupTest {
 
         BookDraft draft = new OpenLibraryLookup(http, "").byIsbn(ETRANGER).orElseThrow();
 
-        assertThat(draft.language())
-                .hasValueSatisfying(language -> assertThat(language.code())
+        assertThat(draft.language().orElse(null))
+                .satisfies(language -> assertThat(language.code())
                         .as("/languages/fre must become fr")
                         .isEqualTo("fr"));
     }
@@ -80,8 +80,8 @@ class OpenLibraryLookupTest {
 
         assertThat(draft.title()).isEqualTo("L’étranger");
         assertThat(draft.authors()).containsExactly("Albert Camus");
-        assertThat(draft.publisher()).contains("Gallimard");
-        assertThat(draft.pages()).contains(194);
+        assertThat(draft.publisher().orElse(null)).isEqualTo("Gallimard");
+        assertThat(draft.pages().orElse(null)).isEqualTo(194);
     }
 
     @Test
@@ -92,8 +92,10 @@ class OpenLibraryLookupTest {
 
         BookDraft draft = new OpenLibraryLookup(http, "").byIsbn(ETRANGER).orElseThrow();
 
-        assertThat(draft.series()).as("from \"Collection Folio No. 2\"").contains("Collection Folio");
-        assertThat(draft.seriesNumber()).contains("2");
+        assertThat(draft.series().orElse(null))
+                .as("from \"Collection Folio No. 2\"")
+                .isEqualTo("Collection Folio");
+        assertThat(draft.seriesNumber().orElse(null)).isEqualTo("2");
     }
 
     @Test

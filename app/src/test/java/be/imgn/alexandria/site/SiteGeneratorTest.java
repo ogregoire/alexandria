@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -19,6 +18,7 @@ import be.imgn.alexandria.domain.item.Location;
 import be.imgn.alexandria.domain.item.ReadingProgress;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.shared.Note;
 import be.imgn.alexandria.domain.shared.Title;
 import be.imgn.alexandria.infrastructure.json.JsonCatalog;
 
@@ -205,7 +205,7 @@ class SiteGeneratorTest {
                 Location.MISSING,
                 ReadingProgress.UNREAD,
                 Condition.UNGRADED,
-                Optional.empty()));
+                Note.NOTHING));
 
         assertThatThrownBy(() -> new SiteGenerator(catalog).generateInto(output))
                 .isInstanceOf(IllegalStateException.class)

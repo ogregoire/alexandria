@@ -2,10 +2,10 @@ package be.imgn.alexandria.domain.item;
 
 import java.time.LocalDate;
 import java.util.Objects;
-import java.util.Optional;
 
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
 import be.imgn.alexandria.domain.shared.EventDate;
+import be.imgn.alexandria.domain.shared.Note;
 
 /**
  * FRBR Item: the single copy on your shelf — this printing, this dust jacket, this coffee ring.
@@ -20,7 +20,7 @@ public record Item(
         Location location,
         ReadingProgress reading,
         Condition condition,
-        Optional<String> notes) {
+        Note notes) {
 
     public Item {
         Objects.requireNonNull(id, "id");
@@ -29,7 +29,7 @@ public record Item(
         Objects.requireNonNull(location, "location");
         Objects.requireNonNull(reading, "reading");
         Objects.requireNonNull(condition, "condition");
-        notes = notes == null ? Optional.empty() : notes.filter(n -> !n.isBlank());
+        notes = notes == null ? Note.NOTHING : notes;
 
         if (!acquisition.owned() && location instanceof Location.LentTo(String person, var ignored)) {
             throw new IllegalArgumentException("cannot lend " + id + " to " + person + ": it is itself on loan to you");
@@ -44,7 +44,7 @@ public record Item(
                 Location.shelf(shelf),
                 ReadingProgress.UNREAD,
                 Condition.UNGRADED,
-                Optional.empty());
+                Note.NOTHING);
     }
 
     public Item startReading(LocalDate on) {
@@ -91,6 +91,6 @@ public record Item(
     }
 
     public Item withNotes(String newNotes) {
-        return new Item(id, embodiedIn, acquisition, location, reading, condition, Optional.ofNullable(newNotes));
+        return new Item(id, embodiedIn, acquisition, location, reading, condition, Note.of(newNotes));
     }
 }

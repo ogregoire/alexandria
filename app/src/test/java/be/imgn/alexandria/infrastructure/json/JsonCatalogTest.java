@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -17,6 +16,7 @@ import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.item.Location;
 import be.imgn.alexandria.domain.item.ReadingProgress;
+import be.imgn.alexandria.domain.shared.Note;
 
 class JsonCatalogTest {
 
@@ -79,7 +79,7 @@ class JsonCatalogTest {
                 Location.shelf("study"),
                 ReadingProgress.Finished.undated(),
                 Condition.UNGRADED,
-                Optional.empty()));
+                Note.NOTHING));
 
         String json = Files.readString(root.resolve("items/a-gift.json"));
 

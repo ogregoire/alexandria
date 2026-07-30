@@ -87,9 +87,14 @@ public final class OpenLibraryLookup implements BookLookup {
                 .publisher(data.textsOrField("publishers", "name").stream()
                         .findFirst()
                         .orElse(null))
-                .publishedYear(year(data.optionalText("publish_date").or(() -> edition.optionalText("publish_date"))))
-                .pages(data.optionalInt("number_of_pages").or(() -> edition.optionalInt("number_of_pages")))
-                .language(language(edition))
+                .publishedYear(year(data.optionalText("publish_date")
+                                .or(() -> edition.optionalText("publish_date"))
+                                .orElse(null))
+                        .orElse(null))
+                .pages(data.optionalInt("number_of_pages")
+                        .or(() -> edition.optionalInt("number_of_pages"))
+                        .orElse(null))
+                .language(language(edition).orElse(null))
                 .subjects(data.textsOrField("subjects", "name"));
 
         series(edition).ifPresent(parts -> {
@@ -99,7 +104,8 @@ public final class OpenLibraryLookup implements BookLookup {
 
         work.ifPresent(record -> {
             record.optionalText("title").ifPresent(draft::originalTitle);
-            draft.originalYear(year(record.optionalText("first_publish_date")));
+            draft.originalYear(
+                    year(record.optionalText("first_publish_date").orElse(null)).orElse(null));
         });
         return draft.build();
     }
@@ -160,11 +166,12 @@ public final class OpenLibraryLookup implements BookLookup {
         return Optional.of(new Series(raw, null));
     }
 
-    private static Optional<Integer> year(Optional<String> raw) {
-        return raw.flatMap(value -> {
-            Matcher matcher = YEAR.matcher(value);
-            return matcher.find() ? Optional.of(Integer.parseInt(matcher.group(1))) : Optional.empty();
-        });
+    private static Optional<Integer> year(String raw) {
+        if (raw == null) {
+            return Optional.empty();
+        }
+        Matcher matcher = YEAR.matcher(raw);
+        return matcher.find() ? Optional.of(Integer.parseInt(matcher.group(1))) : Optional.empty();
     }
 
     private Optional<JsonIn> fetch(String url) {

@@ -2,7 +2,6 @@ package be.imgn.alexandria.application.lookup;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import be.imgn.alexandria.domain.manifestation.Identifier;
 import be.imgn.alexandria.domain.shared.Language;
@@ -11,8 +10,8 @@ import be.imgn.alexandria.domain.shared.Language;
  * What a lookup service could tell us about one ISBN, before any of it becomes a catalogue record.
  *
  * <p>Deliberately not domain types: this is unverified third-party data on its way to a form the user will correct.
- * Only {@code title} is required, because that is all some providers reliably return; everything else is optional and
- * simply leaves its field blank.
+ * Only {@code title} is required, because that is all some providers reliably return; every other field is
+ * {@link Suggested}, which is to say the provider either reported it or did not.
  *
  * @param title the edition's title, which for a translation is the translated one
  * @param originalTitle the work's title in its original language, when the provider models works separately from
@@ -21,34 +20,34 @@ import be.imgn.alexandria.domain.shared.Language;
  */
 public record BookDraft(
         String title,
-        Optional<String> subtitle,
-        Optional<String> originalTitle,
+        Suggested<String> subtitle,
+        Suggested<String> originalTitle,
         List<String> authors,
         List<String> translators,
-        Optional<String> publisher,
-        Optional<Integer> publishedYear,
-        Optional<Integer> originalYear,
-        Optional<Language> language,
-        Optional<Integer> pages,
-        Optional<String> series,
-        Optional<String> seriesNumber,
+        Suggested<String> publisher,
+        Suggested<Integer> publishedYear,
+        Suggested<Integer> originalYear,
+        Suggested<Language> language,
+        Suggested<Integer> pages,
+        Suggested<String> series,
+        Suggested<String> seriesNumber,
         List<String> subjects,
         Identifier identifier,
         String source) {
 
     public BookDraft {
         Objects.requireNonNull(title, "title");
-        subtitle = orEmpty(subtitle);
-        originalTitle = orEmpty(originalTitle);
+        subtitle = orSilent(subtitle);
+        originalTitle = orSilent(originalTitle);
         authors = authors == null ? List.of() : List.copyOf(authors);
         translators = translators == null ? List.of() : List.copyOf(translators);
-        publisher = orEmpty(publisher);
-        publishedYear = orEmpty(publishedYear);
-        originalYear = orEmpty(originalYear);
-        language = orEmpty(language);
-        pages = orEmpty(pages);
-        series = orEmpty(series);
-        seriesNumber = orEmpty(seriesNumber);
+        publisher = orSilent(publisher);
+        publishedYear = orSilent(publishedYear);
+        originalYear = orSilent(originalYear);
+        language = orSilent(language);
+        pages = orSilent(pages);
+        series = orSilent(series);
+        seriesNumber = orSilent(seriesNumber);
         subjects = subjects == null ? List.of() : List.copyOf(subjects);
         Objects.requireNonNull(identifier, "identifier");
         Objects.requireNonNull(source, "source");
@@ -66,13 +65,11 @@ public record BookDraft(
     /** True when the edition is not in the language the work was written in. */
     public boolean looksTranslated() {
         return !translators.isEmpty()
-                || originalTitle
-                        .filter(original -> !original.equalsIgnoreCase(title))
-                        .isPresent();
+                || originalTitle instanceof Suggested.Given(String original) && !original.equalsIgnoreCase(title);
     }
 
-    private static <T> Optional<T> orEmpty(Optional<T> value) {
-        return value == null ? Optional.empty() : value;
+    private static <T> Suggested<T> orSilent(Suggested<T> value) {
+        return value == null ? Suggested.silent() : value;
     }
 
     /** Providers fill in whatever they have; the rest stays absent. */
@@ -81,17 +78,17 @@ public record BookDraft(
         private final String title;
         private final Identifier identifier;
         private final String source;
-        private Optional<String> subtitle = Optional.empty();
-        private Optional<String> originalTitle = Optional.empty();
+        private Suggested<String> subtitle = Suggested.silent();
+        private Suggested<String> originalTitle = Suggested.silent();
         private List<String> authors = List.of();
         private List<String> translators = List.of();
-        private Optional<String> publisher = Optional.empty();
-        private Optional<Integer> publishedYear = Optional.empty();
-        private Optional<Integer> originalYear = Optional.empty();
-        private Optional<Language> language = Optional.empty();
-        private Optional<Integer> pages = Optional.empty();
-        private Optional<String> series = Optional.empty();
-        private Optional<String> seriesNumber = Optional.empty();
+        private Suggested<String> publisher = Suggested.silent();
+        private Suggested<Integer> publishedYear = Suggested.silent();
+        private Suggested<Integer> originalYear = Suggested.silent();
+        private Suggested<Language> language = Suggested.silent();
+        private Suggested<Integer> pages = Suggested.silent();
+        private Suggested<String> series = Suggested.silent();
+        private Suggested<String> seriesNumber = Suggested.silent();
         private List<String> subjects = List.of();
 
         private Builder(String title, Identifier identifier, String source) {
@@ -101,12 +98,12 @@ public record BookDraft(
         }
 
         public Builder subtitle(String value) {
-            this.subtitle = blankToEmpty(value);
+            this.subtitle = Suggested.ofText(value);
             return this;
         }
 
         public Builder originalTitle(String value) {
-            this.originalTitle = blankToEmpty(value);
+            this.originalTitle = Suggested.ofText(value);
             return this;
         }
 
@@ -121,37 +118,37 @@ public record BookDraft(
         }
 
         public Builder publisher(String value) {
-            this.publisher = blankToEmpty(value);
+            this.publisher = Suggested.ofText(value);
             return this;
         }
 
-        public Builder publishedYear(Optional<Integer> value) {
-            this.publishedYear = value;
+        public Builder publishedYear(Integer value) {
+            this.publishedYear = Suggested.of(value);
             return this;
         }
 
-        public Builder originalYear(Optional<Integer> value) {
-            this.originalYear = value;
+        public Builder originalYear(Integer value) {
+            this.originalYear = Suggested.of(value);
             return this;
         }
 
-        public Builder language(Optional<Language> value) {
-            this.language = value;
+        public Builder language(Language value) {
+            this.language = Suggested.of(value);
             return this;
         }
 
-        public Builder pages(Optional<Integer> value) {
-            this.pages = value;
+        public Builder pages(Integer value) {
+            this.pages = Suggested.of(value);
             return this;
         }
 
         public Builder series(String value) {
-            this.series = blankToEmpty(value);
+            this.series = Suggested.ofText(value);
             return this;
         }
 
         public Builder seriesNumber(String value) {
-            this.seriesNumber = blankToEmpty(value);
+            this.seriesNumber = Suggested.ofText(value);
             return this;
         }
 
@@ -177,10 +174,6 @@ public record BookDraft(
                     subjects,
                     identifier,
                     source);
-        }
-
-        private static Optional<String> blankToEmpty(String value) {
-            return value == null || value.isBlank() ? Optional.empty() : Optional.of(value.trim());
         }
     }
 }

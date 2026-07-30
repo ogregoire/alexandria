@@ -121,9 +121,9 @@ public final class BnfLookup implements BookLookup {
                 .authors(agents(values(document, "creator")))
                 .translators(translators(values(document, "contributor")))
                 .publisher(publisher(values(document, "publisher")).orElse(null))
-                .publishedYear(firstYear(values(document, "date")))
-                .pages(pages(extent))
-                .language(language(values(document, "language")))
+                .publishedYear(firstYear(values(document, "date")).orElse(null))
+                .pages(pages(extent).orElse(null))
+                .language(language(values(document, "language")).orElse(null))
                 .subjects(values(document, "subject"));
 
         Matcher series = SERIES.matcher(description);

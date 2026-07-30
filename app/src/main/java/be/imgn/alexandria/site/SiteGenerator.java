@@ -385,7 +385,9 @@ public final class SiteGenerator {
                                 """.formatted(
                                 Escape.html(copy.reading().display()),
                                 Escape.html(copy.location().display()),
-                                copy.notes().map(n -> " · " + Escape.html(n)).orElse("")))
+                                copy.notes().text().isEmpty()
+                                        ? ""
+                                        : " · " + Escape.html(copy.notes().text())))
                         .collect(Collectors.joining());
 
         // The byline, which the facts table has no row for: the author belongs beside the title,
@@ -574,7 +576,9 @@ public final class SiteGenerator {
                 """.formatted(
                                 Escape.html(copy.reading().display()),
                                 Escape.html(copy.location().display()),
-                                copy.notes().map(n -> " · " + Escape.html(n)).orElse("")))
+                                copy.notes().text().isEmpty()
+                                        ? ""
+                                        : " · " + Escape.html(copy.notes().text())))
                 .collect(Collectors.joining());
     }
 

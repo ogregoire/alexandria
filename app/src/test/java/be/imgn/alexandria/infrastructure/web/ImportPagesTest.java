@@ -43,10 +43,10 @@ class ImportPagesTest {
             .authors(List.of("Miguel de Cervantes"))
             .translators(List.of("Edith Grossman"))
             .publisher("Ecco")
-            .publishedYear(Optional.of(2003))
-            .originalYear(Optional.of(1605))
-            .language(Optional.of(Language.ENGLISH))
-            .pages(Optional.of(940))
+            .publishedYear(2003)
+            .originalYear(1605)
+            .language(Language.ENGLISH)
+            .pages(940)
             .series("Ecco Classics")
             .build();
 
@@ -322,8 +322,8 @@ class ImportPagesTest {
         BookDraft starred = BookDraft.of("La Roue du Temps", ISBN, "Stub Library")
                 .authors(List.of("Robert Jordan"))
                 .publisher("Rivages *")
-                .publishedYear(Optional.of(1995))
-                .language(Optional.of(new Language("fr")))
+                .publishedYear(1995)
+                .language(new Language("fr"))
                 .build();
         Editor other = new Editor(new CatalogService(catalog), stub(starred));
         String otherBase = "http://127.0.0.1:" + other.start(0);
@@ -350,8 +350,8 @@ class ImportPagesTest {
                 .authors(List.of("Tolkien, John Ronald Reuel"))
                 .translators(List.of("Lauzon, Daniel"))
                 .publisher("Christian Bourgois éditeur")
-                .publishedYear(Optional.of(2023))
-                .language(Optional.of(new Language("fr")))
+                .publishedYear(2023)
+                .language(new Language("fr"))
                 .build();
         Editor other = new Editor(new CatalogService(catalog), stub(inverted));
         String otherBase = "http://127.0.0.1:" + other.start(0);

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -39,22 +38,22 @@ class ItemCodecTest {
                         Acquisition.Purchased.on(LocalDate.of(2019, 4, 12), Money.of("28.50", "EUR"), "De Slegte"),
                         new Location.Shelf("living room", Note.of("shelf 3")),
                         ReadingProgress.Finished.on(LocalDate.of(2020, 1, 6), Rating.of(5)),
-                        Optional.of("Spine sunned.")),
+                        Note.of("Spine sunned.")),
                 item(
                         Acquisition.Gift.unattributed(),
                         Location.MISSING,
                         ReadingProgress.Finished.undated(),
-                        Optional.empty()),
+                        Note.NOTHING),
                 item(
                         Acquisition.Gift.from("Émeline", LocalDate.of(2025, 9, 23)),
                         new Location.Box("attic 2"),
                         ReadingProgress.UNREAD,
-                        Optional.empty()),
+                        Note.NOTHING),
                 item(
                         Acquisition.Inherited.from("my father", null),
                         Location.LentTo.to("Thomas", LocalDate.of(2025, 9, 3)),
                         new ReadingProgress.Reading(EventDate.on(LocalDate.of(2026, 7, 2)), PageReached.at(148)),
-                        Optional.of("Quote \"marks\" and a \\ backslash.")),
+                        Note.of("Quote \"marks\" and a \\ backslash.")),
                 item(
                         new Acquisition.Borrowed(
                                 "Hugo",
@@ -62,16 +61,15 @@ class ItemCodecTest {
                                 EventDate.on(LocalDate.of(2026, 8, 12))),
                         new Location.Device("phone"),
                         new ReadingProgress.Abandoned(EventDate.UNRECORDED, PageReached.at(212), "Stalled."),
-                        Optional.empty()),
+                        Note.NOTHING),
                 item(
                         Acquisition.UNRECORDED,
                         Location.shelf("study"),
                         new ReadingProgress.Reading(EventDate.UNRECORDED, PageReached.UNRECORDED),
-                        Optional.empty()));
+                        Note.NOTHING));
     }
 
-    private static Item item(
-            Acquisition acquisition, Location location, ReadingProgress reading, Optional<String> notes) {
+    private static Item item(Acquisition acquisition, Location location, ReadingProgress reading, Note notes) {
         return new Item(ItemId.of("a-copy"), EDITION, acquisition, location, reading, Condition.VERY_GOOD, notes);
     }
 
@@ -85,10 +83,7 @@ class ItemCodecTest {
     @Test
     void omitsAbsentFieldsRatherThanWritingNull() {
         String json = ItemCodec.write(item(
-                Acquisition.Gift.unattributed(),
-                Location.MISSING,
-                ReadingProgress.Finished.undated(),
-                Optional.empty()));
+                Acquisition.Gift.unattributed(), Location.MISSING, ReadingProgress.Finished.undated(), Note.NOTHING));
 
         assertThat(json)
                 .contains("\"type\" : \"gift\"")
@@ -101,8 +96,8 @@ class ItemCodecTest {
 
     @Test
     void refusesAVariantItDoesNotKnow() {
-        String json = ItemCodec.write(
-                item(Acquisition.UNRECORDED, Location.MISSING, ReadingProgress.UNREAD, Optional.empty()));
+        String json =
+                ItemCodec.write(item(Acquisition.UNRECORDED, Location.MISSING, ReadingProgress.UNREAD, Note.NOTHING));
 
         assertThatThrownBy(() -> ItemCodec.read(json.replace("\"unrecorded\"", "\"inveigled\"")))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -123,7 +118,7 @@ class ItemCodecTest {
                 Acquisition.UNRECORDED,
                 Location.MISSING,
                 ReadingProgress.UNREAD,
-                Optional.of("tab\there, newline\nthere, quote \" and backslash \\"));
+                Note.of("tab\there, newline\nthere, quote \" and backslash \\"));
 
         assertThat(ItemCodec.read(ItemCodec.write(awkward))).isEqualTo(awkward);
     }

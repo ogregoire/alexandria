@@ -2,13 +2,13 @@ package be.imgn.alexandria.infrastructure.web;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import be.imgn.alexandria.application.CatalogService;
 import be.imgn.alexandria.domain.item.Condition;
 import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.shared.Note;
 
 /** Browsing and editing the Item aggregate — the copy you actually own. */
 final class ItemPages {
@@ -41,8 +41,12 @@ final class ItemPages {
                         Html.table(List.of("Copy", "Edition", "Where", "Reading", "Condition"), rows)));
     }
 
-    String edit(Optional<Item> existing) {
-        Item item = existing.orElse(null);
+    /** A blank form for a record that does not exist yet. */
+    String edit() {
+        return edit((Item) null);
+    }
+
+    String edit(Item item) {
         String heading = item == null ? "New item" : item.id().value();
         String id = item == null ? "" : item.id().value();
         Map<String, String> editions = service.manifestationChoices();
@@ -97,7 +101,7 @@ final class ItemPages {
                         item == null
                                 ? Condition.UNGRADED.name()
                                 : item.condition().name()),
-                Html.textArea("notes", "Notes", item == null ? "" : item.notes().orElse("")),
+                Html.textArea("notes", "Notes", item == null ? "" : item.notes().text()),
                 VariantForms.acquisition("acquisition", "Acquired", item == null ? null : item.acquisition()),
                 VariantForms.location("location", "Location", item == null ? null : item.location()),
                 VariantForms.reading("reading", "Progress", item == null ? null : item.reading()),
@@ -112,6 +116,6 @@ final class ItemPages {
                 VariantForms.readLocation(form, "location"),
                 VariantForms.readReading(form, "reading"),
                 Condition.valueOf(form.required("condition")),
-                form.optional("notes"));
+                Note.of(form.orEmpty("notes")));
     }
 }

@@ -3,7 +3,6 @@ package be.imgn.alexandria;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import be.imgn.alexandria.domain.agent.Agent;
@@ -113,6 +112,6 @@ public final class CatalogFixture {
                 new Location.Shelf("living room", Note.of("shelf 3")),
                 ReadingProgress.Finished.on(LocalDate.of(2020, 1, 6), Rating.of(5)),
                 Condition.VERY_GOOD,
-                Optional.of("Spine sunned."));
+                Note.of("Spine sunned."));
     }
 }

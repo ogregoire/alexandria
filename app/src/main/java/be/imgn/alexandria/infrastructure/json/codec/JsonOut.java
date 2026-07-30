@@ -3,7 +3,6 @@ package be.imgn.alexandria.infrastructure.json.codec;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -15,8 +14,8 @@ import java.util.function.Function;
  * reproduces the committed format exactly: two-space indent, {@code " : "} between key and value, LF endings, {@code [
  * ]} for an empty array, and absent optionals omitted rather than written as null.
  *
- * <p>Omission is a property of the writer rather than a global setting: {@code text(name, Optional.empty())} adds
- * nothing, so a codec reads as a list of the fields a record has and says nothing about the ones it does not.
+ * <p>Omission is a property of the writer rather than a global setting: {@code textIfAny(name, "")} adds nothing, so a
+ * codec reads as a list of the fields a record has and says nothing about the ones it does not.
  */
 public final class JsonOut {
 
@@ -31,10 +30,6 @@ public final class JsonOut {
 
     public JsonOut text(String key, String value) {
         return value == null ? this : put(key, quote(value));
-    }
-
-    public JsonOut text(String key, Optional<String> value) {
-        return value.map(present -> put(key, quote(present))).orElse(this);
     }
 
     /**
@@ -54,10 +49,6 @@ public final class JsonOut {
         return put(key, Integer.toString(value));
     }
 
-    public JsonOut number(String key, Optional<Integer> value) {
-        return value.map(present -> put(key, Integer.toString(present))).orElse(this);
-    }
-
     /**
      * A nested object, always written — a sum type's payload may legitimately be empty.
      *
@@ -68,10 +59,6 @@ public final class JsonOut {
         JsonOut nested = new JsonOut();
         body.accept(nested);
         return put(key, nested.render(0));
-    }
-
-    public JsonOut objectIfPresent(String key, Optional<?> value, Consumer<JsonOut> body) {
-        return value.isEmpty() ? this : object(key, body);
     }
 
     /** Strings in the order given; the caller sorts when the order has to be stable. */

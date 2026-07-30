@@ -112,8 +112,10 @@ public final class Editor {
                 return Router.Response.html(
                         imports.ask(typed, "'" + typed + "' is not a valid ISBN: " + e.getMessage()));
             }
-            return Router.Response.html(
-                    imports.review(isbn, lookup.byIsbn(isbn), request.body().checked("addItem")));
+            boolean addItem = request.body().checked("addItem");
+            return Router.Response.html(lookup.byIsbn(isbn)
+                    .map(draft -> imports.review(isbn, draft, addItem))
+                    .orElseGet(() -> imports.review(isbn, addItem)));
         });
         // A rejected form comes back as HTML holding what was typed, not as an error page.
         router.post("/import/save", request -> {
@@ -128,12 +130,12 @@ public final class Editor {
         });
 
         router.get("/agents", request -> Router.Response.html(agents.list()));
-        router.get("/agents/new", request -> Router.Response.html(agents.edit(Optional.empty())));
+        router.get("/agents/new", request -> Router.Response.html(agents.edit()));
         router.get(
                 "/agents/{id}",
                 request -> service.catalog()
                         .agent(AgentId.of(request.param("id")))
-                        .map(agent -> Router.Response.html(agents.edit(Optional.of(agent))))
+                        .map(agent -> Router.Response.html(agents.edit(agent)))
                         .orElseGet(() -> Router.Response.error(404, "No agent " + request.param("id"))));
         router.post("/agents/{id}", request -> {
             service.save(agents.read(request.body()));
@@ -145,12 +147,12 @@ public final class Editor {
         });
 
         router.get("/works", request -> Router.Response.html(works.list()));
-        router.get("/works/new", request -> Router.Response.html(works.edit(Optional.empty())));
+        router.get("/works/new", request -> Router.Response.html(works.edit()));
         router.get(
                 "/works/{id}",
                 request -> service.catalog()
                         .work(WorkId.of(request.param("id")))
-                        .map(work -> Router.Response.html(works.edit(Optional.of(work))))
+                        .map(work -> Router.Response.html(works.edit(work)))
                         .orElseGet(() -> Router.Response.error(404, "No work " + request.param("id"))));
         router.post("/works/{id}", request -> {
             AgentResolution resolution = service.newResolution();
@@ -164,12 +166,12 @@ public final class Editor {
         });
 
         router.get("/manifestations", request -> Router.Response.html(manifestations.list()));
-        router.get("/manifestations/new", request -> Router.Response.html(manifestations.edit(Optional.empty())));
+        router.get("/manifestations/new", request -> Router.Response.html(manifestations.edit()));
         router.get(
                 "/manifestations/{id}",
                 request -> service.catalog()
                         .manifestation(ManifestationId.of(request.param("id")))
-                        .map(manifestation -> Router.Response.html(manifestations.edit(Optional.of(manifestation))))
+                        .map(manifestation -> Router.Response.html(manifestations.edit(manifestation)))
                         .orElseGet(() -> Router.Response.error(404, "No manifestation " + request.param("id"))));
         router.post("/manifestations/{id}", request -> {
             AgentResolution resolution = service.newResolution();
@@ -183,12 +185,12 @@ public final class Editor {
         });
 
         router.get("/items", request -> Router.Response.html(items.list()));
-        router.get("/items/new", request -> Router.Response.html(items.edit(Optional.empty())));
+        router.get("/items/new", request -> Router.Response.html(items.edit()));
         router.get(
                 "/items/{id}",
                 request -> service.catalog()
                         .item(ItemId.of(request.param("id")))
-                        .map(item -> Router.Response.html(items.edit(Optional.of(item))))
+                        .map(item -> Router.Response.html(items.edit(item)))
                         .orElseGet(() -> Router.Response.error(404, "No item " + request.param("id"))));
         router.post("/items/{id}", request -> {
             service.save(items.read(request.body()));

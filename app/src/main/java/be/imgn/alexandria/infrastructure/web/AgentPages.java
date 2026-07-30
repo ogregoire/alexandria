@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,8 +47,12 @@ final class AgentPages {
                         Html.table(List.of("Name", "Files under", "Kind", "Aliases", "References"), rows)));
     }
 
-    String edit(Optional<Agent> existing) {
-        Agent agent = existing.orElse(null);
+    /** A blank form for a record that does not exist yet. */
+    String edit() {
+        return edit((Agent) null);
+    }
+
+    String edit(Agent agent) {
         String heading = agent == null ? "New agent" : agent.name();
         String id = agent == null ? "" : agent.id().value();
 

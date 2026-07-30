@@ -3,7 +3,6 @@ package be.imgn.alexandria;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Locale;
-import java.util.Optional;
 
 import be.imgn.alexandria.application.CatalogService;
 import be.imgn.alexandria.application.lookup.BookLookup;
@@ -56,8 +55,7 @@ public final class Alexandria {
         Thread.currentThread().join();
     }
 
-    private record Arguments(
-            Path data, int port, boolean openBrowser, Path site, boolean offline, Optional<String> contact) {
+    private record Arguments(Path data, int port, boolean openBrowser, Path site, boolean offline, String contact) {
 
         static Arguments parse(String[] args) {
             Path data = Path.of("data");
@@ -79,12 +77,7 @@ public final class Alexandria {
                 }
             }
             return new Arguments(
-                    data,
-                    port,
-                    openBrowser,
-                    site,
-                    offline,
-                    Optional.ofNullable(contact).filter(value -> !value.isBlank()));
+                    data, port, openBrowser, site, offline, contact == null || contact.isBlank() ? "" : contact);
         }
 
         private static String next(String[] args, int index, String option) {

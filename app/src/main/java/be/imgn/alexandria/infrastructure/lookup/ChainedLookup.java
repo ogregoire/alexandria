@@ -28,15 +28,15 @@ public final class ChainedLookup implements BookLookup {
 
     /** The default chain: free, no API key, English and French. */
     public static ChainedLookup standard() {
-        return standard(Optional.empty());
+        return standard(null);
     }
 
     /**
      * @param contact an email or URL to identify this installation with. Supplying one triples the rate Open Library
      *     allows; without it every provider is held to its unidentified limit.
      */
-    public static ChainedLookup standard(Optional<String> contact) {
-        UserAgent caller = contact.map(UserAgent::identifiedBy).orElseGet(UserAgent::anonymous);
+    public static ChainedLookup standard(String contact) {
+        UserAgent caller = UserAgent.identifiedBy(contact);
         return new ChainedLookup(
                 List.of(new OpenLibraryLookup(caller), new BnfLookup(caller), new GoogleBooksLookup(caller)));
     }

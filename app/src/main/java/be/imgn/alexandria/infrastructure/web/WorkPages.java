@@ -53,8 +53,12 @@ final class WorkPages {
                         Html.table(List.of("Title", "Author", "Form", "Created", "Expressions", "Editions"), rows)));
     }
 
-    String edit(Optional<Work> existing) {
-        Work work = existing.orElse(null);
+    /** A blank form for a record that does not exist yet. */
+    String edit() {
+        return edit((Work) null);
+    }
+
+    String edit(Work work) {
         AgentDirectory agents = service.directory();
         String heading = work == null ? "New work" : work.title().main();
         String id = work == null ? "" : work.id().value();

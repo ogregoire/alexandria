@@ -38,7 +38,7 @@ public final class ItemCodec {
                 .object("location", nested -> location(nested, item.location()))
                 .object("reading", nested -> reading(nested, item.reading()))
                 .text("condition", item.condition().name())
-                .text("notes", item.notes()));
+                .textIfAny("notes", item.notes().text()));
     }
 
     private static void acquisition(JsonOut out, Acquisition acquisition) {
@@ -99,7 +99,7 @@ public final class ItemCodec {
                 location(in.object("location")),
                 reading(in.object("reading")),
                 Condition.valueOf(in.text("condition")),
-                in.optionalText("notes"));
+                Note.of(in.orBlank("notes")));
     }
 
     private static Acquisition acquisition(JsonIn in) {

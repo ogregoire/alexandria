@@ -75,28 +75,31 @@ public final class GoogleBooksLookup implements BookLookup {
                 .subtitle(info.optionalText("subtitle").orElse(null))
                 .authors(info.texts("authors"))
                 .publisher(info.optionalText("publisher").orElse(null))
-                .publishedYear(year(info.optionalText("publishedDate")))
-                .pages(info.optionalInt("pageCount"))
-                .language(language(info.optionalText("language")))
+                .publishedYear(
+                        year(info.optionalText("publishedDate").orElse(null)).orElse(null))
+                .pages(info.optionalInt("pageCount").orElse(null))
+                .language(language(info.optionalText("language").orElse(null)).orElse(null))
                 .subjects(info.texts("categories"))
                 .build();
     }
 
-    private static Optional<Language> language(Optional<String> code) {
-        return code.flatMap(value -> {
-            try {
-                return Optional.of(new Language(Iso639.toTwoLetter(value)));
-            } catch (IllegalArgumentException e) {
-                return Optional.empty();
-            }
-        });
+    private static Optional<Language> language(String code) {
+        if (code == null) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(new Language(Iso639.toTwoLetter(code)));
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
     }
 
-    private static Optional<Integer> year(Optional<String> raw) {
-        return raw.flatMap(value -> {
-            Matcher matcher = YEAR.matcher(value);
-            return matcher.find() ? Optional.of(Integer.parseInt(matcher.group(1))) : Optional.empty();
-        });
+    private static Optional<Integer> year(String raw) {
+        if (raw == null) {
+            return Optional.empty();
+        }
+        Matcher matcher = YEAR.matcher(raw);
+        return matcher.find() ? Optional.of(Integer.parseInt(matcher.group(1))) : Optional.empty();
     }
 
     /** A payload we cannot parse is a miss, like any other. */
