@@ -7,13 +7,11 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import be.imgn.alexandria.application.lookup.BookDraft;
 import be.imgn.alexandria.application.lookup.BookLookup;
 import be.imgn.alexandria.domain.manifestation.Identifier;
 import be.imgn.alexandria.domain.shared.Language;
+import be.imgn.alexandria.infrastructure.json.codec.JsonIn;
 
 /**
  * Open Library, which models works and editions separately — the same split this catalogue does — so an ISBN yields
@@ -39,7 +37,6 @@ public final class OpenLibraryLookup implements BookLookup {
     private static final Pattern YEAR = Pattern.compile("(\\d{4})");
 
     private final Http http;
-    private final ObjectMapper json = new ObjectMapper();
     private final String base;
 
     public OpenLibraryLookup() {
@@ -66,30 +63,34 @@ public final class OpenLibraryLookup implements BookLookup {
         if (digits.isEmpty()) {
             return Optional.empty();
         }
-        Optional<JsonNode> edition = fetch(base + "/isbn/" + digits.get() + ".json");
-        Optional<JsonNode> data = fetch(base + "/api/books?bibkeys=ISBN:" + digits.get() + "&format=json&jscmd=data")
-                .map(node -> node.path("ISBN:" + digits.get()));
-        if (edition.isEmpty() && data.map(JsonNode::isMissingNode).orElse(true)) {
+        Optional<JsonIn> edition = fetch(base + "/isbn/" + digits.get() + ".json");
+        Optional<JsonIn> data = fetch(base + "/api/books?bibkeys=ISBN:" + digits.get() + "&format=json&jscmd=data")
+                .flatMap(body -> body.optionalObject("ISBN:" + digits.get()));
+        if (edition.isEmpty() && data.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(draft(isbn, edition.orElse(json.createObjectNode()), data.orElse(json.createObjectNode())));
+        return Optional.of(draft(isbn, edition.orElseGet(JsonIn::empty), data.orElseGet(JsonIn::empty)));
     }
 
-    private BookDraft draft(Identifier isbn, JsonNode edition, JsonNode data) {
-        Optional<JsonNode> work = workRecord(edition);
+    private BookDraft draft(Identifier isbn, JsonIn edition, JsonIn data) {
+        Optional<JsonIn> work = workRecord(edition);
 
-        String title = text(data, "title").or(() -> text(edition, "title")).orElse("Untitled");
+        String title = data.optionalText("title")
+                .or(() -> edition.optionalText("title"))
+                .orElse("Untitled");
         BookDraft.Builder draft = BookDraft.of(title, isbn, name())
-                .subtitle(text(data, "subtitle")
-                        .or(() -> text(edition, "subtitle"))
+                .subtitle(data.optionalText("subtitle")
+                        .or(() -> edition.optionalText("subtitle"))
                         .orElse(null))
-                .authors(names(data.path("authors")))
+                .authors(data.textsOrField("authors", "name"))
                 .translators(contributorsIn(edition, "translator"))
-                .publisher(firstName(data.path("publishers")).orElse(null))
-                .publishedYear(year(text(data, "publish_date").or(() -> text(edition, "publish_date"))))
-                .pages(integer(data, "number_of_pages").or(() -> integer(edition, "number_of_pages")))
+                .publisher(data.textsOrField("publishers", "name").stream()
+                        .findFirst()
+                        .orElse(null))
+                .publishedYear(year(data.optionalText("publish_date").or(() -> edition.optionalText("publish_date"))))
+                .pages(data.optionalInt("number_of_pages").or(() -> edition.optionalInt("number_of_pages")))
                 .language(language(edition))
-                .subjects(names(data.path("subjects")));
+                .subjects(data.textsOrField("subjects", "name"));
 
         series(edition).ifPresent(parts -> {
             draft.series(parts.name());
@@ -97,27 +98,24 @@ public final class OpenLibraryLookup implements BookLookup {
         });
 
         work.ifPresent(record -> {
-            text(record, "title").ifPresent(draft::originalTitle);
-            draft.originalYear(year(text(record, "first_publish_date")));
+            record.optionalText("title").ifPresent(draft::originalTitle);
+            draft.originalYear(year(record.optionalText("first_publish_date")));
         });
         return draft.build();
     }
 
-    private Optional<JsonNode> workRecord(JsonNode edition) {
-        JsonNode works = edition.path("works");
-        if (!works.isArray() || works.isEmpty()) {
-            return Optional.empty();
-        }
-        return text(works.get(0), "key").flatMap(key -> fetch(base + key + ".json"));
+    private Optional<JsonIn> workRecord(JsonIn edition) {
+        return edition.objects("works").stream()
+                .findFirst()
+                .flatMap(work -> work.optionalText("key"))
+                .flatMap(key -> fetch(base + key + ".json"));
     }
 
     /** Open Library writes languages as {@code {"key": "/languages/fre"}}, ISO 639-2/B. */
-    private static Optional<Language> language(JsonNode edition) {
-        JsonNode languages = edition.path("languages");
-        if (!languages.isArray() || languages.isEmpty()) {
-            return Optional.empty();
-        }
-        return text(languages.get(0), "key")
+    private static Optional<Language> language(JsonIn edition) {
+        return edition.objects("languages").stream()
+                .findFirst()
+                .flatMap(entry -> entry.optionalText("key"))
                 .map(key -> key.substring(key.lastIndexOf('/') + 1))
                 .flatMap(OpenLibraryLookup::toLanguage);
     }
@@ -131,10 +129,10 @@ public final class OpenLibraryLookup implements BookLookup {
     }
 
     /** {@code "contributions": ["Edith Grossman (Translator)"]} — the only place they appear. */
-    private static List<String> contributorsIn(JsonNode edition, String role) {
+    private static List<String> contributorsIn(JsonIn edition, String role) {
         List<String> found = new ArrayList<>();
-        for (JsonNode entry : edition.path("contributions")) {
-            Matcher matcher = CONTRIBUTION.matcher(entry.asText(""));
+        for (String entry : edition.texts("contributions")) {
+            Matcher matcher = CONTRIBUTION.matcher(entry);
             if (matcher.matches() && matcher.group(2).trim().equalsIgnoreCase(role)) {
                 found.add(matcher.group(1).trim());
             }
@@ -145,12 +143,12 @@ public final class OpenLibraryLookup implements BookLookup {
     private record Series(String name, String number) {}
 
     /** {@code "Collection Folio No. 2"} and {@code "The Farseer Trilogy, 1"} both occur. */
-    private static Optional<Series> series(JsonNode edition) {
-        JsonNode series = edition.path("series");
-        if (!series.isArray() || series.isEmpty()) {
+    private static Optional<Series> series(JsonIn edition) {
+        Optional<String> first = edition.texts("series").stream().findFirst();
+        if (first.isEmpty()) {
             return Optional.empty();
         }
-        String raw = series.get(0).asText("").trim();
+        String raw = first.get().trim();
         if (raw.isEmpty()) {
             return Optional.empty();
         }
@@ -162,22 +160,6 @@ public final class OpenLibraryLookup implements BookLookup {
         return Optional.of(new Series(raw, null));
     }
 
-    private static List<String> names(JsonNode array) {
-        List<String> values = new ArrayList<>();
-        for (JsonNode entry : array) {
-            String value =
-                    entry.isTextual() ? entry.asText() : entry.path("name").asText("");
-            if (!value.isBlank()) {
-                values.add(value.trim());
-            }
-        }
-        return values;
-    }
-
-    private static Optional<String> firstName(JsonNode array) {
-        return names(array).stream().findFirst();
-    }
-
     private static Optional<Integer> year(Optional<String> raw) {
         return raw.flatMap(value -> {
             Matcher matcher = YEAR.matcher(value);
@@ -185,26 +167,15 @@ public final class OpenLibraryLookup implements BookLookup {
         });
     }
 
-    private static Optional<String> text(JsonNode node, String field) {
-        JsonNode value = node.path(field);
-        return value.isTextual() && !value.asText().isBlank()
-                ? Optional.of(value.asText().trim())
-                : Optional.empty();
+    private Optional<JsonIn> fetch(String url) {
+        return http.get(url).flatMap(OpenLibraryLookup::parse);
     }
 
-    private static Optional<Integer> integer(JsonNode node, String field) {
-        JsonNode value = node.path(field);
-        return value.isNumber() ? Optional.of(value.asInt()) : Optional.empty();
-    }
-
-    private Optional<JsonNode> fetch(String url) {
-        return http.get(url).flatMap(this::parse);
-    }
-
-    private Optional<JsonNode> parse(String body) {
+    /** A payload we cannot parse is a miss, like any other. */
+    private static Optional<JsonIn> parse(String body) {
         try {
-            return Optional.of(json.readTree(body));
-        } catch (Exception e) {
+            return Optional.of(JsonIn.parse(body));
+        } catch (RuntimeException e) {
             return Optional.empty();
         }
     }

@@ -71,9 +71,11 @@ class AgentDirectoryTest {
                         "Penguin Random House",
                         Set.of("Penguin"))));
 
-        assertThat(clashing.conflicts()).singleElement().satisfies(conflict -> assertThat(conflict.toString())
-                .contains("penguin-books")
-                .contains("penguin-random-house"));
+        assertThat(clashing.conflicts())
+                .singleElement()
+                .satisfies(conflict -> assertThat(conflict.toString())
+                        .contains("penguin-books")
+                        .contains("penguin-random-house"));
     }
 
     @Test

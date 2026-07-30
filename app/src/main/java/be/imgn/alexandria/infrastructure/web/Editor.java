@@ -118,10 +118,12 @@ public final class Editor {
 
         router.get("/agents", request -> Router.Response.html(agents.list()));
         router.get("/agents/new", request -> Router.Response.html(agents.edit(Optional.empty())));
-        router.get("/agents/{id}", request -> service.catalog()
-                .agent(AgentId.of(request.param("id")))
-                .map(agent -> Router.Response.html(agents.edit(Optional.of(agent))))
-                .orElseGet(() -> Router.Response.error(404, "No agent " + request.param("id"))));
+        router.get(
+                "/agents/{id}",
+                request -> service.catalog()
+                        .agent(AgentId.of(request.param("id")))
+                        .map(agent -> Router.Response.html(agents.edit(Optional.of(agent))))
+                        .orElseGet(() -> Router.Response.error(404, "No agent " + request.param("id"))));
         router.post("/agents/{id}", request -> {
             service.save(agents.read(request.body()));
             return Router.Response.seeOther("/agents");
@@ -133,10 +135,12 @@ public final class Editor {
 
         router.get("/works", request -> Router.Response.html(works.list()));
         router.get("/works/new", request -> Router.Response.html(works.edit(Optional.empty())));
-        router.get("/works/{id}", request -> service.catalog()
-                .work(WorkId.of(request.param("id")))
-                .map(work -> Router.Response.html(works.edit(Optional.of(work))))
-                .orElseGet(() -> Router.Response.error(404, "No work " + request.param("id"))));
+        router.get(
+                "/works/{id}",
+                request -> service.catalog()
+                        .work(WorkId.of(request.param("id")))
+                        .map(work -> Router.Response.html(works.edit(Optional.of(work))))
+                        .orElseGet(() -> Router.Response.error(404, "No work " + request.param("id"))));
         router.post("/works/{id}", request -> {
             AgentResolution resolution = service.newResolution();
             Work work = works.read(request.body(), resolution);
@@ -150,10 +154,12 @@ public final class Editor {
 
         router.get("/manifestations", request -> Router.Response.html(manifestations.list()));
         router.get("/manifestations/new", request -> Router.Response.html(manifestations.edit(Optional.empty())));
-        router.get("/manifestations/{id}", request -> service.catalog()
-                .manifestation(ManifestationId.of(request.param("id")))
-                .map(manifestation -> Router.Response.html(manifestations.edit(Optional.of(manifestation))))
-                .orElseGet(() -> Router.Response.error(404, "No manifestation " + request.param("id"))));
+        router.get(
+                "/manifestations/{id}",
+                request -> service.catalog()
+                        .manifestation(ManifestationId.of(request.param("id")))
+                        .map(manifestation -> Router.Response.html(manifestations.edit(Optional.of(manifestation))))
+                        .orElseGet(() -> Router.Response.error(404, "No manifestation " + request.param("id"))));
         router.post("/manifestations/{id}", request -> {
             AgentResolution resolution = service.newResolution();
             Manifestation manifestation = manifestations.read(request.body(), resolution);
@@ -167,10 +173,12 @@ public final class Editor {
 
         router.get("/items", request -> Router.Response.html(items.list()));
         router.get("/items/new", request -> Router.Response.html(items.edit(Optional.empty())));
-        router.get("/items/{id}", request -> service.catalog()
-                .item(ItemId.of(request.param("id")))
-                .map(item -> Router.Response.html(items.edit(Optional.of(item))))
-                .orElseGet(() -> Router.Response.error(404, "No item " + request.param("id"))));
+        router.get(
+                "/items/{id}",
+                request -> service.catalog()
+                        .item(ItemId.of(request.param("id")))
+                        .map(item -> Router.Response.html(items.edit(Optional.of(item))))
+                        .orElseGet(() -> Router.Response.error(404, "No item " + request.param("id"))));
         router.post("/items/{id}", request -> {
             service.save(items.read(request.body()));
             return Router.Response.seeOther("/items");
@@ -181,9 +189,11 @@ public final class Editor {
         });
 
         router.get("/reports", request -> Router.Response.html(reports.index()));
-        router.get("/reports/{name}", request -> reports.show(request.param("name"))
-                .map(Router.Response::html)
-                .orElseGet(() -> Router.Response.error(404, "No report " + request.param("name"))));
+        router.get(
+                "/reports/{name}",
+                request -> reports.show(request.param("name"))
+                        .map(Router.Response::html)
+                        .orElseGet(() -> Router.Response.error(404, "No report " + request.param("name"))));
 
         router.get("/assets/{file}", request -> asset(request.param("file")));
     }

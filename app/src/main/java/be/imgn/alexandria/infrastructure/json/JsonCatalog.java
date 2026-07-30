@@ -11,10 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 
 import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
@@ -26,6 +24,10 @@ import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.domain.work.WorkId;
+import be.imgn.alexandria.infrastructure.json.codec.AgentCodec;
+import be.imgn.alexandria.infrastructure.json.codec.ItemCodec;
+import be.imgn.alexandria.infrastructure.json.codec.ManifestationCodec;
+import be.imgn.alexandria.infrastructure.json.codec.WorkCodec;
 
 /**
  * The catalogue as a directory of JSON files — one file per aggregate root, named after its id. These files are the
@@ -33,14 +35,16 @@ import be.imgn.alexandria.domain.work.WorkId;
  *
  * <p>The whole catalogue is held in memory. A personal library is thousands of records at most, so paying for indexes
  * or lazy loading would buy nothing.
+ *
+ * <p>Reading and writing go through the codecs in {@code json.codec}, which map each aggregate with an exhaustive
+ * switch over its sealed types. That is the point of them: a new variant is a compile error here rather than a runtime
+ * surprise on whichever file happens to contain it.
  */
 public final class JsonCatalog implements Catalog {
 
     private static final String SUFFIX = ".json";
 
     private final Path root;
-    private final ObjectMapper mapper = AlexandriaJson.mapper();
-    private final ObjectWriter writer = AlexandriaJson.writer();
 
     private final Map<AgentId, Agent> agents = new LinkedHashMap<>();
     private final Map<WorkId, Work> works = new LinkedHashMap<>();
@@ -62,10 +66,10 @@ public final class JsonCatalog implements Catalog {
         works.clear();
         manifestations.clear();
         items.clear();
-        readAll(dir("agents"), Agent.class).forEach(a -> agents.put(a.id(), a));
-        readAll(dir("works"), Work.class).forEach(w -> works.put(w.id(), w));
-        readAll(dir("manifestations"), Manifestation.class).forEach(m -> manifestations.put(m.id(), m));
-        readAll(dir("items"), Item.class).forEach(i -> items.put(i.id(), i));
+        readAll(dir("agents"), AgentCodec::read).forEach(a -> agents.put(a.id(), a));
+        readAll(dir("works"), WorkCodec::read).forEach(w -> works.put(w.id(), w));
+        readAll(dir("manifestations"), ManifestationCodec::read).forEach(m -> manifestations.put(m.id(), m));
+        readAll(dir("items"), ItemCodec::read).forEach(i -> items.put(i.id(), i));
     }
 
     @Override
@@ -120,25 +124,27 @@ public final class JsonCatalog implements Catalog {
     @Override
     public void save(Agent agent) {
         agents.put(agent.id(), agent);
-        write(dir("agents").resolve(agent.id().value() + SUFFIX), agent);
+        write(dir("agents").resolve(agent.id().value() + SUFFIX), AgentCodec.write(agent));
     }
 
     @Override
     public void save(Work work) {
         works.put(work.id(), work);
-        write(dir("works").resolve(work.id().value() + SUFFIX), work);
+        write(dir("works").resolve(work.id().value() + SUFFIX), WorkCodec.write(work));
     }
 
     @Override
     public void save(Manifestation manifestation) {
         manifestations.put(manifestation.id(), manifestation);
-        write(dir("manifestations").resolve(manifestation.id().value() + SUFFIX), manifestation);
+        write(
+                dir("manifestations").resolve(manifestation.id().value() + SUFFIX),
+                ManifestationCodec.write(manifestation));
     }
 
     @Override
     public void save(Item item) {
         items.put(item.id(), item);
-        write(dir("items").resolve(item.id().value() + SUFFIX), item);
+        write(dir("items").resolve(item.id().value() + SUFFIX), ItemCodec.write(item));
     }
 
     @Override
@@ -175,30 +181,38 @@ public final class JsonCatalog implements Catalog {
         return path;
     }
 
-    private <T> List<T> readAll(Path directory, Class<T> type) {
+    /**
+     * Reads every record in a directory with the codec for that aggregate.
+     *
+     * <p>The codec arrives as a function rather than a {@code Class} token, so the type is known at the call site and
+     * nothing has to be inferred at runtime.
+     */
+    private <T> List<T> readAll(Path directory, Function<String, T> codec) {
         try (Stream<Path> files = Files.list(directory)) {
             return files.filter(p -> p.getFileName().toString().endsWith(SUFFIX))
                     .sorted()
-                    .map(p -> read(p, type))
+                    .map(p -> read(p, codec))
                     .toList();
         } catch (IOException e) {
             throw new UncheckedIOException("cannot list " + directory, e);
         }
     }
 
-    private <T> T read(Path file, Class<T> type) {
+    private <T> T read(Path file, Function<String, T> codec) {
         try {
-            return mapper.readValue(file.toFile(), type);
+            return codec.apply(Files.readString(file, StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new UncheckedIOException("cannot read " + file + ": " + e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("cannot read " + file + ": " + e.getMessage(), e);
         }
     }
 
     /** Writes via a temporary file so an interrupted save cannot leave a half-written record. */
-    private void write(Path file, Object value) {
+    private void write(Path file, String json) {
         Path temporary = file.resolveSibling(file.getFileName() + ".tmp");
         try {
-            Files.writeString(temporary, writer.writeValueAsString(value) + "\n", StandardCharsets.UTF_8);
+            Files.writeString(temporary, json, StandardCharsets.UTF_8);
             Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new UncheckedIOException("cannot write " + file, e);

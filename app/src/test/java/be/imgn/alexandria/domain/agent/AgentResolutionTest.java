@@ -54,8 +54,9 @@ class AgentResolutionTest {
 
         resolution.resolve("Penguin Classics", AgentKind.ORGANISATION);
 
-        assertThat(resolution.created()).singleElement().satisfies(agent -> assertThat(agent.sortName())
-                .isEqualTo("Penguin Classics"));
+        assertThat(resolution.created())
+                .singleElement()
+                .satisfies(agent -> assertThat(agent.sortName()).isEqualTo("Penguin Classics"));
     }
 
     @Test

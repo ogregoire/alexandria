@@ -297,10 +297,11 @@ class ImportPagesTest {
 
         var work = catalog.work(WorkId.of("cervantes-don-quijote")).orElseThrow();
         assertThat(work.created().display()).isEqualTo("1605-1615");
-        assertThat(work.expressions()).singleElement().satisfies(expression -> assertThat(
-                        expression.realised().display())
-                .as("the translation is dated on its own, not borrowed from the work")
-                .isEqualTo("2003"));
+        assertThat(work.expressions())
+                .singleElement()
+                .satisfies(expression -> assertThat(expression.realised().display())
+                        .as("the translation is dated on its own, not borrowed from the work")
+                        .isEqualTo("2003"));
     }
 
     @Test

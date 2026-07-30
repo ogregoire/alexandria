@@ -64,9 +64,10 @@ class OpenLibraryLookupTest {
 
         BookDraft draft = new OpenLibraryLookup(http, "").byIsbn(ETRANGER).orElseThrow();
 
-        assertThat(draft.language()).hasValueSatisfying(language -> assertThat(language.code())
-                .as("/languages/fre must become fr")
-                .isEqualTo("fr"));
+        assertThat(draft.language())
+                .hasValueSatisfying(language -> assertThat(language.code())
+                        .as("/languages/fre must become fr")
+                        .isEqualTo("fr"));
     }
 
     @Test

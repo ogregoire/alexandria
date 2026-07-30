@@ -86,8 +86,9 @@ class EditorTest {
         assertThat(saved.title().full()).isEqualTo("The Hobbit : There and Back Again");
         assertThat(saved.byline()).isEqualTo("J. R. R. Tolkien");
         assertThat(saved.subjects()).containsExactly("fantasy", "quests");
-        assertThat(saved.expressions()).singleElement().satisfies(e -> assertThat(e.describe())
-                .isEqualTo("English (original)"));
+        assertThat(saved.expressions())
+                .singleElement()
+                .satisfies(e -> assertThat(e.describe()).isEqualTo("English (original)"));
         assertThat(root().resolve("works/tolkien-the-hobbit.json")).exists();
     }
 

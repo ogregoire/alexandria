@@ -55,10 +55,11 @@ public final class CatalogService {
         AgentDirectory others = AgentDirectory.of(catalog.agents().stream()
                 .filter(existing -> !existing.id().equals(agent.id()))
                 .toList());
-        agent.names().forEach(name -> others.resolve(name).ifPresent(clash -> {
-            throw new IllegalArgumentException(
-                    "'" + name + "' already belongs to " + clash.name() + " (" + clash.id() + ")");
-        }));
+        agent.names()
+                .forEach(name -> others.resolve(name).ifPresent(clash -> {
+                    throw new IllegalArgumentException(
+                            "'" + name + "' already belongs to " + clash.name() + " (" + clash.id() + ")");
+                }));
         catalog.save(agent);
     }
 

@@ -158,8 +158,9 @@ public final class BnfLookup implements BookLookup {
 
     /** "Gallimard (Paris)" — the place is not part of the name. */
     private static Optional<String> publisher(List<String> raw) {
-        return raw.stream().findFirst().map(value -> value.replaceAll("\\s*\\([^)]*\\)\\s*$", "")
-                .trim());
+        return raw.stream()
+                .findFirst()
+                .map(value -> value.replaceAll("\\s*\\([^)]*\\)\\s*$", "").trim());
     }
 
     private static Optional<Integer> pages(String extent) {
