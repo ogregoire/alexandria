@@ -157,7 +157,10 @@ public final class SiteGenerator {
                             """.formatted(
                                     Escape.html(credit.work().id().value()),
                                     Escape.html(credit.work().title().full()),
-                                    Escape.html(credit.describe()),
+                                    Escape.html(credit.role().label()
+                                            + credit.realisation()
+                                                    .map(language -> " · " + language)
+                                                    .orElse("")),
                                     Escape.html(credit.when().display())))
                     .collect(Collectors.joining());
             sections.append("""

@@ -43,10 +43,15 @@ public record Credit(Work work, Optional<Expression> expression, Role role, Stri
         return expression.map(Expression::realised).orElseGet(work::created);
     }
 
-    /** The role, qualified by the realisation when the credit is for one. */
-    public String describe() {
-        return expression
-                .map(realisation -> role.label() + " of the " + realisation.describe())
-                .orElse(role.label());
+    /**
+     * The language of the realisation contributed to, when the credit is for one.
+     *
+     * <p>Deliberately just the language rather than the expression's full description. On a translator's own page,
+     * "translated from English by Daniel Lauzon" tells the reader nothing they did not already know and reads as though
+     * "the French" were the thing translated. What is missing from a bare role is which realisation, and the language
+     * says that in one word.
+     */
+    public Optional<String> realisation() {
+        return expression.map(realised -> realised.language().displayName());
     }
 }

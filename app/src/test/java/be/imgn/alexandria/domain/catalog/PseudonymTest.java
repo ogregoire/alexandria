@@ -131,11 +131,12 @@ class PseudonymTest {
         assertThat(translatorCredit.when().display())
                 .as("the translator by the translation, not by when the work was written")
                 .isEqualTo("2007");
-        assertThat(translatorCredit.describe())
-                .as("and the credit says which realisation it is for")
-                .contains("translator")
+        assertThat(translatorCredit.realisation())
+                .as("named by its language, not by a sentence restating the translator")
                 .contains("French");
-        assertThat(authorCredit.describe()).isEqualTo("author");
+        assertThat(authorCredit.realisation())
+                .as("a credit on the work itself has no realisation to name")
+                .isEmpty();
     }
 
     @Test

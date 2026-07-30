@@ -119,7 +119,10 @@ final class AgentPages {
                                     "/works/" + credit.work().id().value(),
                                     credit.work().title().main()))
                             .append(" <span class=\"hint\">")
-                            .append(Html.escape(credit.describe()))
+                            .append(Html.escape(credit.role().label()))
+                            .append(credit.realisation()
+                                    .map(language -> " · " + Html.escape(language))
+                                    .orElse(""))
                             .append(" · ")
                             .append(Html.escape(credit.when().display()))
                             .append("</span></li>"));
