@@ -2,6 +2,7 @@ package be.imgn.alexandria.domain.shared;
 
 import java.text.Normalizer;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -26,7 +27,21 @@ public final class Slug {
     }
 
     public static String of(String text) {
-        Guard.notBlank(text, "text");
+        return candidate(text)
+                .orElseThrow(() -> new IllegalArgumentException("'" + text + "' does not yield a usable slug"));
+    }
+
+    /**
+     * The slug for this text, when it has one.
+     *
+     * <p>Not every string names something: a value a catalogue filled with punctuation — Open Library files Rivages as
+     * "Rivages *" — reduces to nothing at all. Callers merely <em>suggesting</em> an identifier want an empty answer
+     * there; only callers that must have one should reach for {@link #of} and its exception.
+     */
+    public static Optional<String> candidate(String text) {
+        if (text == null || text.isBlank()) {
+            return Optional.empty();
+        }
         String ascii = Normalizer.normalize(text, Normalizer.Form.NFD);
         ascii = DIACRITICS.matcher(ascii).replaceAll("");
         String slug = NON_SLUG.matcher(ascii.toLowerCase(Locale.ROOT)).replaceAll("-");
@@ -34,10 +49,7 @@ public final class Slug {
         if (slug.length() > MAX_SEGMENT) {
             slug = trimDashes(slug.substring(0, MAX_SEGMENT));
         }
-        if (slug.isEmpty()) {
-            throw new IllegalArgumentException("'" + text + "' does not yield a usable slug");
-        }
-        return slug;
+        return slug.isEmpty() ? Optional.empty() : Optional.of(slug);
     }
 
     private static String trimDashes(String value) {

@@ -117,7 +117,10 @@ public record NameForm(String display, String sortName, String filingWord) {
     public static NameForm ofOrganisation(String raw) {
         String name = collapse(raw);
         List<String> words = new ArrayList<>(List.of(name.split(" ")));
-        while (words.size() > 1 && isOrganisationType(words.getLast())) {
+        // Catalogues carry marks that are not part of the name: Open Library files Rivages as
+        // "Rivages *". A trailing token with no letter or digit in it cannot be what the
+        // publisher files under, so it is dropped rather than becoming the identifier.
+        while (words.size() > 1 && (isOrganisationType(words.getLast()) || isPunctuation(words.getLast()))) {
             words.removeLast();
         }
         return new NameForm(name, name, filingWordOf(words.getLast()));
@@ -135,6 +138,10 @@ public record NameForm(String display, String sortName, String filingWord) {
 
     private static boolean isOrganisationType(String word) {
         return ORGANISATION_TYPES.contains(strip(word)) || "&".equals(word);
+    }
+
+    private static boolean isPunctuation(String word) {
+        return word.codePoints().noneMatch(Character::isLetterOrDigit);
     }
 
     /** Compares on letters alone, so "éditeur", "Ltd." and "Co." all match their entry. */

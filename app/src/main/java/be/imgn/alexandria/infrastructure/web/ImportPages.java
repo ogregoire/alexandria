@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import be.imgn.alexandria.application.CatalogService;
@@ -439,33 +440,49 @@ final class ImportPages {
 
     // --------------------------------------------------- id suggestions
 
+    // These propose an identifier from what a provider sent. A provider sends what it has, which
+    // is sometimes punctuation — Open Library files Rivages as "Rivages *". A suggestion that
+    // cannot be made is simply not made: the field is left for the user to fill. It must never
+    // throw, because a lookup that reaches the editor as an error has broken the one rule the
+    // import form has — it prefills, and the user corrects it.
+
     private static String suggestWorkId(String author, String title) {
-        if (title.isBlank()) {
+        Optional<String> stem = Slug.candidate(title);
+        if (stem.isEmpty()) {
             return "";
         }
-        String surname =
-                author.isBlank() ? "" : Slug.of(NameForm.ofPerson(author).filingWord()) + "-";
-        return surname + Slug.of(title);
+        return filingSlug(author, NameForm::ofPerson)
+                .map(surname -> surname + "-" + stem.orElseThrow())
+                .orElseGet(stem::orElseThrow);
     }
 
     /** "grossman-en" for a translation, "original-fr" otherwise. */
     private static String suggestExpressionId(String translator, Language language, boolean translated) {
         String code = language == null ? "xx" : language.code();
-        if (translated && !translator.isBlank()) {
-            return Slug.of(NameForm.ofPerson(translator).filingWord()) + "-" + code;
+        if (translated) {
+            Optional<String> surname = filingSlug(translator, NameForm::ofPerson);
+            if (surname.isPresent()) {
+                return surname.orElseThrow() + "-" + code;
+            }
         }
         return (translated ? "translation-" : "original-") + code;
     }
 
     private static String suggestManifestationId(BookDraft draft, String title) {
         List<String> parts = new ArrayList<>();
-        if (!title.isBlank()) {
-            parts.add(Slug.of(title));
-        }
+        Slug.candidate(title).ifPresent(parts::add);
         draft.publisher()
-                .ifPresent(publisher ->
-                        parts.add(Slug.of(NameForm.ofOrganisation(publisher).filingWord())));
+                .flatMap(publisher -> filingSlug(publisher, NameForm::ofOrganisation))
+                .ifPresent(parts::add);
         draft.publishedYear().ifPresent(year -> parts.add(String.valueOf(year)));
-        return parts.isEmpty() ? "" : String.join("-", parts);
+        return String.join("-", parts);
+    }
+
+    /** The slug of the word a name files under, when the name has one to give. */
+    private static Optional<String> filingSlug(String raw, Function<String, NameForm> reading) {
+        if (raw == null || raw.isBlank()) {
+            return Optional.empty();
+        }
+        return Slug.candidate(reading.apply(raw).filingWord());
     }
 }

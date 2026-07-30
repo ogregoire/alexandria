@@ -315,6 +315,35 @@ class ImportPagesTest {
     }
 
     @Test
+    void prefillsEvenWhenTheProviderPunctuatesTheName() throws Exception {
+        // Open Library really does file Rivages as "Rivages *" — this is the payload for
+        // ISBN 2-86930-898-1. The asterisk used to reach the slug and answer the import with a
+        // 400 instead of a form.
+        BookDraft starred = BookDraft.of("La Roue du Temps", ISBN, "Stub Library")
+                .authors(List.of("Robert Jordan"))
+                .publisher("Rivages *")
+                .publishedYear(Optional.of(1995))
+                .language(Optional.of(new Language("fr")))
+                .build();
+        Editor other = new Editor(new CatalogService(catalog), stub(starred));
+        String otherBase = "http://127.0.0.1:" + other.start(0);
+        try {
+            HttpResponse<String> response = postTo(otherBase, "/import", Map.of("isbn", "9780060188702"));
+
+            assertThat(response.statusCode())
+                    .as("a provider's punctuation is something to correct on the form, not an error")
+                    .isEqualTo(200);
+            assertThat(response.body())
+                    .as("the edition files under Rivages, the asterisk dropped")
+                    .contains("value=\"la-roue-du-temps-rivages-1995\"")
+                    .as("while the name itself is shown as the provider sent it, for the user to fix")
+                    .contains("value=\"Rivages *\"");
+        } finally {
+            other.stop();
+        }
+    }
+
+    @Test
     void derivesIdentifiersFromTheSurnameEvenWhenTheProviderInvertsTheName() throws Exception {
         // A library catalogue hands out "Tolkien, John Ronald Reuel"; the surname is Tolkien.
         BookDraft inverted = BookDraft.of("Le seigneur des anneaux", ISBN, "Stub Library")

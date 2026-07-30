@@ -113,4 +113,13 @@ class NameFormTest {
                 .isEqualTo("Penguin");
         assertThat(NameForm.of("Penguin Books", AgentKind.PERSON).filingWord()).isEqualTo("Books");
     }
+
+    @Test
+    void dropsACataloguesPunctuationFromAnOrganisationsFilingWord() {
+        // Open Library files Rivages as "Rivages *".
+        assertThat(NameForm.ofOrganisation("Rivages *").filingWord()).isEqualTo("Rivages");
+        assertThat(NameForm.ofOrganisation("Rivages *").display())
+                .as("the name is still shown the way the catalogue sent it")
+                .isEqualTo("Rivages *");
+    }
 }
