@@ -247,8 +247,15 @@ class EditorTest {
 
     @Test
     void servesItsOwnAssets() throws Exception {
-        assertThat(get("/assets/editor.css").body()).contains("--paper");
+        assertThat(get("/assets/editor.css").body()).contains("editor");
         assertThat(get("/assets/editor.js").body()).contains("data-variant-of");
+    }
+
+    @Test
+    void servesTheTokensSharedWithThePublishedSite() throws Exception {
+        // editor.css imports it by relative URL, so the same /assets route has to reach outside
+        // /web to the one copy both surfaces read.
+        assertThat(get("/assets/tokens.css").body()).contains("--color-paper");
     }
 
     @Test

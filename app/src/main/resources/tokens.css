@@ -1,0 +1,114 @@
+/* Hallmark · tokens · genre: editorial · theme: Almanac (light paper · roman-serif display · warm accent)
+ * anchor hue 60–85 warm · accent oklch(45% 0.115 38) terracotta, carried over from the hand-written palette
+ *
+ * Shared by both surfaces: the static catalogue (catalog.css) and the local editor (editor.css).
+ * One file so the two cannot drift apart. Every colour and every font in either stylesheet
+ * references a token from here — no inline hex, no bare font-family.
+ */
+
+:root {
+  /* ---------------------------------------------------------------- colour
+   * OKLCH throughout: lightness is perceptual, so a step of 4% reads as a step of 4%
+   * whatever the hue. Every neutral carries a trace of the accent's warmth — a warm
+   * accent over cool greys is the mismatch nobody can name but everybody sees.
+   */
+  --color-paper: oklch(97.5% 0.008 85);
+  --color-paper-2: oklch(95% 0.01 82);
+  --color-paper-3: oklch(92% 0.012 80);
+  --color-rule: oklch(86% 0.012 80);
+  --color-rule-2: oklch(78% 0.014 75);
+  /* The edge of a control the user is meant to aim at — measured 3.4:1 against paper, so it
+   * clears WCAG 1.4.11. Deliberately darker than --color-rule: a separator between two rows
+   * of a list is decoration and may stay a hairline, but the boundary of an input is
+   * information, and someone has to be able to see where the field starts. */
+  --color-control-edge: oklch(62% 0.016 70);
+  --color-neutral: oklch(52% 0.014 60);
+  --color-muted: oklch(44% 0.014 55);
+  --color-ink-2: oklch(32% 0.012 50);
+  --color-ink: oklch(21% 0.01 60);
+
+  --color-accent: oklch(45% 0.115 38);
+  /* Text to use whenever --color-accent fills a surface. Never hardcode white. */
+  --color-accent-ink: oklch(97.5% 0.008 85);
+  /* Offset 2px from its element, so the ring always lands on paper and stays readable
+   * even around an accent-filled button. */
+  --color-focus: oklch(55% 0.18 35);
+
+  --color-error: oklch(48% 0.17 25);
+  --color-ok: oklch(45% 0.1 150);
+
+  /* ------------------------------------------------------------ typography
+   * Three registers, each tied to a kind of content, all from stacks already on the
+   * machine — this catalogue ships zero dependencies and must open from file://.
+   *   display — titles, mastheads, headings. The library's voice.
+   *   body    — labels, navigation, prose, form controls. Gets out of the way.
+   *   data    — ISBNs, slugs, shelf marks, dates, counts. Anything you compare down a column.
+   */
+  --font-display: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-data: ui-monospace, SFMono-Regular, "SF Mono", Menlo, "Cascadia Mono", "Liberation Mono", monospace;
+
+  /* Major third, 1.25, from a 16px body. */
+  --text-xs: 0.64rem;
+  --text-sm: 0.8rem;
+  --text-base: 1rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.5625rem;
+  --text-xl: 1.9531rem;
+  --text-2xl: 2.4414rem;
+  --text-display: clamp(2rem, 4vw + 0.75rem, 3.0518rem);
+
+  /* ---------------------------------------------------------------- space
+   * 4pt base, named by role. Nine steps is more than this catalogue needs, which is the
+   * point: the rhythm varies because the scale offers somewhere to vary to.
+   */
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  --page-gutter: clamp(1rem, 4vw, 2.5rem);
+
+  /* ---------------------------------------------------------------- detail */
+  --rule-hair: 1px;
+  --radius: 3px;
+  --control-height: 2.75rem; /* 44px — the touch floor, shared by every input and button */
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --dur-micro: 100ms;
+  --dur-short: 180ms;
+
+  --z-base: 1;
+  --z-sticky: 200;
+}
+
+/* Dark mode moves lightness and chroma only — never the hue. Paper sits at 15%, not near
+ * black; surfaces get lighter as they rise, and the accent lifts and desaturates so it
+ * stays legible without glowing. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: oklch(15% 0.01 60);
+    --color-paper-2: oklch(18% 0.011 60);
+    --color-paper-3: oklch(22% 0.012 60);
+    --color-rule: oklch(32% 0.012 60);
+    --color-rule-2: oklch(40% 0.014 60);
+    --color-control-edge: oklch(52% 0.016 65);
+    --color-neutral: oklch(62% 0.012 65);
+    --color-muted: oklch(72% 0.011 70);
+    --color-ink-2: oklch(85% 0.008 75);
+    --color-ink: oklch(93% 0.007 80);
+
+    --color-accent: oklch(74% 0.105 40);
+    --color-accent-ink: oklch(16% 0.01 60);
+    --color-focus: oklch(74% 0.15 40);
+
+    --color-error: oklch(72% 0.13 25);
+    --color-ok: oklch(72% 0.09 150);
+  }
+}

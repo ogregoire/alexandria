@@ -222,8 +222,6 @@ public final class Editor {
                   <a class="tile" href="/items"><strong>%d</strong><span>items</span></a>
                 </div>
                 <p><a class="button" href="/import">Add a book from its ISBN</a></p>
-                <p>Saving writes a JSON file under <code>data/</code>. Commit that file and the
-                   change is in the catalogue's history.</p>
                 """.formatted(
                         problems,
                         counts.get("agents"),
@@ -234,8 +232,10 @@ public final class Editor {
     }
 
     private Router.Response asset(String file) {
-        String resource = "/web/" + file;
-        try (InputStream in = Editor.class.getResourceAsStream(resource)) {
+        // Editor-only assets live under /web; tokens.css sits at the root because the published
+        // site serves the same file, and one copy is the only way the two cannot drift apart.
+        try (InputStream in = Optional.<InputStream>ofNullable(Editor.class.getResourceAsStream("/web/" + file))
+                .orElseGet(() -> Editor.class.getResourceAsStream("/" + file))) {
             if (in == null) {
                 return Router.Response.error(404, "No asset " + file);
             }

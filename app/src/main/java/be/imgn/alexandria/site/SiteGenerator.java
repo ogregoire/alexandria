@@ -52,6 +52,7 @@ public final class SiteGenerator {
             Files.createDirectories(output.resolve("agents"));
             written.add(write(output.resolve("index.html"), indexPage()));
             written.add(write(output.resolve("search-index.json"), searchIndex()));
+            written.add(write(output.resolve("tokens.css"), resource("/tokens.css")));
             written.add(write(output.resolve("catalog.css"), resource("/site/catalog.css")));
             written.add(write(output.resolve("catalog.js"), resource("/site/catalog.js")));
             for (Work work : catalog.works()) {
@@ -68,10 +69,15 @@ public final class SiteGenerator {
 
     // ------------------------------------------------------------- pages
 
+    /**
+     * The index is the whole site: one search field over two tracks. Agents are a track of their own rather than a
+     * detail of the works, because "who translated this" is as good a way into a catalogue as "what do I own" — and
+     * because an agent page that nothing links to may as well not have been generated.
+     */
     private String indexPage() {
-        String rows = catalog.works().stream()
+        String works = catalog.works().stream()
                 .map(work -> """
-                <li class="entry" data-id="%s">
+                <li class="entry" data-id="work:%s">
                   <a class="title" href="works/%s.html">%s</a>
                   <p class="meta">%s · %s · %s</p>
                   <p class="holdings">%s</p>
@@ -86,20 +92,55 @@ public final class SiteGenerator {
                                 Escape.html(holdingsSummary(work))))
                 .collect(Collectors.joining());
 
-        return shell("The library", ".", """
-                <h1>The library</h1>
-                <p class="lede">%d works, %d expressions, %d manifestations, %d items.</p>
-                <input type="search" id="q" placeholder="Search title, author, translator, publisher, subject…"
-                       autocomplete="off" autofocus>
-                <p class="count" id="count"></p>
-                <ul class="entries" id="entries">%s</ul>
-                <p class="empty" id="empty" hidden>Nothing matches.</p>
+        String people = catalog.agents().stream()
+                .sorted(Comparator.comparing(Agent::sortName))
+                .map(agent -> """
+                <li class="person" data-id="agent:%s">
+                  <a href="agents/%s.html">%s</a>
+                  <span class="role">%s</span>
+                </li>
                 """.formatted(
-                catalog.works().size(),
-                catalog.works().stream().mapToInt(w -> w.expressions().size()).sum(),
-                catalog.manifestations().size(),
-                catalog.items().size(),
-                rows));
+                                Escape.html(agent.id().value()),
+                                Escape.html(agent.id().value()),
+                                Escape.html(agent.name()),
+                                Escape.html(standingOf(agent))))
+                .collect(Collectors.joining());
+
+        return shell("The library", ".", """
+                <form class="find" role="search" onsubmit="return false">
+                  <label for="q">Search</label>
+                  <input type="search" id="q" autocomplete="off" autofocus
+                         placeholder="A title, a name, a publisher, a subject, a shelf…">
+                  <p class="count" id="count"></p>
+                </form>
+                <section class="track" data-track="works" data-one="work">
+                  <h2>Works</h2>
+                  <ul class="entries">%s</ul>
+                </section>
+                <section class="track" data-track="agents" data-one="agent">
+                  <h2>Agents</h2>
+                  <ul class="entries">%s</ul>
+                </section>
+                <p class="empty" id="empty" hidden>Nothing matches.</p>
+                """.formatted(works, people), true);
+    }
+
+    /** "1 work", "12 works" — a catalogue holding one of something should not read as a bug. */
+    private static String count(int n, String noun) {
+        return n + " " + noun + (n == 1 ? "" : "s");
+    }
+
+    /** What an agent is in this catalogue: the roles they are credited in, or their kind when nothing credits them. */
+    private String standingOf(Agent agent) {
+        List<String> roles = new ArrayList<>(catalog.creditsOf(agent.id()).stream()
+                .map(credit -> credit.role().label())
+                .distinct()
+                .sorted()
+                .toList());
+        if (!catalog.publishedBy(agent.id()).isEmpty()) {
+            roles.add("publisher");
+        }
+        return roles.isEmpty() ? agent.kind().label() : String.join(", ", roles);
     }
 
     private String workPage(Work work) {
@@ -163,15 +204,20 @@ public final class SiteGenerator {
                                                     .orElse("")),
                                     Escape.html(credit.when().display())))
                     .collect(Collectors.joining());
+            // "as Robin Hobb" earns its heading only when there is more than one name to tell
+            // apart. On someone who published under one name it just says their name twice.
+            String heading = byName.size() == 1
+                    ? ""
+                    : "<h2>as %s%s</h2>"
+                            .formatted(
+                                    Escape.html(name),
+                                    name.equals(agent.name()) ? "" : " <span class=\"detail\">— other name</span>");
             sections.append("""
                     <section class="as">
-                      <h2>as %s%s</h2>
+                      %s
                       <ul class="works">%s</ul>
                     </section>
-                    """.formatted(
-                            Escape.html(name),
-                            name.equals(agent.name()) ? "" : " <span class=\"detail\">— other name</span>",
-                            works));
+                    """.formatted(heading, works));
         });
 
         List<Manifestation> published = catalog.publishedBy(agent.id());
@@ -268,7 +314,7 @@ public final class SiteGenerator {
      * not have to guess the form the catalogue prefers.
      */
     private String searchIndex() {
-        String entries = catalog.works().stream()
+        String workEntries = catalog.works().stream()
                 .map(work -> {
                     Set<String> terms = new LinkedHashSet<>();
                     terms.add(work.title().full());
@@ -294,14 +340,37 @@ public final class SiteGenerator {
                         }
                     }
                     return """
-                    {"id":%s,"title":%s,"author":%s,"text":%s}""".formatted(
-                                    json(work.id().value()),
-                                    json(work.title().full()),
-                                    json(work.byline()),
+                    {"id":%s,"text":%s}""".formatted(
+                                    json("work:" + work.id().value()),
                                     json(String.join(" ", terms).toLowerCase(Locale.ROOT)));
                 })
                 .collect(Collectors.joining(",\n  "));
-        return "[\n  " + entries + "\n]\n";
+
+        String agentEntries = catalog.agents().stream()
+                .sorted(Comparator.comparing(Agent::sortName))
+                .map(agent -> {
+                    Set<String> terms = new LinkedHashSet<>();
+                    agent.names().forEach(terms::add);
+                    terms.add(agent.sortName());
+                    terms.add(agent.kind().label());
+                    terms.add(standingOf(agent));
+                    // The titles they are credited on, so "who translated the Ring" reaches the person too.
+                    catalog.creditsOf(agent.id()).forEach(credit -> {
+                        terms.add(credit.work().title().full());
+                        terms.add(credit.publishedAs());
+                        credit.realisation().ifPresent(terms::add);
+                    });
+                    catalog.publishedBy(agent.id())
+                            .forEach(edition -> terms.add(edition.title().full()));
+                    return """
+                    {"id":%s,"text":%s}""".formatted(
+                                    json("agent:" + agent.id().value()),
+                                    json(String.join(" ", terms).toLowerCase(Locale.ROOT)));
+                })
+                .collect(Collectors.joining(",\n  "));
+
+        String all = agentEntries.isEmpty() ? workEntries : workEntries + ",\n  " + agentEntries;
+        return "[\n  " + all + "\n]\n";
     }
 
     /** The author line, each name linking to the agent behind it. */
@@ -353,24 +422,62 @@ public final class SiteGenerator {
 
     // ------------------------------------------------------------ layout
 
-    private static String shell(String title, String root, String body) {
+    /**
+     * The masthead names the catalogue on every page and the colophon closes it with what the catalogue actually is — a
+     * count of records and the file they came from. Neither invents anything: both are read off the catalogue.
+     */
+    private String shell(String title, String root, String body) {
+        return shell(title, root, body, false);
+    }
+
+    /**
+     * @param wordmarkLeads true on the index, where the catalogue's own name is the page's subject and so its
+     *     {@code h1}. On a record page the record is the subject, so the wordmark steps down to a paragraph and the
+     *     record keeps the {@code h1} — headings stay in order either way.
+     */
+    private String shell(String title, String root, String body, boolean wordmarkLeads) {
+        int expressions =
+                catalog.works().stream().mapToInt(w -> w.expressions().size()).sum();
         return """
                 <!doctype html>
                 <html lang="en">
                 <head>
                   <meta charset="utf-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1">
+                  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
                   <title>%s — Alexandria</title>
                   <link rel="stylesheet" href="%s/catalog.css">
                 </head>
                 <body>
+                  <header class="mast">
+                    <%s class="mast-name"><a href="%s/index.html">Alexandria</a></%s>
+                    <p class="mast-line">%s · %s</p>
+                    <hr class="mast-rule" aria-hidden="true">
+                  </header>
                   <main>
                 %s
                   </main>
+                  <footer class="colophon">
+                    <p>%s · %s · %s · %s · %s.
+                       A personal catalogue after IFLA-LRM, kept as JSON and rendered without a database.</p>
+                  </footer>
                   <script src="%s/catalog.js"></script>
                 </body>
                 </html>
-                """.formatted(Escape.html(title), root, body, root);
+                """.formatted(
+                        Escape.html(title),
+                        root,
+                        wordmarkLeads ? "h1" : "p",
+                        root,
+                        wordmarkLeads ? "h1" : "p",
+                        count(catalog.works().size(), "work"),
+                        count(catalog.agents().size(), "agent"),
+                        body,
+                        count(catalog.works().size(), "work"),
+                        count(expressions, "expression"),
+                        count(catalog.manifestations().size(), "manifestation"),
+                        count(catalog.items().size(), "item"),
+                        count(catalog.agents().size(), "agent"),
+                        root);
     }
 
     private String holdingsSummary(Work work) {

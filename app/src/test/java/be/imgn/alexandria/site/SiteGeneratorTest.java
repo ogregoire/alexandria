@@ -33,6 +33,23 @@ class SiteGeneratorTest {
         assertThat(output.resolve("search-index.json")).exists();
         assertThat(output.resolve("catalog.css")).exists();
         assertThat(output.resolve("catalog.js")).exists();
+        assertThat(output.resolve("tokens.css")).exists();
+    }
+
+    @Test
+    void reachesAgentsFromTheIndexAndTheSearch(@TempDir Path root, @TempDir Path output) throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+
+        new SiteGenerator(catalog).generateInto(output);
+        String index = Files.readString(output.resolve("index.html"));
+        String search = Files.readString(output.resolve("search-index.json"));
+
+        assertThat(index)
+                .as("the people track links every agent page the generator wrote")
+                .contains("agents/edith-grossman.html");
+        assertThat(search)
+                .as("and searching a translator's name matches the translator, not only the book")
+                .contains("\"agent:edith-grossman\"");
     }
 
     @Test

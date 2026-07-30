@@ -28,19 +28,23 @@ public final class Html {
                 <body>
                   <header>
                     <a class="brand" href="/">Alexandria</a>
-                    <nav>
-                      <a href="/import">Add from ISBN</a>
-                      <a href="/agents">Agents</a>
+                    <nav aria-label="Primary">
                       <a href="/works">Works</a>
                       <a href="/manifestations">Manifestations</a>
                       <a href="/items">Items</a>
+                      <a href="/agents">Agents</a>
                       <a href="/reports">Reports</a>
+                      <a class="primary" href="/import">Add from ISBN</a>
                     </nav>
                   </header>
                   <main>
                     <p class="crumb">%s</p>
                     %s
                   </main>
+                  <footer class="foot">
+                    <p>Saving writes a JSON file under your data directory · commit it and the
+                       change is in the catalogue's history</p>
+                  </footer>
                   <script src="/assets/editor.js"></script>
                 </body>
                 </html>

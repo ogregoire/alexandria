@@ -1,0 +1,24 @@
+[
+  {
+    "date": "2026-07-30",
+    "surface": "app/src/main/resources/web/editor.css",
+    "macrostructure": "none (app scope — the editor is a tool, not a page)",
+    "theme": "Almanac",
+    "theme_axes": "light paper / roman-serif display / warm accent",
+    "nav": "N1b canonical three-section",
+    "footer": "Ft2 inline single line",
+    "enrichment": "none",
+    "brief": "Alexandria local editor — data entry over a WEMI catalogue"
+  },
+  {
+    "date": "2026-07-30",
+    "surface": "app/src/main/resources/site/catalog.css",
+    "macrostructure": "Index-First",
+    "theme": "Almanac",
+    "theme_axes": "light paper / roman-serif display / warm accent",
+    "nav": "N6 newspaper masthead",
+    "footer": "Ft4 dense colophon",
+    "enrichment": "none",
+    "brief": "Alexandria published catalogue — GitHub Pages, works and agents in one index"
+  }
+]

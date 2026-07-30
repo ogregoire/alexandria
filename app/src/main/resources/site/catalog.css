@@ -1,85 +1,379 @@
-:root {
-  --ink: #1c1a17;
-  --paper: #faf8f4;
-  --rule: #ded7ca;
-  --muted: #6f6759;
-  --accent: #7a3b2e;
+/* Hallmark · genre: editorial · macrostructure: Index-First · theme: Almanac
+ * nav: N6 Newspaper masthead (knobs: issue-line=below wordmark, wordmark=xl, rule=double)
+ * footer: Ft4 Dense colophon (knobs: family=data/mono, layout=single block, includes=counts+date)
+ * enrichment: none — typography only · motion: none (Index-First is motion-off; Almanac is 0.85x)
+ * pre-emit critique: P5 H5 E4 S5 R5 V4
+ *
+ * The page is the index. No hero, no narrative: a masthead, one search field, and the
+ * catalogue itself in hairline-ruled rows. Two tracks — works and people — because a
+ * catalogue is as much a directory of who made things as a list of the things.
+ */
+
+@import url("tokens.css");
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #ece7de;
-    --paper: #16150f;
-    --rule: #3a352d;
-    --muted: #9c9486;
-    --accent: #d99178;
-  }
+/* clip, not hidden: hidden would create a scroll container and break sticky descendants. */
+html,
+body {
+  overflow-x: clip;
 }
-
-* { box-sizing: border-box; }
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font: 17px/1.6 ui-serif, Georgia, "Iowan Old Style", serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
 }
 
-main { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
-
-h1 { font-weight: 500; font-size: 1.9rem; letter-spacing: -0.01em; margin: 0 0 0.35rem; }
-h3 { font-weight: 600; font-size: 1rem; margin: 0 0 0.4rem; }
-
-a { color: var(--accent); }
-
-.lede, .meta, .count, .hint { color: var(--muted); font-size: 0.92rem; }
-.meta { margin: 0 0 1.5rem; }
-.crumb { font-size: 0.85rem; margin: 0 0 1.5rem; }
-
-#q {
-  width: 100%;
-  margin: 1.5rem 0 0.5rem;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
+/* Weight compensates for the optical gain of light text on dark. */
+@media (prefers-color-scheme: dark) {
+  body {
+    font-weight: 350;
+  }
 }
 
-.count { margin: 0 0 1.5rem; }
+main {
+  max-width: 48rem;
+  margin: 0 auto;
+  /* Generous top, tight bottom — the rhythm is deliberately uneven. */
+  padding: var(--space-xl) var(--page-gutter) var(--space-2xl);
+}
 
-.entries { list-style: none; padding: 0; margin: 0; }
+a {
+  color: var(--color-accent);
+  text-decoration-thickness: var(--rule-hair);
+  text-underline-offset: 0.18em;
+}
 
-.entry { padding: 1rem 0; border-top: 1px solid var(--rule); }
-.entry .title { font-size: 1.1rem; text-decoration: none; }
-.entry .title:hover { text-decoration: underline; }
-.entry p { margin: 0.2rem 0 0; }
-.holdings { color: var(--muted); font-size: 0.85rem; }
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
 
-.subjects { margin: 0 0 2rem; }
-.tag {
-  display: inline-block;
-  font-size: 0.75rem;
+/* ------------------------------------------------------------------ masthead */
+
+.mast {
+  display: grid;
+  gap: var(--space-2xs);
+  padding: var(--space-lg) var(--page-gutter) 0;
+  text-align: center;
+}
+
+.mast-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.75rem, 5vw, 2.4414rem);
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.mast-name a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mast-line {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.1em;
+}
+
+.mast-rule {
+  height: 4px;
+  margin: var(--space-sm) 0 0;
+  border: 0;
+  border-top: var(--rule-hair) solid var(--color-rule);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+/* ------------------------------------------------------------------ search */
+
+/* main already opens with --space-xl; the field sits directly under the rule. */
+.find {
+  margin: 0 0 var(--space-lg);
+}
+
+.find label {
+  display: block;
+  margin-bottom: var(--space-2xs);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted);
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  padding: 0.1rem 0.6rem;
 }
 
-.expression { border-top: 1px solid var(--rule); padding: 1.25rem 0 0.5rem; }
-.contributors { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.6rem; }
+/* Border width is 1px in every state; the outline slot is reserved at 2px transparent so
+ * the focus ring cannot shift the box. */
+#q {
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 var(--space-sm);
+  border: var(--rule-hair) solid var(--color-control-edge);
+  border-radius: var(--radius);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  transition: background-color var(--dur-short) var(--ease-out);
+}
 
-.edition { border-left: 2px solid var(--rule); padding: 0.1rem 0 0.1rem 1rem; margin: 0 0 1rem; }
-.imprint { margin: 0; font-size: 0.95rem; }
-.series, .copy, .none { color: var(--muted); font-size: 0.88rem; margin: 0.15rem 0 0; }
+#q::placeholder {
+  color: var(--color-neutral);
+}
 
-.empty { color: var(--muted); padding: 2rem 0; }
+@media (hover: hover) {
+  #q:hover {
+    background: var(--color-paper-2);
+  }
+}
 
-.as { border-top: 1px solid var(--rule); padding: 1.25rem 0 0.25rem; }
-.as h2 { font-weight: 500; font-size: 1.15rem; margin: 0 0 0.6rem; }
-.works { list-style: none; padding: 0; margin: 0; }
-.works li { padding: 0.3rem 0; }
-.detail { color: var(--muted); font-size: 0.85rem; }
+#q:focus-visible {
+  outline-color: var(--color-focus);
+  border-color: var(--color-ink-2);
+}
+
+.count {
+  margin: var(--space-xs) 0 0;
+  color: var(--color-muted);
+  font-family: var(--font-data);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ tracks
+ * S4 inline section heads: a small-caps phrase that emerges inside the flow rather than
+ * breaking it with a band. No numbering — these are two tracks, not two chapters.
+ */
+
+.track {
+  margin: var(--space-xl) 0 0;
+}
+
+.track > h2 {
+  margin: 0 0 var(--space-2xs);
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.entries {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  padding: var(--space-md) 0;
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+
+.entry .title {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.entry .title:hover {
+  text-decoration: underline;
+}
+
+.entry p {
+  margin: var(--space-2xs) 0 0;
+}
+
+.meta,
+.holdings,
+.hint,
+.lede {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+/* Dates, counts and identifiers align down the column. */
+.holdings,
+.meta {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The people track is a directory: one line each, name then what they did. */
+.person {
+  padding: var(--space-sm) 0;
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+
+.person a {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  text-decoration: none;
+}
+
+.person a:hover {
+  text-decoration: underline;
+}
+
+.person .role {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.empty {
+  padding: var(--space-lg) 0;
+  color: var(--color-muted);
+}
+
+/* ------------------------------------------------------------------ record pages */
+
+.crumb {
+  margin: 0 0 var(--space-lg);
+  font-size: var(--text-sm);
+}
+
+h1 {
+  margin: 0 0 var(--space-2xs);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--text-display);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  /* Long single words — a Welsh title, a German compound — break rather than overflow. */
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+h1 + .meta {
+  margin: 0 0 var(--space-lg);
+}
+
+h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--text-md);
+}
+
+h3 {
+  margin: 0 0 var(--space-2xs);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-base);
+}
+
+.subjects {
+  margin: 0 0 var(--space-lg);
+}
+
+.tag {
+  display: inline-block;
+  padding: var(--space-3xs) var(--space-xs);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+}
+
+.expression {
+  padding: var(--space-lg) 0 var(--space-xs);
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+
+.contributors {
+  margin: 0 0 var(--space-sm);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+/* A hairline on one side only, no box: the edition hangs off the expression above it
+ * rather than sitting in a card inside a card. */
+.edition {
+  margin: 0 0 var(--space-md);
+  padding-inline-start: var(--space-md);
+  border-inline-start: var(--rule-hair) solid var(--color-rule-2);
+}
+
+.imprint {
+  margin: 0;
+}
+
+/* Shelf marks, ISBNs and reading states are data — set them as data. */
+.series,
+.copy,
+.none {
+  margin: var(--space-3xs) 0 0;
+  color: var(--color-muted);
+  font-family: var(--font-data);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.as {
+  padding: var(--space-lg) 0 var(--space-2xs);
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+
+.as h2 {
+  margin: 0 0 var(--space-sm);
+}
+
+.works {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.works li {
+  padding: var(--space-2xs) 0;
+}
+
+.detail {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ colophon */
+
+.colophon {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 0 var(--page-gutter) var(--space-2xl);
+  color: var(--color-muted);
+  font-family: var(--font-data);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The rule sits on the paragraph, not the padded box, so it lines up with every other
+ * hairline on the page rather than reaching past them into the gutter. */
+.colophon p {
+  margin: 0;
+  max-width: 72ch;
+  padding-top: var(--space-md);
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+
+@media (min-width: 40rem) {
+  .entry {
+    padding: var(--space-lg) 0;
+  }
+}

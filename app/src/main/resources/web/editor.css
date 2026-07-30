@@ -1,159 +1,550 @@
-:root {
-  --ink: #1c1a17;
-  --paper: #faf8f4;
-  --rule: #d9d2c5;
-  --muted: #6b6459;
-  --accent: #7a3b2e;
-  --danger: #8c2f2f;
-  --ok: #2f6b45;
+/* Hallmark · genre: editorial · scope: app (no macrostructure — the editor is a tool, not a page)
+ * nav: N1b canonical three-section (knobs: links=6, dropdowns=none, scroll=always-solid)
+ * footer: Ft2 Inline single line (knobs: separator=middot, density=spaced)
+ * motion: functional only — control feedback and the ISBN lookup's busy state. Nothing decorative.
+ * pre-emit critique: P5 H4 E5 S5 R5 V4
+ *
+ * Differs from the published catalogue on nav (N1b vs N6) and footer (Ft2 vs Ft4) on purpose:
+ * the two surfaces share a palette and a voice, not a shape. One is a broadsheet you read,
+ * the other is a bench you work at.
+ */
+
+@import url("tokens.css");
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #ece7de;
-    --paper: #171614;
-    --rule: #3a352d;
-    --muted: #9c9486;
-    --accent: #d99178;
-    --danger: #e08a8a;
-    --ok: #8fce9f;
-  }
+html,
+body {
+  overflow-x: clip;
 }
-
-* { box-sizing: border-box; }
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font: 16px/1.55 ui-serif, Georgia, "Iowan Old Style", serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
 }
+
+@media (prefers-color-scheme: dark) {
+  body {
+    font-weight: 350;
+  }
+}
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 0.18em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+/* ------------------------------------------------------------------ nav (N1b) */
 
 header {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem 1.5rem;
-  align-items: baseline;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--rule);
+  gap: var(--space-sm) var(--space-lg);
+  align-items: center;
+  padding: var(--space-sm) var(--page-gutter);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  background: var(--color-paper);
 }
 
 .brand {
-  font-size: 1.15rem;
+  margin-inline-end: auto;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-md);
+  align-items: center;
+}
+
+header nav a {
+  padding: var(--space-2xs) 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  /* An affordance is a one-line object. Let the bar wrap, never the label. */
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  header nav a:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+}
+
+/* The one action the bar promotes, set apart from the destinations beside it. */
+header nav a.primary {
+  padding: var(--space-2xs) var(--space-sm);
+  border: var(--rule-hair) solid var(--color-rule-2);
+  border-radius: var(--radius);
+  color: var(--color-ink);
+}
+
+@media (hover: hover) {
+  header nav a.primary:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+}
+
+main {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--page-gutter) var(--space-2xl);
+}
+
+/* Tables and forms want the full 62rem; running prose does not — past about 75 characters
+ * the eye loses the start of the next line. */
+main > p,
+main > .hint {
+  max-width: 68ch;
+}
+
+/* ------------------------------------------------------------------ type */
+
+h1 {
+  margin: var(--space-2xs) 0 var(--space-md);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--text-xl);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-md);
+}
+
+.crumb {
+  margin: 0 0 var(--space-xs);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.hint {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.ok {
+  color: var(--color-ok);
+}
+
+.broken {
+  color: var(--color-error);
+}
+
+code {
+  font-family: var(--font-data);
+  font-size: 0.9em;
+}
+
+/* ------------------------------------------------------------------ tables */
+
+.scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  /* Counts and identifiers line up down the column. */
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) 0;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  text-align: left;
+}
+
+th {
+  color: var(--color-muted);
+  font-weight: 600;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  text-decoration: none;
-  color: var(--ink);
 }
 
-nav { display: flex; gap: 1.25rem; }
-nav a { color: var(--muted); text-decoration: none; }
-nav a:hover { color: var(--accent); }
-
-main { max-width: 62rem; margin: 0 auto; padding: 1.5rem; }
-
-h1 { font-weight: 600; font-size: 1.6rem; margin: 0.5rem 0 1rem; }
-h2 { font-weight: 600; font-size: 1.1rem; }
-
-.crumb { color: var(--muted); font-size: 0.85rem; margin: 0 0 0.5rem; }
-.crumb a, a { color: var(--accent); }
-
-.hint { color: var(--muted); font-size: 0.9rem; }
-.ok { color: var(--ok); }
-.broken { color: var(--danger); }
-
-.scroll { overflow-x: auto; }
-
-table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
-th, td { text-align: left; padding: 0.45rem 0.75rem 0.45rem 0; border-bottom: 1px solid var(--rule); }
-th { font-weight: 600; color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+/* ------------------------------------------------------------------ forms */
 
 fieldset {
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  padding: 1rem 1.25rem 1.25rem;
-  margin: 0 0 1.25rem;
+  margin: 0 0 var(--space-lg);
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius);
 }
 
-fieldset.nested { background: color-mix(in srgb, var(--ink) 3%, transparent); }
-legend { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0 0.4rem; }
+fieldset.nested {
+  background: var(--color-paper-2);
+}
 
-label { display: block; margin: 0 0 0.75rem; }
-label > span { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.2rem; }
+legend {
+  padding: 0 var(--space-xs);
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
 
-input[type=text], input[type=date], input[type=number], select, textarea {
+label {
+  display: block;
+  margin: 0 0 var(--space-sm);
+}
+
+label > span {
+  display: block;
+  margin-bottom: var(--space-3xs);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+/* Border stays 1px in every state and the outline slot is reserved at 2px transparent,
+ * so focusing a field can never move the box a pixel. State changes go to background
+ * and outline — never to border-width, padding or height. */
+input[type="text"],
+input[type="date"],
+input[type="number"],
+input[type="search"],
+select,
+textarea {
   width: 100%;
-  padding: 0.4rem 0.55rem;
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  background: var(--paper);
-  color: var(--ink);
-  font: inherit;
-  font-size: 0.95rem;
+  min-height: var(--control-height);
+  padding: var(--space-xs) var(--space-sm);
+  border: var(--rule-hair) solid var(--color-control-edge);
+  border-radius: var(--radius);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  transition: background-color var(--dur-short) var(--ease-out);
 }
 
-input[readonly] { color: var(--muted); }
+/* Identifiers are compared character by character, so they are set as data. */
+input[name="id"],
+input[name$=".isbn"],
+input[name="isbn"],
+input[name$="identifier"] {
+  font-family: var(--font-data);
+}
 
-label.check { display: flex; gap: 0.5rem; align-items: baseline; margin-bottom: 0.35rem; }
-label.check input { width: auto; }
-label.check span { margin: 0; font-size: 0.95rem; color: var(--ink); }
+textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
 
-.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0 1rem; }
+@media (hover: hover) {
+  input:hover,
+  select:hover,
+  textarea:hover {
+    background: var(--color-paper-2);
+  }
+}
 
-.sum { margin-bottom: 0.75rem; }
-.sum .variant { border-style: dashed; margin: 0.35rem 0 0; padding: 0.75rem 1rem 0.25rem; }
-.sum .variant:empty { display: none; }
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-color: var(--color-focus);
+  border-color: var(--color-ink-2);
+}
 
-button, .button {
-  display: inline-block;
-  padding: 0.45rem 1.1rem;
-  border: 1px solid var(--accent);
-  border-radius: 3px;
-  background: var(--accent);
-  color: var(--paper);
-  font: inherit;
-  font-size: 0.95rem;
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-neutral);
+}
+
+input[readonly] {
+  background: var(--color-paper-3);
+  color: var(--color-muted);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+label.check {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  margin-bottom: var(--space-xs);
+  min-height: var(--control-height);
+}
+
+label.check input {
+  width: auto;
+  min-height: 0;
+  accent-color: var(--color-accent);
+}
+
+label.check span {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-base);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  gap: 0 var(--space-md);
+}
+
+.sum {
+  margin-bottom: var(--space-sm);
+}
+
+/* The variant's fields hang off their selector on a rule rather than sitting in a second
+ * bordered box inside the fieldset — one containment layer, not two. */
+.sum .variant {
+  margin: var(--space-xs) 0 0;
+  padding: 0 0 0 var(--space-md);
+  border: 0;
+  border-inline-start: var(--rule-hair) solid var(--color-rule-2);
+}
+
+.sum .variant:empty {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ buttons */
+
+button,
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-height);
+  padding: 0 var(--space-lg);
+  border: var(--rule-hair) solid var(--color-accent);
+  border-radius: var(--radius);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
+  transition: background-color var(--dur-short) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
 }
 
-form.danger { margin-top: 2rem; }
-form.danger button { background: none; color: var(--danger); border-color: var(--danger); }
+@media (hover: hover) {
+  button:hover,
+  .button:hover {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+}
 
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+button:active,
+.button:active {
+  transform: translateY(1px);
+}
+
+button:disabled,
+button[aria-busy="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+form.danger {
+  margin-top: var(--space-xl);
+}
+
+form.danger button {
+  border-color: var(--color-error);
+  background: none;
+  color: var(--color-error);
+}
+
+@media (hover: hover) {
+  form.danger button:hover {
+    background: var(--color-error);
+    border-color: var(--color-error);
+    color: var(--color-paper);
+  }
+}
+
+/* ------------------------------------------------------------------ home */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+  gap: var(--space-md);
+  margin: var(--space-lg) 0;
+}
+
 .tile {
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  padding: 1rem;
+  padding: var(--space-md);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius);
+  color: var(--color-ink);
   text-decoration: none;
-  color: var(--ink);
 }
-.tile strong { display: block; font-size: 1.8rem; font-weight: 600; }
-.tile span { color: var(--muted); font-size: 0.85rem; }
 
-.reports { list-style: none; padding: 0; }
-.reports li { padding: 0.5rem 0; border-bottom: 1px solid var(--rule); }
-.reports span { display: block; }
+@media (hover: hover) {
+  .tile:hover {
+    border-color: var(--color-accent);
+  }
+}
 
-pre { overflow-x: auto; font-size: 0.85rem; background: color-mix(in srgb, var(--ink) 5%, transparent); padding: 0.75rem; border-radius: 3px; }
-pre.error { color: var(--danger); white-space: pre-wrap; }
-div.error { border: 1px solid var(--danger); border-radius: 3px; padding: 0.5rem 1rem; }
-div.error h2 { margin: 0.4rem 0 0.2rem; color: var(--danger); }
-div.error ul { margin: 0.4rem 0 0.6rem; padding-left: 1.2rem; }
-div.error li { font-size: 0.92rem; }
+.tile strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--text-xl);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
 
-/* A rejected field: the message sits under the control that caused it. */
+.tile span {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.reports {
+  padding: 0;
+  list-style: none;
+}
+
+.reports li {
+  padding: var(--space-xs) 0;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.reports span {
+  display: block;
+}
+
+pre {
+  padding: var(--space-sm);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  background: var(--color-paper-2);
+  font-family: var(--font-data);
+  font-size: var(--text-sm);
+}
+
+pre.error {
+  color: var(--color-error);
+  white-space: pre-wrap;
+}
+
+/* ------------------------------------------------------------------ problems */
+
+div.error {
+  padding: var(--space-xs) var(--space-md);
+  border: var(--rule-hair) solid var(--color-error);
+  border-radius: var(--radius);
+}
+
+div.error h2 {
+  margin: var(--space-xs) 0 var(--space-3xs);
+  color: var(--color-error);
+}
+
+div.error ul {
+  margin: var(--space-xs) 0 var(--space-sm);
+  padding-left: var(--space-lg);
+}
+
+div.error li {
+  font-size: var(--text-sm);
+}
+
+/* editor.js adds and removes this message as you type, so on every field it watches the
+ * slot is reserved up front — otherwise correcting one field shifts every field below it. */
+label:has([data-check]) {
+  position: relative;
+  padding-bottom: 1lh;
+}
+
+label:has([data-check]) > .field-error {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  margin-top: 0;
+}
+
+/* A rejected field: the message sits under the control that caused it. Colour is never
+ * the only signal — the message is text, and the field carries aria-invalid. */
 .field-error {
   display: block;
-  margin-top: 0.25rem;
-  font-size: 0.85rem;
+  margin-top: var(--space-2xs);
+  color: var(--color-error);
+  font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--danger);
 }
 
-label.bad > span { color: var(--danger); }
-label.bad input, label.bad select, label.bad textarea { border-color: var(--danger); }
-input[aria-invalid=true], select[aria-invalid=true], textarea[aria-invalid=true] {
-  border-color: var(--danger);
-  outline-color: var(--danger);
+label.bad > span {
+  color: var(--color-error);
+}
+
+label.bad input,
+label.bad select,
+label.bad textarea,
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+/* ------------------------------------------------------------------ footer (Ft2) */
+
+.foot {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: var(--space-md) var(--page-gutter) var(--space-xl);
+  border-top: var(--rule-hair) solid var(--color-rule);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.foot p {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 100ms !important;
+    animation-duration: 100ms !important;
+  }
 }
