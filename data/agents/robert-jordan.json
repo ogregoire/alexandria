@@ -1,0 +1,9 @@
+{
+  "id" : "robert-jordan",
+  "kind" : {
+    "type" : "person"
+  },
+  "name" : "Robert Jordan",
+  "sortName" : "Jordan, Robert",
+  "aliases" : [ ]
+}

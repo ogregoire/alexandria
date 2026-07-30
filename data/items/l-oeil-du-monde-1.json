@@ -1,0 +1,16 @@
+{
+  "id" : "l-oeil-du-monde-1",
+  "embodiedIn" : "l-oeil-du-monde-bragelonne-2012",
+  "acquisition" : {
+    "type" : "purchased"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1",
+    "position" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "FINE"
+}

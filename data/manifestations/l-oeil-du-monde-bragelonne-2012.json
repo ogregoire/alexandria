@@ -1,0 +1,28 @@
+{
+  "id" : "l-oeil-du-monde-bragelonne-2012",
+  "embodies" : [
+    "jordan-the-eye-of-the-world/malle-fr"
+  ],
+  "title" : {
+    "main" : "L'Œil du monde"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "exact",
+    "date" : "2012-03-23"
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782352945567"
+  },
+  "extent" : {
+    "type" : "unspecified"
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "1"
+  }
+}
