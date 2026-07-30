@@ -1,0 +1,29 @@
+{
+  "id" : "un-souvenir-de-lumiere-bragelonne-2022",
+  "embodies" : [
+    "jordan-a-memory-of-light/malle-fr"
+  ],
+  "title" : {
+    "main" : "Un souvenir de lumière"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2022
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9791028112462"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 1028
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "14"
+  }
+}

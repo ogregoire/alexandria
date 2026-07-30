@@ -1,0 +1,15 @@
+{
+  "id" : "nouveau-printemps-1",
+  "embodiedIn" : "nouveau-printemps-bragelonne-2012",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

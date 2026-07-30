@@ -1,7 +1,7 @@
 {
-  "id" : "jordan-the-path-of-daggers",
+  "id" : "jordan-new-spring",
   "title" : {
-    "main" : "The Path of Daggers"
+    "main" : "New Spring"
   },
   "creators" : [
     {
@@ -17,7 +17,7 @@
   },
   "created" : {
     "type" : "year",
-    "value" : 1998
+    "value" : 2004
   },
   "subjects" : [
     "fantasy",
@@ -25,7 +25,7 @@
   ],
   "expressions" : [
     {
-      "id" : "jordan-the-path-of-daggers/malle-fr",
+      "id" : "jordan-new-spring/malle-fr",
       "kind" : {
         "type" : "translation",
         "from" : "en"
@@ -49,7 +49,7 @@
       ],
       "realised" : {
         "type" : "year",
-        "value" : 2016
+        "value" : 2012
       }
     }
   ]

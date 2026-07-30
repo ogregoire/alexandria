@@ -1,7 +1,7 @@
 {
-  "id" : "jordan-the-path-of-daggers",
+  "id" : "jordan-towers-of-midnight",
   "title" : {
-    "main" : "The Path of Daggers"
+    "main" : "Towers of Midnight"
   },
   "creators" : [
     {
@@ -10,6 +10,13 @@
         "type" : "author"
       },
       "publishedAs" : "Robert Jordan"
+    },
+    {
+      "agent" : "brandon-sanderson",
+      "role" : {
+        "type" : "author"
+      },
+      "publishedAs" : "Brandon Sanderson"
     }
   ],
   "form" : {
@@ -17,7 +24,7 @@
   },
   "created" : {
     "type" : "year",
-    "value" : 1998
+    "value" : 2010
   },
   "subjects" : [
     "fantasy",
@@ -25,7 +32,7 @@
   ],
   "expressions" : [
     {
-      "id" : "jordan-the-path-of-daggers/malle-fr",
+      "id" : "jordan-towers-of-midnight/malle-fr",
       "kind" : {
         "type" : "translation",
         "from" : "en"
@@ -49,7 +56,7 @@
       ],
       "realised" : {
         "type" : "year",
-        "value" : 2016
+        "value" : 2022
       }
     }
   ]

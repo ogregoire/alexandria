@@ -1,0 +1,29 @@
+{
+  "id" : "nouveau-printemps-bragelonne-2012",
+  "embodies" : [
+    "jordan-new-spring/malle-fr"
+  ],
+  "title" : {
+    "main" : "Nouveau Printemps",
+    "subtitle" : "La Préquelle de La Roue du temps"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2012
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782352945581"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 430
+  },
+  "series" : {
+    "name" : "La Roue du temps"
+  }
+}

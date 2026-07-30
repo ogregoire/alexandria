@@ -45,6 +45,13 @@
             "type" : "translator"
           },
           "publishedAs" : "Jean-Claude Mallé"
+        },
+        {
+          "agent" : "lee-gibbons",
+          "role" : {
+            "type" : "illustrator"
+          },
+          "publishedAs" : "Lee Gibbons"
         }
       ],
       "realised" : {

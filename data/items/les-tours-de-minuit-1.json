@@ -1,0 +1,15 @@
+{
+  "id" : "les-tours-de-minuit-1",
+  "embodiedIn" : "les-tours-de-minuit-bragelonne-2022",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

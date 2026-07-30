@@ -1,0 +1,29 @@
+{
+  "id" : "les-tours-de-minuit-bragelonne-2022",
+  "embodies" : [
+    "jordan-towers-of-midnight/malle-fr"
+  ],
+  "title" : {
+    "main" : "Les Tours de minuit"
+  },
+  "publisher" : "bragelonne",
+  "published" : {
+    "type" : "year",
+    "value" : 2022
+  },
+  "carrier" : {
+    "type" : "paperback"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9791028120269"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 958
+  },
+  "series" : {
+    "name" : "La Roue du temps",
+    "number" : "13"
+  }
+}

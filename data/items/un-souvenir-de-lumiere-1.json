@@ -1,0 +1,15 @@
+{
+  "id" : "un-souvenir-de-lumiere-1",
+  "embodiedIn" : "un-souvenir-de-lumiere-bragelonne-2022",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}
