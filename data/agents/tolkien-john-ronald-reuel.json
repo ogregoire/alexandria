@@ -3,7 +3,9 @@
   "kind" : {
     "type" : "person"
   },
-  "name" : "Tolkien, John Ronald Reuel",
+  "name" : "John Ronald Reuel Tolkien",
   "sortName" : "Tolkien, John Ronald Reuel",
-  "aliases" : [ ]
+  "aliases" : [
+    "J. R. R. Tolkien"
+  ]
 }

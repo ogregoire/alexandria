@@ -9,7 +9,7 @@
       "role" : {
         "type" : "author"
       },
-      "publishedAs" : "Tolkien, John Ronald Reuel"
+      "publishedAs" : "J. R. R. Tolkien"
     }
   ],
   "form" : {
@@ -35,14 +35,14 @@
           "role" : {
             "type" : "translator"
           },
-          "publishedAs" : "Lauzon, Daniel"
+          "publishedAs" : "Daniel Lauzon"
         },
         {
           "agent" : "tolkien-john-ronald-reuel",
           "role" : {
             "type" : "illustrator"
           },
-          "publishedAs" : "Tolkien, John Ronald Reuel"
+          "publishedAs" : "J. R. R. Tolkien"
         }
       ],
       "realised" : {
