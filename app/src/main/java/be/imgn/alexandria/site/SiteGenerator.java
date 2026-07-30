@@ -361,14 +361,17 @@ public final class SiteGenerator {
 
         // The components, not the imprint: the imprint is the same facts run together for a
         // one-line summary, and printing both would say everything twice.
-        String publisher =
-                edition.publisher().flatMap(agents::find).map(Agent::name).orElse("");
+        String publisher = edition.publisher()
+                .agent()
+                .flatMap(agents::find)
+                .map(Agent::name)
+                .orElse("");
         String facts = Stream.of(
                         fact("Publisher", publisher),
                         fact("Published", edition.published().display()),
                         fact("Carrier", edition.carrier().label()),
                         fact("Extent", edition.extent().display()),
-                        fact("Series", edition.series().map(s -> s.display()).orElse("")),
+                        fact("Series", edition.series().display()),
                         fact("Identifier", edition.identifier().display()))
                 .filter(row -> !row.isEmpty())
                 .collect(Collectors.joining());
@@ -552,9 +555,10 @@ public final class SiteGenerator {
                         edition.identifier().display().isEmpty()
                                 ? ""
                                 : " · " + Escape.html(edition.identifier().display()),
-                        edition.series()
-                                .map(s -> "<p class=\"series\">" + Escape.html(s.display()) + "</p>")
-                                .orElse(""),
+                        edition.series().display().isEmpty()
+                                ? ""
+                                : "<p class=\"series\">"
+                                        + Escape.html(edition.series().display()) + "</p>",
                         copiesOf(edition)))
                 .collect(Collectors.joining());
     }
@@ -602,8 +606,8 @@ public final class SiteGenerator {
                 .map(edition -> {
                     Set<String> terms = new LinkedHashSet<>();
                     terms.add(titleOf(edition));
-                    edition.publisher().ifPresent(publisher -> addAgent(terms, publisher));
-                    edition.series().ifPresent(s -> terms.add(s.display()));
+                    edition.publisher().agent().ifPresent(publisher -> addAgent(terms, publisher));
+                    terms.add(edition.series().display());
                     terms.add(edition.identifier().display());
                     terms.add(edition.carrier().label());
                     terms.add(edition.published().display());

@@ -116,7 +116,7 @@ public interface Catalog {
     /** Editions this agent published, for a publishing house. */
     default List<Manifestation> publishedBy(AgentId agent) {
         return manifestations().stream()
-                .filter(m -> m.publisher().filter(agent::equals).isPresent())
+                .filter(m -> m.publisher().agent().filter(agent::equals).isPresent())
                 .toList();
     }
 
@@ -134,7 +134,7 @@ public interface Catalog {
             }
         }
         manifestations().stream()
-                .filter(m -> m.publisher().filter(agent::equals).isPresent())
+                .filter(m -> m.publisher().agent().filter(agent::equals).isPresent())
                 .forEach(m -> references.add("manifestation " + m.id()));
         return List.copyOf(references);
     }

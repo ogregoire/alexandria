@@ -2,7 +2,6 @@ package be.imgn.alexandria.domain.manifestation;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentId;
@@ -22,13 +21,13 @@ public record Manifestation(
         ManifestationId id,
         List<ExpressionId> embodies,
         Title title,
-        Optional<AgentId> publisher,
+        Publisher publisher,
         BibliographicDate published,
         Carrier carrier,
         Identifier identifier,
         Extent extent,
-        Optional<Series> series,
-        Optional<Integer> editionStatement) {
+        Series series,
+        EditionStatement editionStatement) {
 
     public Manifestation {
         Objects.requireNonNull(id, "id");
@@ -38,10 +37,9 @@ public record Manifestation(
         Objects.requireNonNull(identifier, "identifier");
         Objects.requireNonNull(extent, "extent");
         embodies = Guard.notEmpty(embodies, "embodies");
-        publisher = publisher == null ? Optional.empty() : publisher;
-        series = series == null ? Optional.empty() : series;
-        editionStatement = editionStatement == null ? Optional.empty() : editionStatement;
-        editionStatement.ifPresent(n -> Guard.inRange(n, 1, 1_000, "editionStatement"));
+        publisher = publisher == null ? Publisher.UNRECORDED : publisher;
+        series = series == null ? Series.STANDALONE : series;
+        editionStatement = editionStatement == null ? EditionStatement.UNSTATED : editionStatement;
 
         if (embodies.size() != embodies.stream().distinct().count()) {
             throw new IllegalArgumentException("duplicate expression reference in manifestation " + id);
@@ -64,13 +62,13 @@ public record Manifestation(
                 id,
                 List.of(expression),
                 title,
-                Optional.ofNullable(publisher),
+                Publisher.of(publisher),
                 published,
                 carrier,
                 identifier,
                 extent,
-                Optional.empty(),
-                Optional.empty());
+                Series.STANDALONE,
+                EditionStatement.UNSTATED);
     }
 
     public boolean embodies(ExpressionId expressionId) {
@@ -92,14 +90,14 @@ public record Manifestation(
                 carrier,
                 identifier,
                 extent,
-                Optional.ofNullable(newSeries),
+                newSeries == null ? Series.STANDALONE : newSeries,
                 editionStatement);
     }
 
     /** Imprint line: "Ecco, 2003. Hardcover, 940 pp." */
     public String imprint(AgentDirectory agents) {
         StringBuilder line = new StringBuilder();
-        publisher.ifPresent(p -> line.append(agents.nameOf(p)).append(", "));
+        publisher.agent().ifPresent(p -> line.append(agents.nameOf(p)).append(", "));
         line.append(published.display());
         line.append(". ").append(carrier.label());
         String size = extent.display();

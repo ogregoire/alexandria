@@ -21,9 +21,11 @@ import be.imgn.alexandria.domain.agent.NameForm;
 import be.imgn.alexandria.domain.item.Condition;
 import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
+import be.imgn.alexandria.domain.manifestation.EditionStatement;
 import be.imgn.alexandria.domain.manifestation.Identifier;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.manifestation.Publisher;
 import be.imgn.alexandria.domain.manifestation.Series;
 import be.imgn.alexandria.domain.shared.Language;
 import be.imgn.alexandria.domain.shared.Slug;
@@ -361,9 +363,10 @@ final class ImportPages {
                                 name,
                                 VariantForms.readAgentKind(
                                         edition.optional("publisherKind").orElse("organisation")))));
-        Optional<Series> series = edition.optional("series.name")
+        Series series = edition.optional("series.name")
                 .flatMap(name -> problems.read(
-                        "manifestation.series.name", () -> Series.of(name, edition.orEmpty("series.number"))));
+                        "manifestation.series.name", () -> Series.of(name, edition.orEmpty("series.number"))))
+                .orElse(Series.STANDALONE);
 
         if (problems.any()
                 || workId.isEmpty()
@@ -409,13 +412,13 @@ final class ImportPages {
                                 edition.optional("title.main")
                                         .orElse(workTitle.map(Title::main).orElse("Untitled")),
                                 edition.orEmpty("title.subtitle")),
-                        publisher,
+                        publisher.map(Publisher::of).orElse(Publisher.UNRECORDED),
                         published.get(),
                         carrier.get(),
                         identifier.get(),
                         extent.get(),
                         series,
-                        edition.optionalInt("edition")));
+                        EditionStatement.parse(edition.orEmpty("edition"))));
 
         Optional<Item> copy = Optional.empty();
         if (form.checked("addItem") && manifestation.isPresent()) {

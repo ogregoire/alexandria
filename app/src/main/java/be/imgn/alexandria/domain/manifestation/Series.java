@@ -5,25 +5,35 @@ import be.imgn.alexandria.domain.shared.Guard;
 /**
  * A publisher's series, e.g. "Penguin Classics" no. 42.
  *
- * <p>Numbered or not, rather than one shape holding an optional number, for the same reason as
- * {@link be.imgn.alexandria.domain.shared.Title}: {@code Optional} is a return type, and a record component is a
- * constructor parameter. Plenty of series are unnumbered, and a prequel can belong to a numbered series without taking
- * a number in it.
+ * <p>Three shapes, not an {@code Optional} anywhere: most books belong to no series at all, plenty of series go
+ * unnumbered, and a prequel can belong to a numbered series without taking a number in it. Folding "no series" in here
+ * rather than wrapping the whole type in an {@code Optional} is what lets {@link Manifestation} hold a Series flat.
  */
 public sealed interface Series {
 
-    String name();
+    Series STANDALONE = new Standalone();
 
-    /** The series as it is written on a spine: the name, and the number when it has one. */
+    /** The series as it is written on a spine: the name, and the number when it has one. Blank for a standalone. */
     String display();
 
     static Series of(String name) {
-        return new Unnumbered(name);
+        return name == null || name.isBlank() ? STANDALONE : new Unnumbered(name);
     }
 
-    /** A blank or absent number gives an {@link Unnumbered} series. */
+    /** A blank or absent name gives a {@link Standalone}; a blank number, an {@link Unnumbered} series. */
     static Series of(String name, String number) {
+        if (name == null || name.isBlank()) {
+            return STANDALONE;
+        }
         return number == null || number.isBlank() ? new Unnumbered(name) : new Numbered(name, number);
+    }
+
+    record Standalone() implements Series {
+
+        @Override
+        public String display() {
+            return "";
+        }
     }
 
     record Unnumbered(String name) implements Series {

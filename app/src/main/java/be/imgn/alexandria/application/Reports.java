@@ -115,7 +115,7 @@ public final class Reports {
                     AgentDirectory agents = catalog.directory();
                     Map<String, long[]> tally = new TreeMap<>();
                     for (Manifestation manifestation : catalog.manifestations()) {
-                        manifestation.publisher().ifPresent(publisher -> {
+                        manifestation.publisher().agent().ifPresent(publisher -> {
                             long[] counts = tally.computeIfAbsent(agents.nameOf(publisher), k -> new long[2]);
                             counts[0]++;
                             counts[1] += catalog.copiesOf(manifestation.id()).size();

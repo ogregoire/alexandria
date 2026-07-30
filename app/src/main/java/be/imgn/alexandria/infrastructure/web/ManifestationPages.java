@@ -10,10 +10,12 @@ import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentId;
 import be.imgn.alexandria.domain.agent.AgentResolution;
 import be.imgn.alexandria.domain.manifestation.Carrier;
+import be.imgn.alexandria.domain.manifestation.EditionStatement;
 import be.imgn.alexandria.domain.manifestation.Extent;
 import be.imgn.alexandria.domain.manifestation.Identifier;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.manifestation.Publisher;
 import be.imgn.alexandria.domain.manifestation.Series;
 import be.imgn.alexandria.domain.shared.BibliographicDate;
 import be.imgn.alexandria.domain.shared.Title;
@@ -38,6 +40,7 @@ final class ManifestationPages {
                                 manifestation.title().main()),
                         manifestation
                                 .publisher()
+                                .agent()
                                 .map(p -> Html.link("/agents/" + p.value(), agents.nameOf(p)))
                                 .orElse(""),
                         Html.escape(manifestation.published().display()),
@@ -99,93 +102,92 @@ final class ManifestationPages {
                 </form>
                 %s
                 """.formatted(
-                                Html.escape(heading),
-                                Html.datalist(VariantForms.AGENT_LIST, agents.suggestions()),
-                                Html.escape(id.isEmpty() ? "new" : id),
+                        Html.escape(heading),
+                        Html.datalist(VariantForms.AGENT_LIST, agents.suggestions()),
+                        Html.escape(id.isEmpty() ? "new" : id),
+                        manifestation == null
+                                ? Html.textField("id", "Identifier (slug)", "")
+                                : WorkPages.readOnly("Identifier", id) + WorkPages.hidden("id", id),
+                        Html.textField(
+                                "title.main",
+                                "Title",
                                 manifestation == null
-                                        ? Html.textField("id", "Identifier (slug)", "")
-                                        : WorkPages.readOnly("Identifier", id) + WorkPages.hidden("id", id),
-                                Html.textField(
-                                        "title.main",
-                                        "Title",
-                                        manifestation == null
-                                                ? ""
-                                                : manifestation.title().main()),
-                                Html.textField(
-                                        "title.subtitle",
-                                        "Subtitle",
-                                        manifestation != null
-                                                        && manifestation.title()
-                                                                instanceof Title.Subtitled(var ignored, String subtitle)
-                                                ? subtitle
+                                        ? ""
+                                        : manifestation.title().main()),
+                        Html.textField(
+                                "title.subtitle",
+                                "Subtitle",
+                                manifestation != null
+                                                && manifestation.title()
+                                                        instanceof Title.Subtitled(var ignored, String subtitle)
+                                        ? subtitle
+                                        : ""),
+                        Html.suggestField(
+                                "publisher",
+                                "Publisher",
+                                manifestation == null
+                                        ? ""
+                                        : manifestation
+                                                .publisher()
+                                                .agent()
+                                                .map(agents::nameOf)
+                                                .orElse(""),
+                                VariantForms.AGENT_LIST),
+                        Html.select(
+                                "publisherKind",
+                                "If new",
+                                VariantForms.agentKinds(),
+                                manifestation == null
+                                        ? "organisation"
+                                        : manifestation
+                                                .publisher()
+                                                .agent()
+                                                .flatMap(agents::find)
+                                                .map(agent -> VariantNames.of(agent.kind()))
+                                                .orElse("organisation")),
+                        VariantForms.date(
+                                "published",
+                                "Published",
+                                manifestation == null ? BibliographicDate.UNKNOWN : manifestation.published()),
+                        VariantForms.carrier(
+                                "carrier",
+                                "Carrier",
+                                manifestation == null ? Carrier.PAPERBACK : manifestation.carrier()),
+                        VariantForms.identifier(
+                                "identifier",
+                                "Identifier",
+                                manifestation == null ? Identifier.NONE : manifestation.identifier()),
+                        VariantForms.extent(
+                                "extent",
+                                "Extent",
+                                manifestation == null ? Extent.UNSPECIFIED : manifestation.extent()),
+                        Html.textField(
+                                "series.name",
+                                "Series",
+                                manifestation == null
+                                        ? ""
+                                        : switch (manifestation.series()) {
+                                            case Series.Standalone() -> "";
+                                            case Series.Unnumbered(String name) -> name;
+                                            case Series.Numbered(String name, var ignored) -> name;
+                                        }),
+                        Html.textField(
+                                "series.number",
+                                "Series number",
+                                manifestation == null
+                                        ? ""
+                                        : manifestation.series()
+                                                        instanceof Series.Numbered(var ignoredName, String number)
+                                                ? number
                                                 : ""),
-                                Html.suggestField(
-                                        "publisher",
-                                        "Publisher",
-                                        manifestation == null
-                                                ? ""
-                                                : manifestation
-                                                        .publisher()
-                                                        .map(agents::nameOf)
-                                                        .orElse(""),
-                                        VariantForms.AGENT_LIST),
-                                Html.select(
-                                        "publisherKind",
-                                        "If new",
-                                        VariantForms.agentKinds(),
-                                        manifestation == null
-                                                ? "organisation"
-                                                : manifestation
-                                                        .publisher()
-                                                        .flatMap(agents::find)
-                                                        .map(agent -> VariantNames.of(agent.kind()))
-                                                        .orElse("organisation")),
-                                VariantForms.date(
-                                        "published",
-                                        "Published",
-                                        manifestation == null ? BibliographicDate.UNKNOWN : manifestation.published()),
-                                VariantForms.carrier(
-                                        "carrier",
-                                        "Carrier",
-                                        manifestation == null ? Carrier.PAPERBACK : manifestation.carrier()),
-                                VariantForms.identifier(
-                                        "identifier",
-                                        "Identifier",
-                                        manifestation == null ? Identifier.NONE : manifestation.identifier()),
-                                VariantForms.extent(
-                                        "extent",
-                                        "Extent",
-                                        manifestation == null ? Extent.UNSPECIFIED : manifestation.extent()),
-                                Html.textField(
-                                        "series.name",
-                                        "Series",
-                                        manifestation == null
-                                                ? ""
-                                                : manifestation
-                                                        .series()
-                                                        .map(Series::name)
-                                                        .orElse("")),
-                                Html.textField(
-                                        "series.number",
-                                        "Series number",
-                                        manifestation == null
-                                                ? ""
-                                                : manifestation
-                                                        .series()
-                                                        .filter(Series.Numbered.class::isInstance)
-                                                        .map(series -> ((Series.Numbered) series).number())
-                                                        .orElse("")),
-                                Html.numberField(
-                                        "edition",
-                                        "Edition number",
-                                        manifestation == null
-                                                ? ""
-                                                : manifestation
-                                                        .editionStatement()
-                                                        .map(String::valueOf)
-                                                        .orElse("")),
-                                expressionCheckboxes(chosen),
-                                deleteButton));
+                        Html.numberField(
+                                "edition",
+                                "Edition number",
+                                manifestation == null
+                                        ? ""
+                                        : manifestation.editionStatement().stored()),
+                        expressionCheckboxes(chosen),
+                        deleteButton));
     }
 
     private String expressionCheckboxes(List<String> chosen) {
@@ -215,19 +217,18 @@ final class ManifestationPages {
                         name,
                         VariantForms.readAgentKind(
                                 form.optional("publisherKind").orElse("organisation"))));
-        Optional<Series> series =
-                form.optional("series.name").map(name -> Series.of(name, form.orEmpty("series.number")));
+        Series series = Series.of(form.orEmpty("series.name"), form.orEmpty("series.number"));
 
         return new Manifestation(
                 ManifestationId.of(form.required("id")),
                 embodies,
                 Title.of(form.required("title.main"), form.orEmpty("title.subtitle")),
-                publisher,
+                publisher.map(Publisher::of).orElse(Publisher.UNRECORDED),
                 VariantForms.readDate(form, "published"),
                 VariantForms.readCarrier(form, "carrier"),
                 VariantForms.readIdentifier(form, "identifier"),
                 VariantForms.readExtent(form, "extent"),
                 series,
-                form.optionalInt("edition"));
+                EditionStatement.parse(form.orEmpty("edition")));
     }
 }

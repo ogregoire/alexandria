@@ -5,12 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import be.imgn.alexandria.domain.agent.AgentId;
 import be.imgn.alexandria.domain.manifestation.Carrier;
+import be.imgn.alexandria.domain.manifestation.EditionStatement;
 import be.imgn.alexandria.domain.manifestation.Extent;
 import be.imgn.alexandria.domain.manifestation.Identifier;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.manifestation.Publisher;
 import be.imgn.alexandria.domain.manifestation.Series;
 import be.imgn.alexandria.domain.work.ExpressionId;
 
@@ -26,13 +27,15 @@ public final class ManifestationCodec {
             out.text("id", manifestation.id().value())
                     .texts("embodies", embodies)
                     .object("title", nested -> SharedCodec.title(nested, manifestation.title()))
-                    .text("publisher", manifestation.publisher().map(AgentId::value))
+                    .textIfAny("publisher", manifestation.publisher().stored())
                     .object("published", nested -> SharedCodec.date(nested, manifestation.published()))
                     .object("carrier", nested -> carrier(nested, manifestation.carrier()))
                     .object("identifier", nested -> identifier(nested, manifestation.identifier()))
                     .object("extent", nested -> extent(nested, manifestation.extent()));
-            manifestation.series().ifPresent(series -> out.object("series", nested -> series(nested, series)));
-            out.number("editionStatement", manifestation.editionStatement());
+            if (!(manifestation.series() instanceof Series.Standalone)) {
+                out.object("series", nested -> series(nested, manifestation.series()));
+            }
+            out.numberIfAny("editionStatement", manifestation.editionStatement().stored());
         });
     }
 
@@ -46,13 +49,13 @@ public final class ManifestationCodec {
                 ManifestationId.of(in.text("id")),
                 embodies,
                 SharedCodec.title(in.object("title")),
-                in.optionalText("publisher").map(AgentId::of),
+                Publisher.parse(in.orBlank("publisher")),
                 SharedCodec.date(in.object("published")),
                 carrier(in.object("carrier")),
                 identifier(in.object("identifier")),
                 extent(in.object("extent")),
-                in.optionalObject("series").map(ManifestationCodec::series),
-                in.optionalInt("editionStatement"));
+                in.optionalObject("series").map(ManifestationCodec::series).orElse(Series.STANDALONE),
+                EditionStatement.parse(in.numberOrBlank("editionStatement")));
     }
 
     // ------------------------------------------------------------------ carrier
@@ -141,6 +144,9 @@ public final class ManifestationCodec {
 
     private static void series(JsonOut out, Series series) {
         switch (series) {
+            case Series.Standalone() -> {
+                // Never written: a standalone edition has no series object at all.
+            }
             case Series.Unnumbered(String name) -> out.text("name", name);
             case Series.Numbered(String name, String number) ->
                 out.text("name", name).text("number", number);

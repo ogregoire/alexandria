@@ -17,10 +17,12 @@ import be.imgn.alexandria.domain.item.Location;
 import be.imgn.alexandria.domain.item.Rating;
 import be.imgn.alexandria.domain.item.ReadingProgress;
 import be.imgn.alexandria.domain.manifestation.Carrier;
+import be.imgn.alexandria.domain.manifestation.EditionStatement;
 import be.imgn.alexandria.domain.manifestation.Extent;
 import be.imgn.alexandria.domain.manifestation.Identifier;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.manifestation.Publisher;
 import be.imgn.alexandria.domain.manifestation.Series;
 import be.imgn.alexandria.domain.shared.BibliographicDate;
 import be.imgn.alexandria.domain.shared.Contribution;
@@ -94,13 +96,13 @@ public final class CatalogFixture {
                 ECCO,
                 List.of(GROSSMAN),
                 Title.of("Don Quixote"),
-                Optional.of(ECCO_AGENT),
+                Publisher.of(ECCO_AGENT),
                 BibliographicDate.year(2003),
                 Carrier.HARDCOVER,
                 Identifier.isbn("9780060188702"),
                 Extent.pages(940),
-                Optional.of(Series.of("Ecco Classics")),
-                Optional.of(1));
+                Series.of("Ecco Classics"),
+                EditionStatement.of(1));
     }
 
     public static Item item() {

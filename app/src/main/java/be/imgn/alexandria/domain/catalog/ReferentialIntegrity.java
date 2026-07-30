@@ -59,6 +59,7 @@ public final class ReferentialIntegrity {
         for (Manifestation manifestation : catalog.manifestations()) {
             manifestation
                     .publisher()
+                    .agent()
                     .filter(publisher -> !agents.contains(publisher.value()))
                     .ifPresent(publisher -> violations.add(
                             new Violation("manifestation " + manifestation.id(), "unknown publisher " + publisher)));
