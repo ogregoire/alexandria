@@ -1,6 +1,7 @@
 package be.imgn.alexandria.domain.shared;
 
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Joins a title to its subtitle, which is a question of punctuation and therefore of language.
@@ -15,7 +16,13 @@ import java.util.Locale;
  */
 public final class TitleFormat {
 
-    private static final char NARROW_NO_BREAK_SPACE = ' ';
+    private static final char NARROW_NO_BREAK_SPACE = '\u202f';
+
+    /**
+     * ISO 639-1 codes for the languages that hold a space before a colon. Codes rather than {@link Locale} constants
+     * because {@link Locale#getLanguage()} is what the comparison is made against, and because Breton has no constant.
+     */
+    private static final Set<String> SPACE_BEFORE_COLON = Set.of("fr", "br");
 
     private TitleFormat() {}
 
@@ -35,14 +42,32 @@ public final class TitleFormat {
         };
     }
 
+    /** How a language punctuates the break between a title and its subtitle. */
+    private enum Colon {
+        /** English, German, Dutch, Spanish, Italian: the colon sits against the word before it. */
+        CLOSED(": "),
+        /** French and Breton hold a space there, and it must not be one the line can break at. */
+        SPACED(NARROW_NO_BREAK_SPACE + ": ");
+
+        private final String separator;
+
+        Colon(String separator) {
+            this.separator = separator;
+        }
+    }
+
     /**
-     * The languages that hold a space before the colon. French is the one this catalogue meets; the others follow the
-     * same rule and are listed so that adding a book in one of them is not a surprise.
+     * Which rule a language follows. A closed set of two, so an enum is right where a sum type would be ceremony — the
+     * variants carry no payload beyond the separator itself.
      */
+    private static Colon rule(Locale locale) {
+        if (locale == null) {
+            return Colon.CLOSED;
+        }
+        return SPACE_BEFORE_COLON.contains(locale.getLanguage()) ? Colon.SPACED : Colon.CLOSED;
+    }
+
     private static String separator(Locale locale) {
-        return switch (locale == null ? "" : locale.getLanguage()) {
-            case "fr", "br" -> NARROW_NO_BREAK_SPACE + ": ";
-            default -> ": ";
-        };
+        return rule(locale).separator;
     }
 }

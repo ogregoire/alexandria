@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+
+import be.imgn.alexandria.domain.shared.EventDate;
+import be.imgn.alexandria.domain.shared.Note;
 
 /**
  * Provenance is frequently half-remembered. That a book was a gift is worth recording on its own, so nothing here
@@ -19,57 +21,57 @@ class AcquisitionTest {
         Acquisition gift = Acquisition.Gift.unattributed();
 
         assertThat(gift.owned()).isTrue();
-        assertThat(gift.on()).isEmpty();
-        assertThat(((Acquisition.Gift) gift).from()).isEmpty();
+        assertThat(gift.on()).isEqualTo(EventDate.UNRECORDED);
+        assertThat(((Acquisition.Gift) gift).from()).isEqualTo(Note.NOTHING);
     }
 
     @Test
     void recordsAGiftFromSomeoneOnNoParticularDate() {
         Acquisition.Gift gift = Acquisition.Gift.from("Marie", null);
 
-        assertThat(gift.from()).contains("Marie");
-        assertThat(gift.on()).isEmpty();
+        assertThat(gift.from().text()).isEqualTo("Marie");
+        assertThat(gift.on()).isEqualTo(EventDate.UNRECORDED);
     }
 
     @Test
     void recordsAGiftOnADateFromNobodyRemembered() {
-        Acquisition.Gift gift = new Acquisition.Gift(Optional.of(LocalDate.of(2021, 12, 25)), Optional.empty());
+        Acquisition.Gift gift = new Acquisition.Gift(EventDate.on(LocalDate.of(2021, 12, 25)), Note.NOTHING);
 
-        assertThat(gift.on()).contains(LocalDate.of(2021, 12, 25));
-        assertThat(gift.from()).isEmpty();
+        assertThat(gift.on()).isEqualTo(EventDate.on(LocalDate.of(2021, 12, 25)));
+        assertThat(gift.from()).isEqualTo(Note.NOTHING);
     }
 
     @Test
     void treatsABlankGiverAsNoGiver() {
-        assertThat(new Acquisition.Gift(Optional.empty(), Optional.of("   ")).from())
-                .isEmpty();
+        assertThat(new Acquisition.Gift(EventDate.UNRECORDED, Note.of("   ")).from())
+                .isEqualTo(Note.NOTHING);
     }
 
     @Test
     void allowsAPurchaseAndAnInheritanceToBeAsVague() {
-        assertThat(Acquisition.Purchased.on(null, null, null).on()).isEmpty();
-        assertThat(Acquisition.Inherited.from(null, null).from()).isEmpty();
+        assertThat(Acquisition.Purchased.on(null, null, null).on()).isEqualTo(EventDate.UNRECORDED);
+        assertThat(Acquisition.Inherited.from(null, null).from()).isEqualTo(Note.NOTHING);
     }
 
     @Test
     void stillDemandsTheLenderOfABorrowedCopy() {
-        assertThatThrownBy(() -> new Acquisition.Borrowed(" ", Optional.empty(), Optional.empty()))
+        assertThatThrownBy(() -> new Acquisition.Borrowed(" ", EventDate.UNRECORDED, EventDate.UNRECORDED))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("from");
     }
 
     @Test
     void borrowsWithoutKnowingWhen() {
-        Acquisition.Borrowed borrowed = new Acquisition.Borrowed("Hugo", Optional.empty(), Optional.empty());
+        Acquisition.Borrowed borrowed = new Acquisition.Borrowed("Hugo", EventDate.UNRECORDED, EventDate.UNRECORDED);
 
         assertThat(borrowed.owned()).isFalse();
-        assertThat(borrowed.on()).isEmpty();
+        assertThat(borrowed.on()).isEqualTo(EventDate.UNRECORDED);
     }
 
     @Test
     void stillRejectsADueDateBeforeTheLoanBegan() {
         assertThatThrownBy(() -> new Acquisition.Borrowed(
-                        "Hugo", Optional.of(LocalDate.of(2026, 5, 1)), Optional.of(LocalDate.of(2026, 4, 1))))
+                        "Hugo", EventDate.on(LocalDate.of(2026, 5, 1)), EventDate.on(LocalDate.of(2026, 4, 1))))
                 .hasMessageContaining("must not precede");
     }
 

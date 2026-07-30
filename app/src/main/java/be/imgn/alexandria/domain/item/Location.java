@@ -1,9 +1,10 @@
 package be.imgn.alexandria.domain.item;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
+import be.imgn.alexandria.domain.shared.EventDate;
 import be.imgn.alexandria.domain.shared.Guard;
+import be.imgn.alexandria.domain.shared.Note;
 
 /** Where the copy currently is. */
 public sealed interface Location {
@@ -13,15 +14,15 @@ public sealed interface Location {
     /** True when the copy is within reach right now. */
     boolean athand();
 
-    record Shelf(String name, Optional<String> position) implements Location {
+    record Shelf(String name, Note position) implements Location {
         public Shelf {
             Guard.notBlank(name, "name");
-            position = position == null ? Optional.empty() : position.filter(p -> !p.isBlank());
+            position = position == null ? Note.NOTHING : position;
         }
 
         @Override
         public String display() {
-            return position.map(p -> name + " (" + p + ")").orElse(name);
+            return position.text().isEmpty() ? name : name + " (" + position.text() + ")";
         }
 
         @Override
@@ -47,19 +48,19 @@ public sealed interface Location {
     }
 
     /** The borrower is required: an unnamed borrower is a lost book, not a loan. */
-    record LentTo(String person, Optional<LocalDate> since) implements Location {
+    record LentTo(String person, EventDate since) implements Location {
         public LentTo {
             Guard.notBlank(person, "person");
-            since = since == null ? Optional.empty() : since;
+            since = since == null ? EventDate.UNRECORDED : since;
         }
 
         public static LentTo to(String person, LocalDate since) {
-            return new LentTo(person, Optional.ofNullable(since));
+            return new LentTo(person, EventDate.on(since));
         }
 
         @Override
         public String display() {
-            return "lent to " + person + since.map(date -> " since " + date).orElse("");
+            return "lent to " + person + (since.display().isEmpty() ? "" : " since " + since.display());
         }
 
         @Override
@@ -99,7 +100,11 @@ public sealed interface Location {
 
     Location MISSING = new Missing();
 
+    static Location shelf(String name, String position) {
+        return new Shelf(name, Note.of(position));
+    }
+
     static Location shelf(String name) {
-        return new Shelf(name, Optional.empty());
+        return new Shelf(name, Note.NOTHING);
     }
 }

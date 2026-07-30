@@ -1,8 +1,8 @@
 package be.imgn.alexandria.domain.item;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
+import be.imgn.alexandria.domain.shared.EventDate;
 import be.imgn.alexandria.domain.shared.Guard;
 
 /**
@@ -16,39 +16,38 @@ public sealed interface ReadingProgress {
 
     record Unread() implements ReadingProgress {}
 
-    record Reading(Optional<LocalDate> since, Optional<Integer> page) implements ReadingProgress {
+    record Reading(EventDate since, PageReached page) implements ReadingProgress {
         public Reading {
-            since = since == null ? Optional.empty() : since;
-            page = page == null ? Optional.empty() : page;
-            page.ifPresent(p -> Guard.inRange(p, 1, 100_000, "page"));
+            since = since == null ? EventDate.UNRECORDED : since;
+            page = page == null ? PageReached.UNRECORDED : page;
         }
 
         public static Reading startedOn(LocalDate since) {
-            return new Reading(Optional.ofNullable(since), Optional.empty());
+            return new Reading(EventDate.on(since), PageReached.UNRECORDED);
         }
     }
 
-    record Finished(Optional<LocalDate> on, Optional<Rating> rating) implements ReadingProgress {
+    record Finished(EventDate on, Verdict verdict) implements ReadingProgress {
         public Finished {
-            on = on == null ? Optional.empty() : on;
-            rating = rating == null ? Optional.empty() : rating;
+            on = on == null ? EventDate.UNRECORDED : on;
+            verdict = verdict == null ? Verdict.UNRATED : verdict;
         }
 
         /** Read, date unrecorded — the common case for anything read before you kept a list. */
         public static Finished undated() {
-            return new Finished(Optional.empty(), Optional.empty());
+            return new Finished(EventDate.UNRECORDED, Verdict.UNRATED);
         }
 
         public static Finished on(LocalDate date, Rating rating) {
-            return new Finished(Optional.ofNullable(date), Optional.ofNullable(rating));
+            return new Finished(EventDate.on(date), Verdict.of(rating));
         }
     }
 
-    record Abandoned(Optional<LocalDate> on, Optional<Integer> atPage, String why) implements ReadingProgress {
+    record Abandoned(EventDate on, PageReached atPage, String why) implements ReadingProgress {
         public Abandoned {
-            on = on == null ? Optional.empty() : on;
+            on = on == null ? EventDate.UNRECORDED : on;
             Guard.notBlank(why, "why");
-            atPage = atPage == null ? Optional.empty() : atPage;
+            atPage = atPage == null ? PageReached.UNRECORDED : atPage;
         }
     }
 
@@ -57,16 +56,19 @@ public sealed interface ReadingProgress {
     default String display() {
         return switch (this) {
             case Unread() -> "unread";
-            case Reading(Optional<LocalDate> since, Optional<Integer> page) ->
-                "reading" + since.map(date -> " since " + date).orElse("")
-                        + page.map(p -> ", p. " + p).orElse("");
-            case Finished(Optional<LocalDate> on, Optional<Rating> rating) ->
-                "read" + on.map(date -> " " + date).orElse("")
-                        + rating.map(r -> ", " + r.stars() + "/5").orElse("");
-            case Abandoned(Optional<LocalDate> on, Optional<Integer> atPage, String why) ->
-                "abandoned" + on.map(date -> " " + date).orElse("")
-                        + atPage.map(p -> " at p. " + p).orElse("") + " — " + why;
+            case Reading(EventDate since, PageReached page) ->
+                "reading" + phrase(" since ", since.display()) + phrase(", p. ", page.stored());
+            case Finished(EventDate on, Verdict verdict) ->
+                "read" + phrase(" ", on.display())
+                        + (verdict.stars().isPresent() ? ", " + verdict.stars().getAsInt() + "/5" : "");
+            case Abandoned(EventDate on, PageReached atPage, String why) ->
+                "abandoned" + phrase(" ", on.display()) + phrase(" at p. ", atPage.stored()) + " — " + why;
         };
+    }
+
+    /** A fragment and its lead-in, or nothing at all when the fragment was never recorded. */
+    private static String phrase(String lead, String value) {
+        return value.isEmpty() ? "" : lead + value;
     }
 
     default boolean completed() {

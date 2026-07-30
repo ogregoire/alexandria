@@ -26,6 +26,7 @@ import be.imgn.alexandria.domain.shared.BibliographicDate;
 import be.imgn.alexandria.domain.shared.Contribution;
 import be.imgn.alexandria.domain.shared.Language;
 import be.imgn.alexandria.domain.shared.Money;
+import be.imgn.alexandria.domain.shared.Note;
 import be.imgn.alexandria.domain.shared.Title;
 import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.ExpressionId;
@@ -107,7 +108,7 @@ public final class CatalogFixture {
                 MY_COPY,
                 ECCO,
                 Acquisition.Purchased.on(LocalDate.of(2019, 4, 12), Money.of("28.50", "EUR"), "De Slegte"),
-                new Location.Shelf("living room", Optional.of("shelf 3")),
+                new Location.Shelf("living room", Note.of("shelf 3")),
                 ReadingProgress.Finished.on(LocalDate.of(2020, 1, 6), Rating.of(5)),
                 Condition.VERY_GOOD,
                 Optional.of("Spine sunned."));

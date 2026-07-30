@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.shared.EventDate;
 
 /**
  * FRBR Item: the single copy on your shelf — this printing, this dust jacket, this coffee ring.
@@ -47,26 +48,26 @@ public record Item(
     }
 
     public Item startReading(LocalDate on) {
-        return withReading(new ReadingProgress.Reading(Optional.ofNullable(on), Optional.empty()));
+        return withReading(new ReadingProgress.Reading(EventDate.on(on), PageReached.UNRECORDED));
     }
 
     public Item reachedPage(int page) {
-        if (!(reading instanceof ReadingProgress.Reading(Optional<LocalDate> since, var ignored))) {
+        if (!(reading instanceof ReadingProgress.Reading(EventDate since, var ignored))) {
             throw new IllegalStateException("item " + id + " is not currently being read");
         }
-        return withReading(new ReadingProgress.Reading(since, Optional.of(page)));
+        return withReading(new ReadingProgress.Reading(since, PageReached.at(page)));
     }
 
     /** A null date records that it was read without claiming to know when. */
     public Item finishReading(LocalDate on, Rating rating) {
-        return withReading(new ReadingProgress.Finished(Optional.ofNullable(on), Optional.ofNullable(rating)));
+        return withReading(new ReadingProgress.Finished(EventDate.on(on), Verdict.of(rating)));
     }
 
     public Item abandonReading(LocalDate on, String why) {
-        Optional<Integer> atPage = reading instanceof ReadingProgress.Reading(var ignored, Optional<Integer> page)
+        PageReached atPage = reading instanceof ReadingProgress.Reading(var ignored, PageReached page)
                 ? page
-                : Optional.empty();
-        return withReading(new ReadingProgress.Abandoned(Optional.ofNullable(on), atPage, why));
+                : PageReached.UNRECORDED;
+        return withReading(new ReadingProgress.Abandoned(EventDate.on(on), atPage, why));
     }
 
     public Item lendTo(String person, LocalDate on) {

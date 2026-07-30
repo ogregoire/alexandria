@@ -37,6 +37,19 @@ public final class JsonOut {
         return value.map(present -> put(key, quote(present))).orElse(this);
     }
 
+    /**
+     * Writes the key only when there is something to write. Blank means nothing was ever recorded, and an absent key is
+     * how this format has always said so — the two-shape types render their emptiness as "".
+     */
+    public JsonOut textIfAny(String key, String value) {
+        return value == null || value.isEmpty() ? this : put(key, quote(value));
+    }
+
+    /** The same, for a value that must stay an unquoted JSON number. */
+    public JsonOut numberIfAny(String key, String digits) {
+        return digits == null || digits.isEmpty() ? this : put(key, digits);
+    }
+
     public JsonOut number(String key, int value) {
         return put(key, Integer.toString(value));
     }

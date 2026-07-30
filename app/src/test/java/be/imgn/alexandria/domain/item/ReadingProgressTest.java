@@ -3,12 +3,12 @@ package be.imgn.alexandria.domain.item;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.shared.EventDate;
 
 /**
  * That a book has been read is worth recording on its own. When it was read is often not remembered, and demanding it
@@ -30,7 +30,7 @@ class ReadingProgressTest {
 
     @Test
     void finishesWithoutADateButWithARating() {
-        ReadingProgress read = new ReadingProgress.Finished(Optional.empty(), Optional.of(Rating.of(4)));
+        ReadingProgress read = new ReadingProgress.Finished(EventDate.UNRECORDED, Verdict.ofStars(4));
 
         assertThat(read.display()).isEqualTo("read, 4/5");
     }
@@ -52,9 +52,9 @@ class ReadingProgressTest {
 
     @Test
     void startsAndAbandonsWithoutDatesToo() {
-        assertThat(new ReadingProgress.Reading(Optional.empty(), Optional.of(120)).display())
+        assertThat(new ReadingProgress.Reading(EventDate.UNRECORDED, PageReached.at(120)).display())
                 .isEqualTo("reading, p. 120");
-        assertThat(new ReadingProgress.Abandoned(Optional.empty(), Optional.empty(), "dull").display())
+        assertThat(new ReadingProgress.Abandoned(EventDate.UNRECORDED, PageReached.UNRECORDED, "dull").display())
                 .isEqualTo("abandoned — dull");
     }
 
@@ -62,7 +62,7 @@ class ReadingProgressTest {
     void keepsRequiringTheReasonForGivingUp() {
         assertThat(Assertions.assertThrows(
                         IllegalArgumentException.class,
-                        () -> new ReadingProgress.Abandoned(Optional.empty(), Optional.empty(), " ")))
+                        () -> new ReadingProgress.Abandoned(EventDate.UNRECORDED, PageReached.UNRECORDED, " ")))
                 .hasMessageContaining("why");
     }
 }

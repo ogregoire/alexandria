@@ -19,10 +19,12 @@ import be.imgn.alexandria.domain.catalog.Catalog;
 import be.imgn.alexandria.domain.item.Acquisition;
 import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.Location;
-import be.imgn.alexandria.domain.item.Rating;
 import be.imgn.alexandria.domain.item.ReadingProgress;
+import be.imgn.alexandria.domain.item.Verdict;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
+import be.imgn.alexandria.domain.shared.EventDate;
 import be.imgn.alexandria.domain.shared.Money;
+import be.imgn.alexandria.domain.shared.Price;
 import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.ExpressionKind;
 import be.imgn.alexandria.domain.work.Work;
@@ -101,11 +103,7 @@ public final class Reports {
                                 h.item().acquisition().owned() ? "lent out" : "borrowed",
                                 h.work().title().main(),
                                 h.item().location().display(),
-                                h.item()
-                                        .acquisition()
-                                        .on()
-                                        .map(LocalDate::toString)
-                                        .orElse("")))
+                                h.item().acquisition().on().display()))
                         .toList()));
 
         specs.add(report(
@@ -234,19 +232,15 @@ public final class Reports {
                 "Everything finished and rated, best first.",
                 List.of("Rating", "Work", "Expression", "Finished"),
                 catalog -> Holding.of(catalog).stream()
-                        .filter(h -> rating(h.item()).isPresent())
-                        .sorted(Comparator.comparingInt((Holding h) ->
-                                        -rating(h.item()).orElseThrow().stars())
-                                .thenComparing(
-                                        h -> finished(h.item())
-                                                .map(LocalDate::toString)
-                                                .orElse(""),
-                                        Comparator.reverseOrder()))
+                        .filter(h -> rating(h.item()).stars().isPresent())
+                        .sorted(Comparator.comparingInt(
+                                        (Holding h) -> -rating(h.item()).stars().getAsInt())
+                                .thenComparing(h -> finished(h.item()).display(), Comparator.reverseOrder()))
                         .map(h -> List.of(
-                                String.valueOf(rating(h.item()).orElseThrow().stars()),
+                                rating(h.item()).stored(),
                                 h.work().title().main(),
                                 h.expression().describe(),
-                                finished(h.item()).map(LocalDate::toString).orElse("")))
+                                finished(h.item()).display()))
                         .toList()));
 
         specs.add(report(
@@ -281,16 +275,14 @@ public final class Reports {
                     Map<Bucket, Long> copies = new TreeMap<>();
                     for (Item item : catalog.items()) {
                         if (item.acquisition()
-                                        instanceof
-                                        Acquisition.Purchased(
-                                                Optional<LocalDate> on,
-                                                Optional<Money> price,
-                                                var ignored)
-                                && price.isPresent()
-                                && on.isPresent()) {
-                            Bucket bucket = new Bucket(
-                                    on.get().getYear(), price.get().currency().getCurrencyCode());
-                            spent.merge(bucket, price.get().amount(), BigDecimal::add);
+                                instanceof
+                                Acquisition.Purchased(
+                                        EventDate.On(LocalDate on),
+                                        Price.Paid(Money price),
+                                        var ignored)) {
+                            Bucket bucket =
+                                    new Bucket(on.getYear(), price.currency().getCurrencyCode());
+                            spent.merge(bucket, price.amount(), BigDecimal::add);
                             copies.merge(bucket, 1L, Long::sum);
                         }
                     }
@@ -330,16 +322,16 @@ public final class Reports {
                 .toList();
     }
 
-    private static Optional<Rating> rating(Item item) {
-        return item.reading() instanceof ReadingProgress.Finished(var ignored, Optional<Rating> rating)
-                ? rating
-                : Optional.empty();
+    private static Verdict rating(Item item) {
+        return item.reading() instanceof ReadingProgress.Finished(var ignored, Verdict verdict)
+                ? verdict
+                : Verdict.UNRATED;
     }
 
-    private static Optional<LocalDate> finished(Item item) {
-        return item.reading() instanceof ReadingProgress.Finished(Optional<LocalDate> on, var ignored)
+    private static EventDate finished(Item item) {
+        return item.reading() instanceof ReadingProgress.Finished(EventDate on, var ignored)
                 ? on
-                : Optional.empty();
+                : EventDate.UNRECORDED;
     }
 
     /** Kept for the home page, which only wants the five counts. */

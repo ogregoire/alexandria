@@ -1,17 +1,17 @@
 package be.imgn.alexandria.infrastructure.json.codec;
 
-import java.time.LocalDate;
-import java.util.Optional;
-
 import be.imgn.alexandria.domain.item.Acquisition;
 import be.imgn.alexandria.domain.item.Condition;
 import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.item.Location;
-import be.imgn.alexandria.domain.item.Rating;
+import be.imgn.alexandria.domain.item.PageReached;
 import be.imgn.alexandria.domain.item.ReadingProgress;
+import be.imgn.alexandria.domain.item.Verdict;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
-import be.imgn.alexandria.domain.shared.Money;
+import be.imgn.alexandria.domain.shared.EventDate;
+import be.imgn.alexandria.domain.shared.Note;
+import be.imgn.alexandria.domain.shared.Price;
 
 /**
  * Reads and writes an {@link Item} without a serialisation library.
@@ -43,35 +43,31 @@ public final class ItemCodec {
 
     private static void acquisition(JsonOut out, Acquisition acquisition) {
         switch (acquisition) {
-            case Acquisition.Purchased(Optional<LocalDate> date, Optional<Money> price, Optional<String> from) ->
+            case Acquisition.Purchased(EventDate date, Price price, Note from) ->
                 out.text("type", "purchased")
-                        .text("date", date.map(LocalDate::toString))
-                        .text("price", price.map(Money::text))
-                        .text("from", from);
-            case Acquisition.Gift(Optional<LocalDate> date, Optional<String> from) ->
-                out.text("type", "gift")
-                        .text("date", date.map(LocalDate::toString))
-                        .text("from", from);
-            case Acquisition.Inherited(Optional<LocalDate> date, Optional<String> from) ->
-                out.text("type", "inherited")
-                        .text("date", date.map(LocalDate::toString))
-                        .text("from", from);
-            case Acquisition.Borrowed(String from, Optional<LocalDate> since, Optional<LocalDate> due) ->
+                        .textIfAny("date", date.iso())
+                        .textIfAny("price", price.stored())
+                        .textIfAny("from", from.text());
+            case Acquisition.Gift(EventDate date, Note from) ->
+                out.text("type", "gift").textIfAny("date", date.iso()).textIfAny("from", from.text());
+            case Acquisition.Inherited(EventDate date, Note from) ->
+                out.text("type", "inherited").textIfAny("date", date.iso()).textIfAny("from", from.text());
+            case Acquisition.Borrowed(String from, EventDate since, EventDate due) ->
                 out.text("type", "borrowed")
                         .text("from", from)
-                        .text("since", since.map(LocalDate::toString))
-                        .text("due", due.map(LocalDate::toString));
+                        .textIfAny("since", since.iso())
+                        .textIfAny("due", due.iso());
             case Acquisition.Unrecorded() -> out.text("type", "unrecorded");
         }
     }
 
     private static void location(JsonOut out, Location location) {
         switch (location) {
-            case Location.Shelf(String name, Optional<String> position) ->
-                out.text("type", "shelf").text("name", name).text("position", position);
+            case Location.Shelf(String name, Note position) ->
+                out.text("type", "shelf").text("name", name).textIfAny("position", position.text());
             case Location.Box(String label) -> out.text("type", "box").text("label", label);
-            case Location.LentTo(String person, Optional<LocalDate> since) ->
-                out.text("type", "lent-to").text("person", person).text("since", since.map(LocalDate::toString));
+            case Location.LentTo(String person, EventDate since) ->
+                out.text("type", "lent-to").text("person", person).textIfAny("since", since.iso());
             case Location.Device(String name) -> out.text("type", "device").text("name", name);
             case Location.Missing() -> out.text("type", "missing");
         }
@@ -80,18 +76,14 @@ public final class ItemCodec {
     private static void reading(JsonOut out, ReadingProgress reading) {
         switch (reading) {
             case ReadingProgress.Unread() -> out.text("type", "unread");
-            case ReadingProgress.Reading(Optional<LocalDate> since, Optional<Integer> page) ->
-                out.text("type", "reading")
-                        .text("since", since.map(LocalDate::toString))
-                        .number("page", page);
-            case ReadingProgress.Finished(Optional<LocalDate> on, Optional<Rating> rating) ->
-                out.text("type", "finished")
-                        .text("on", on.map(LocalDate::toString))
-                        .number("rating", rating.map(Rating::stars));
-            case ReadingProgress.Abandoned(Optional<LocalDate> on, Optional<Integer> atPage, String why) ->
+            case ReadingProgress.Reading(EventDate since, PageReached page) ->
+                out.text("type", "reading").textIfAny("since", since.iso()).numberIfAny("page", page.stored());
+            case ReadingProgress.Finished(EventDate on, Verdict verdict) ->
+                out.text("type", "finished").textIfAny("on", on.iso()).numberIfAny("rating", verdict.stored());
+            case ReadingProgress.Abandoned(EventDate on, PageReached atPage, String why) ->
                 out.text("type", "abandoned")
-                        .text("on", on.map(LocalDate::toString))
-                        .number("atPage", atPage)
+                        .textIfAny("on", on.iso())
+                        .numberIfAny("atPage", atPage.stored())
                         .text("why", why);
         }
     }
@@ -114,11 +106,15 @@ public final class ItemCodec {
         return switch (in.type()) {
             case "purchased" ->
                 new Acquisition.Purchased(
-                        in.optionalDate("date"), in.optionalText("price").map(Money::parse), in.optionalText("from"));
-            case "gift" -> new Acquisition.Gift(in.optionalDate("date"), in.optionalText("from"));
-            case "inherited" -> new Acquisition.Inherited(in.optionalDate("date"), in.optionalText("from"));
+                        EventDate.parse(in.orBlank("date")),
+                        Price.parse(in.orBlank("price")),
+                        Note.of(in.orBlank("from")));
+            case "gift" -> new Acquisition.Gift(EventDate.parse(in.orBlank("date")), Note.of(in.orBlank("from")));
+            case "inherited" ->
+                new Acquisition.Inherited(EventDate.parse(in.orBlank("date")), Note.of(in.orBlank("from")));
             case "borrowed" ->
-                new Acquisition.Borrowed(in.text("from"), in.optionalDate("since"), in.optionalDate("due"));
+                new Acquisition.Borrowed(
+                        in.text("from"), EventDate.parse(in.orBlank("since")), EventDate.parse(in.orBlank("due")));
             case "unrecorded" -> Acquisition.UNRECORDED;
             default -> throw unknown("acquisition", in.type());
         };
@@ -126,9 +122,9 @@ public final class ItemCodec {
 
     private static Location location(JsonIn in) {
         return switch (in.type()) {
-            case "shelf" -> new Location.Shelf(in.text("name"), in.optionalText("position"));
+            case "shelf" -> new Location.Shelf(in.text("name"), Note.of(in.orBlank("position")));
             case "box" -> new Location.Box(in.text("label"));
-            case "lent-to" -> new Location.LentTo(in.text("person"), in.optionalDate("since"));
+            case "lent-to" -> new Location.LentTo(in.text("person"), EventDate.parse(in.orBlank("since")));
             case "device" -> new Location.Device(in.text("name"));
             case "missing" -> Location.MISSING;
             default -> throw unknown("location", in.type());
@@ -138,12 +134,17 @@ public final class ItemCodec {
     private static ReadingProgress reading(JsonIn in) {
         return switch (in.type()) {
             case "unread" -> ReadingProgress.UNREAD;
-            case "reading" -> new ReadingProgress.Reading(in.optionalDate("since"), in.optionalInt("page"));
+            case "reading" ->
+                new ReadingProgress.Reading(
+                        EventDate.parse(in.orBlank("since")), PageReached.parse(in.numberOrBlank("page")));
             case "finished" ->
                 new ReadingProgress.Finished(
-                        in.optionalDate("on"), in.optionalInt("rating").map(Rating::of));
+                        EventDate.parse(in.orBlank("on")), Verdict.parse(in.numberOrBlank("rating")));
             case "abandoned" ->
-                new ReadingProgress.Abandoned(in.optionalDate("on"), in.optionalInt("atPage"), in.text("why"));
+                new ReadingProgress.Abandoned(
+                        EventDate.parse(in.orBlank("on")),
+                        PageReached.parse(in.numberOrBlank("atPage")),
+                        in.text("why"));
             default -> throw unknown("reading progress", in.type());
         };
     }

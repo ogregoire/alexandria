@@ -55,6 +55,19 @@ public final class JsonIn {
         return fields.get(key) instanceof String value ? Optional.of(value) : Optional.empty();
     }
 
+    /**
+     * The field's text, or blank when it is absent — for the two-shape types that read "nothing written down" from a
+     * missing key rather than from an empty Optional.
+     */
+    public String orBlank(String key) {
+        return optionalText(key).orElse("");
+    }
+
+    /** A numeric field's digits, or blank when it is absent — the number-shaped partner of {@link #orBlank}. */
+    public String numberOrBlank(String key) {
+        return optionalInt(key).map(String::valueOf).orElse("");
+    }
+
     public String text(String key) {
         return optionalText(key).orElseThrow(() -> new IllegalArgumentException("missing string field '" + key + "'"));
     }

@@ -29,6 +29,7 @@ import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.item.Location;
 import be.imgn.alexandria.domain.item.ReadingProgress;
+import be.imgn.alexandria.domain.shared.EventDate;
 import be.imgn.alexandria.domain.shared.TitleFormat;
 import be.imgn.alexandria.domain.work.WorkId;
 import be.imgn.alexandria.infrastructure.json.JsonCatalog;
@@ -215,7 +216,7 @@ class EditorTest {
                 ItemId.of("borrowed-copy"),
                 CatalogFixture.ECCO,
                 new Acquisition.Borrowed(
-                        "Marie", Optional.of(LocalDate.of(2024, 3, 1)), Optional.of(LocalDate.of(2024, 4, 1))),
+                        "Marie", EventDate.on(LocalDate.of(2024, 3, 1)), EventDate.on(LocalDate.of(2024, 4, 1))),
                 Location.shelf("desk"),
                 ReadingProgress.UNREAD,
                 Condition.GOOD,

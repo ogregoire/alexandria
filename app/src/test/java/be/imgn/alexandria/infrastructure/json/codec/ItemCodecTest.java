@@ -14,10 +14,13 @@ import be.imgn.alexandria.domain.item.Condition;
 import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.item.Location;
+import be.imgn.alexandria.domain.item.PageReached;
 import be.imgn.alexandria.domain.item.Rating;
 import be.imgn.alexandria.domain.item.ReadingProgress;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.shared.EventDate;
 import be.imgn.alexandria.domain.shared.Money;
+import be.imgn.alexandria.domain.shared.Note;
 
 /**
  * Every shape an {@link Item} can take, round-tripped.
@@ -34,7 +37,7 @@ class ItemCodecTest {
         return List.of(
                 item(
                         Acquisition.Purchased.on(LocalDate.of(2019, 4, 12), Money.of("28.50", "EUR"), "De Slegte"),
-                        new Location.Shelf("living room", Optional.of("shelf 3")),
+                        new Location.Shelf("living room", Note.of("shelf 3")),
                         ReadingProgress.Finished.on(LocalDate.of(2020, 1, 6), Rating.of(5)),
                         Optional.of("Spine sunned.")),
                 item(
@@ -50,18 +53,20 @@ class ItemCodecTest {
                 item(
                         Acquisition.Inherited.from("my father", null),
                         Location.LentTo.to("Thomas", LocalDate.of(2025, 9, 3)),
-                        new ReadingProgress.Reading(Optional.of(LocalDate.of(2026, 7, 2)), Optional.of(148)),
+                        new ReadingProgress.Reading(EventDate.on(LocalDate.of(2026, 7, 2)), PageReached.at(148)),
                         Optional.of("Quote \"marks\" and a \\ backslash.")),
                 item(
                         new Acquisition.Borrowed(
-                                "Hugo", Optional.of(LocalDate.of(2026, 5, 12)), Optional.of(LocalDate.of(2026, 8, 12))),
+                                "Hugo",
+                                EventDate.on(LocalDate.of(2026, 5, 12)),
+                                EventDate.on(LocalDate.of(2026, 8, 12))),
                         new Location.Device("phone"),
-                        new ReadingProgress.Abandoned(Optional.empty(), Optional.of(212), "Stalled."),
+                        new ReadingProgress.Abandoned(EventDate.UNRECORDED, PageReached.at(212), "Stalled."),
                         Optional.empty()),
                 item(
                         Acquisition.UNRECORDED,
                         Location.shelf("study"),
-                        new ReadingProgress.Reading(Optional.empty(), Optional.empty()),
+                        new ReadingProgress.Reading(EventDate.UNRECORDED, PageReached.UNRECORDED),
                         Optional.empty()));
     }
 
