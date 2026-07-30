@@ -103,6 +103,20 @@ class SiteGeneratorTest {
     }
 
     @Test
+    void saysSoOnAnEditionNobodyHoldsACopyOf(@TempDir Path root, @TempDir Path output) throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+        catalog.deleteItem(CatalogFixture.MY_COPY);
+
+        new SiteGenerator(catalog).generateInto(output);
+
+        assertThat(Files.readString(output.resolve("editions/quixote-ecco-2003-hb.html")))
+                .as("the shelf section still appears, and admits the shelf is empty")
+                .contains("On the shelf")
+                .contains("No copy of this edition is held")
+                .doesNotContain("class=\"copy\"");
+    }
+
+    @Test
     void countsLiveOnTheirOwnPageRatherThanEveryPage(@TempDir Path root, @TempDir Path output) throws Exception {
         JsonCatalog catalog = CatalogFixture.writeInto(root);
 

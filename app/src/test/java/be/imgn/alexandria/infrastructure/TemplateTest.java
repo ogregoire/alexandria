@@ -3,6 +3,8 @@ package be.imgn.alexandria.infrastructure;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 class TemplateTest {
@@ -80,6 +82,109 @@ class TemplateTest {
         String page = Template.of("<p>{price}</p>").with("price", "$5 \\ 10").render();
 
         assertThat(page).isEqualTo("<p>$5 \\ 10</p>");
+    }
+
+    // ------------------------------------------------------------------ blocks
+
+    @Test
+    void repeatsABlockOncePerItem() {
+        String page = Template.of("<ul>{#each rows}<li>{title}</li>{/each}</ul>")
+                .each("rows", List.of("Don Quixote", "The Eye of the World"), (row, title) -> row.with("title", title))
+                .render();
+
+        assertThat(page).isEqualTo("<ul><li>Don Quixote</li><li>The Eye of the World</li></ul>");
+    }
+
+    @Test
+    void rendersNothingForAnEmptyCollection() {
+        String page = Template.of("<ul>{#each rows}<li>{title}</li>{/each}</ul>")
+                .each("rows", List.<String>of(), (row, title) -> row.with("title", title))
+                .render();
+
+        assertThat(page).isEqualTo("<ul></ul>");
+    }
+
+    @Test
+    void escapesInsideALoopToo() {
+        String page = Template.of("{#each rows}<li>{title}</li>{/each}")
+                .each("rows", List.of("<b>bold</b>"), (row, title) -> row.with("title", title))
+                .render();
+
+        assertThat(page).isEqualTo("<li>&lt;b&gt;bold&lt;/b&gt;</li>");
+    }
+
+    @Test
+    void keepsOrOmitsABranch() {
+        String source = "<p>a</p>{#if held}<p>on the shelf</p>{/if}";
+
+        assertThat(Template.of(source).when("held", true).render()).isEqualTo("<p>a</p><p>on the shelf</p>");
+        assertThat(Template.of(source).when("held", false).render()).isEqualTo("<p>a</p>");
+    }
+
+    @Test
+    void takesTheElseBranchWhenFalse() {
+        String source = "{#if held}<p>held</p>{#else}<p>not held</p>{/if}";
+
+        assertThat(Template.of(source).when("held", true).render()).isEqualTo("<p>held</p>");
+        assertThat(Template.of(source).when("held", false).render()).isEqualTo("<p>not held</p>");
+    }
+
+    /** A slot in the branch not taken is never rendered, so it never needs a value. */
+    @Test
+    void asksOnlyForWhatItActuallyRenders() {
+        String page = Template.of("{#if named}<p>{name}</p>{#else}<p>Anonymous</p>{/if}")
+                .when("named", false)
+                .render();
+
+        assertThat(page).isEqualTo("<p>Anonymous</p>");
+    }
+
+    @Test
+    void nestsBlocksInsideEachOther() {
+        record Shelf(String name, List<String> books) {}
+        String page = Template.of("{#each shelves}<h2>{shelf}</h2><ul>{#each books}<li>{book}</li>{/each}</ul>{/each}")
+                .each(
+                        "shelves",
+                        List.of(new Shelf("desk", List.of("Quixote")), new Shelf("attic", List.of())),
+                        (block, shelf) -> block.with("shelf", shelf.name())
+                                .each("books", shelf.books(), (row, book) -> row.with("book", book)))
+                .render();
+
+        assertThat(page).isEqualTo("<h2>desk</h2><ul><li>Quixote</li></ul><h2>attic</h2><ul></ul>");
+    }
+
+    @Test
+    void refusesToRenderALoopNobodyBound() {
+        assertThatThrownBy(() -> Template.of("{#each rows}<li>{x}</li>{/each}").render())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("rows");
+    }
+
+    @Test
+    void refusesToRenderABranchWithNoCondition() {
+        assertThatThrownBy(() -> Template.of("{#if held}x{/if}").render())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("held");
+    }
+
+    @Test
+    void refusesToBindABlockThatIsNotThere() {
+        assertThatThrownBy(() -> Template.of("<p>{x}</p>").each("rows", List.of(), (row, item) -> {}))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("rows");
+        assertThatThrownBy(() -> Template.of("<p>{x}</p>").when("held", true))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("held");
+    }
+
+    @Test
+    void refusesATemplateWhoseBlocksDoNotClose() {
+        assertThatThrownBy(() -> Template.of("{#each rows}<li>x</li>"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("never closed");
+        assertThatThrownBy(() -> Template.of("<li>x</li>{/each}"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("never opened");
     }
 
     @Test

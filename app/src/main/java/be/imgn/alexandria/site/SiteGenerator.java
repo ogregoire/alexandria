@@ -308,23 +308,27 @@ public final class SiteGenerator {
             return "";
         }
         long total = tally.values().stream().mapToLong(Long::longValue).sum();
-        String rows = tally.entrySet().stream()
-                .map(entry -> """
-                        <tr>
-                          <th scope="row">%s</th>
-                          <td>%d</td>
-                          <td class="bar"><span style="--share: %d%%" aria-hidden="true"></span></td>
-                        </tr>
-                        """.formatted(
-                        Escape.html(entry.getKey()), entry.getValue(), Math.round(entry.getValue() * 100.0 / total)))
-                .collect(Collectors.joining());
-        return """
+        return Template.of("""
                 <section class="stat">
-                  <h2>%s</h2>
-                  <p class="hint">%s</p>
-                  <table><tbody>%s</tbody></table>
+                  <h2>{heading}</h2>
+                  <p class="hint">{explanation}</p>
+                  <table><tbody>{#each rows}<tr>
+                          <th scope="row">{name}</th>
+                          <td>{count}</td>
+                          <td class="bar"><span style="--share: {share}%" aria-hidden="true"></span></td>
+                        </tr>
+                        {/each}</tbody></table>
                 </section>
-                """.formatted(Escape.html(heading), Escape.html(explanation), rows);
+                """)
+                .with("heading", heading)
+                .with("explanation", explanation)
+                .each(
+                        "rows",
+                        tally.entrySet(),
+                        (row, entry) -> row.with("name", entry.getKey())
+                                .with("count", Math.toIntExact(entry.getValue()))
+                                .with("share", (int) Math.round(entry.getValue() * 100.0 / total)))
+                .render();
     }
 
     /** What an agent is in this catalogue: the roles they are credited in, or their kind when nothing credits them. */
@@ -380,44 +384,51 @@ public final class SiteGenerator {
                 .collect(Collectors.joining());
 
         List<Item> copies = catalog.copiesOf(edition.id());
-        String held = copies.isEmpty()
-                ? "<p class=\"none\">No copy of this edition is held.</p>"
-                : copies.stream()
-                        .map(copy -> """
-                                <p class="copy">%s · %s%s</p>
-                                """.formatted(
-                                Escape.html(copy.reading().display()),
-                                Escape.html(copy.location().display()),
-                                copy.notes().text().isEmpty()
-                                        ? ""
-                                        : " · " + Escape.html(copy.notes().text())))
-                        .collect(Collectors.joining());
 
         // The byline, which the facts table has no row for: the author belongs beside the title,
         // the way it sits on a cover.
         String byline =
                 worksBehind(edition).stream().map(this::bylineLinks).distinct().collect(Collectors.joining(", "));
 
-        return shell(edition.title().main(), "..", """
+        return shell(
+                edition.title().main(),
+                "..",
+                Template.of("""
                 <p class="crumb"><a href="../index.html">The library</a></p>
-                <h1>%s</h1>
-                <p class="meta">%s</p>
-                <table class="facts"><tbody>%s</tbody></table>
+                <h1>{title}</h1>
+                <p class="meta">{byline}</p>
+                <table class="facts"><tbody>{facts}</tbody></table>
                 <section class="as">
-                  <h2>%s</h2>
-                  <ul class="works">%s</ul>
+                  <h2>{contentsHeading}</h2>
+                  <ul class="works">{contents}</ul>
                 </section>
                 <section class="as">
                   <h2>On the shelf</h2>
-                  %s
+                  {#if held}{#each copies}<p class="copy">{reading} · {where}{note}</p>
+                  {/each}{#else}<p class="none">No copy of this edition is held.</p>
+                  {/if}
                 </section>
-                """.formatted(
-                        Escape.html(titleOf(edition)),
-                        byline.isEmpty() ? "Anonymous" : byline,
-                        facts,
-                        edition.embodies().size() == 1 ? "What it is" : "What it collects",
-                        contents,
-                        held));
+                """)
+                        .with("title", titleOf(edition))
+                        .withMarkup("byline", byline.isEmpty() ? "Anonymous" : byline)
+                        .withMarkup("facts", facts)
+                        .with("contentsHeading", edition.embodies().size() == 1 ? "What it is" : "What it collects")
+                        .withMarkup("contents", contents)
+                        .when("held", !copies.isEmpty())
+                        .each(
+                                "copies",
+                                copies,
+                                (row, copy) -> row.with(
+                                                "reading", copy.reading().display())
+                                        .with("where", copy.location().display())
+                                        .withMarkup(
+                                                "note",
+                                                copy.notes().text().isEmpty()
+                                                        ? ""
+                                                        : " · "
+                                                                + Escape.html(copy.notes()
+                                                                        .text())))
+                        .render());
     }
 
     private static String fact(String name, String value) {
