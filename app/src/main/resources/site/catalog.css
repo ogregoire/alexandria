@@ -171,6 +171,18 @@ a {
   list-style: none;
 }
 
+/* The list is in the page from the start and hidden here rather than by the script, so it
+ * is never painted and then taken away. `catalog.js` marks the document before the body is
+ * parsed; if it never loads, the marker never appears and the catalogue simply shows —
+ * exactly as it does with scripting off. */
+.js #entries {
+  display: none;
+}
+
+.js #entries.is-searching {
+  display: flex;
+}
+
 .entry {
   padding: var(--space-md) 0;
   border-top: var(--rule-hair) solid var(--color-rule);

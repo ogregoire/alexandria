@@ -102,9 +102,11 @@ public final class SiteGenerator {
      * catalogue as "what do I own" — and because an agent page nothing links to may as well not have been generated.
      * Interleaving the two is what makes one field enough: there is no track to choose first.
      *
-     * <p>The list is delivered whole and hidden by the script until something is typed. Delivering it and hiding it,
-     * rather than building rows from the index on demand, is what keeps the page working with no JavaScript at all —
-     * without the script the catalogue is simply all there, in order.
+     * <p>The list is delivered whole and hidden by the stylesheet until something is typed — hidden by the stylesheet
+     * and not by the script, so it is never painted and then snatched away. Delivering it rather than building rows
+     * from the search index on demand is what keeps the page working with no JavaScript at all: the marker the
+     * stylesheet keys on is set by the script itself, so when the script is absent the catalogue is simply all there,
+     * in order.
      */
     private String indexPage() {
         String rows = Stream.concat(
@@ -721,6 +723,9 @@ public final class SiteGenerator {
                   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
                   <title>%s — Alexandria</title>
                   <link rel="stylesheet" href="%s/catalog.css">
+                  <!-- In the head and not deferred: the script's first line marks the document
+                       so the stylesheet can hide the list before it is ever painted. -->
+                  <script src="%s/catalog.js"></script>
                 </head>
                 <body>
                   <header class="mast">
@@ -734,17 +739,16 @@ public final class SiteGenerator {
                     <p>A personal catalogue after IFLA-LRM, kept as JSON and rendered without a
                        database. <a href="%s/statistics.html">What is in it</a>.</p>
                   </footer>
-                  <script src="%s/catalog.js"></script>
                 </body>
                 </html>
                 """.formatted(
                         Escape.html(title),
                         root,
+                        root,
                         wordmarkLeads ? "h1" : "p",
                         root,
                         wordmarkLeads ? "h1" : "p",
                         body,
-                        root,
                         root);
     }
 

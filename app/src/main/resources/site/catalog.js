@@ -9,7 +9,15 @@
 // "grossman penguin" narrows. An entry whose *heading* matches sorts above one that only
 // matches deeper in: searching "lauzon" wants the translator first and the book he
 // translated second.
-(function () {
+
+// Claim the page before it paints. This file is loaded from <head> without defer, so this
+// line runs before the list exists: the stylesheet hides the list for a document marked
+// "js", and the marker is set early enough that the full catalogue is never drawn and then
+// snatched away. If this file fails to load, the class is never added and the catalogue
+// renders in full — which is the same thing that happens with scripting turned off.
+document.documentElement.classList.add('js');
+
+document.addEventListener('DOMContentLoaded', function () {
   var box = document.getElementById('q');
   var list = document.getElementById('entries');
   if (!box || !list) {
@@ -41,11 +49,12 @@
     var tokens = fold(query).split(/\s+/).filter(Boolean);
 
     if (tokens.length === 0) {
-      rows.forEach(hide);
+      list.classList.remove('is-searching');
       count.textContent = '';
       empty.hidden = true;
       return;
     }
+    list.classList.add('is-searching');
 
     var shown = 0;
     rows.forEach(function (row) {
@@ -82,8 +91,10 @@
       filter();
     })
     .catch(function () {
-      // Opened straight from the filesystem, where fetch is blocked: leave the catalogue
-      // showing in full and take away a field that would do nothing.
+      // Opened straight from the filesystem, where fetch is blocked. Drop the marker so the
+      // stylesheet shows the catalogue in full again, and take away a field that would do
+      // nothing.
+      document.documentElement.classList.remove('js');
       box.closest('.find').hidden = true;
     });
-})();
+});
