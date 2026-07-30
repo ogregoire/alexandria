@@ -21,6 +21,7 @@ import be.imgn.alexandria.domain.shared.Role;
 import be.imgn.alexandria.domain.shared.Title;
 import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.ExpressionId;
+import be.imgn.alexandria.domain.work.ExpressionKind;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.domain.work.WorkForm;
 import be.imgn.alexandria.domain.work.WorkId;
@@ -91,6 +92,50 @@ class PseudonymTest {
         assertThat(catalog.works())
                 .extracting(work -> work.sortKey(catalog.directory()).split(" \\| ")[0])
                 .containsOnly("Hobb, Robin");
+    }
+
+    /**
+     * A translator was being dated by the author's dates: the agent page showed Daniel Lauzon as "translator ·
+     * 1937-1949", the years Tolkien wrote the work, rather than 2014-2016 when the translation was made.
+     */
+    @Test
+    void datesACreditByTheLevelItBelongsTo() {
+        JsonCatalog store = (JsonCatalog) catalog;
+        WorkId id = WorkId.of("hobb-translated");
+        Agent translator = Agent.person("Une Traductrice", "Traductrice, Une");
+        store.save(translator);
+        store.save(new Work(
+                id,
+                Title.of("Assassin's Apprentice"),
+                List.of(Contribution.as(HOBB, Role.AUTHOR, "Robin Hobb")),
+                WorkForm.NOVEL,
+                BibliographicDate.year(1995),
+                Set.of(),
+                List.of(new Expression(
+                        new ExpressionId(id, "fr"),
+                        new ExpressionKind.Translation(Language.ENGLISH),
+                        new Language("fr"),
+                        List.of(Contribution.of(translator, Role.TRANSLATOR)),
+                        BibliographicDate.year(2007)))));
+
+        var authorCredit = store.creditsOf(HOBB.id()).stream()
+                .filter(credit -> credit.work().id().equals(id))
+                .findFirst()
+                .orElseThrow();
+        var translatorCredit =
+                store.creditsOf(translator.id()).stream().findFirst().orElseThrow();
+
+        assertThat(authorCredit.when().display())
+                .as("the author is dated by the work")
+                .isEqualTo("1995");
+        assertThat(translatorCredit.when().display())
+                .as("the translator by the translation, not by when the work was written")
+                .isEqualTo("2007");
+        assertThat(translatorCredit.describe())
+                .as("and the credit says which realisation it is for")
+                .contains("translator")
+                .contains("French");
+        assertThat(authorCredit.describe()).isEqualTo("author");
     }
 
     @Test

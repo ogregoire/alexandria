@@ -119,9 +119,9 @@ final class AgentPages {
                                     "/works/" + credit.work().id().value(),
                                     credit.work().title().main()))
                             .append(" <span class=\"hint\">")
-                            .append(Html.escape(credit.role().label()))
+                            .append(Html.escape(credit.describe()))
                             .append(" · ")
-                            .append(Html.escape(credit.work().created().display()))
+                            .append(Html.escape(credit.when().display()))
                             .append("</span></li>"));
             out.append("</ul>");
         });

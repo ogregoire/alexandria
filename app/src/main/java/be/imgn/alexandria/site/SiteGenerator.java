@@ -157,8 +157,8 @@ public final class SiteGenerator {
                             """.formatted(
                                     Escape.html(credit.work().id().value()),
                                     Escape.html(credit.work().title().full()),
-                                    Escape.html(credit.role().label()),
-                                    Escape.html(credit.work().created().display())))
+                                    Escape.html(credit.describe()),
+                                    Escape.html(credit.when().display())))
                     .collect(Collectors.joining());
             sections.append("""
                     <section class="as">

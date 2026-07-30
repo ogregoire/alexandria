@@ -84,11 +84,14 @@ public interface Catalog {
         for (Work work : works()) {
             work.creators().stream()
                     .filter(c -> c.agent().equals(agent))
-                    .forEach(c -> credits.add(new Credit(work, c.role(), c.publishedAs())));
-            work.expressions().stream()
-                    .flatMap(expression -> expression.contributors().stream())
-                    .filter(c -> c.agent().equals(agent))
-                    .forEach(c -> credits.add(new Credit(work, c.role(), c.publishedAs())));
+                    .forEach(c -> credits.add(Credit.onWork(work, c.role(), c.publishedAs())));
+            // Kept per expression rather than flattened, so a translator is dated by the
+            // translation and not by when the work was written.
+            for (Expression expression : work.expressions()) {
+                expression.contributors().stream()
+                        .filter(c -> c.agent().equals(agent))
+                        .forEach(c -> credits.add(Credit.onExpression(work, expression, c.role(), c.publishedAs())));
+            }
         }
         return List.copyOf(credits);
     }
