@@ -1,12 +1,14 @@
 /* Hallmark · genre: editorial · macrostructure: Index-First · theme: Almanac
- * nav: N6 Newspaper masthead (knobs: issue-line=below wordmark, wordmark=xl, rule=double)
- * footer: Ft4 Dense colophon (knobs: family=data/mono, layout=single block, includes=counts+date)
+ * nav: N6 Newspaper masthead (knobs: wordmark=xl, issue-line=none, rule=double)
+ * footer: Ft4 Dense colophon (knobs: family=data/mono, layout=single block)
  * enrichment: none — typography only · motion: none (Index-First is motion-off; Almanac is 0.85x)
  * pre-emit critique: P5 H5 E4 S5 R5 V4
  *
- * The page is the index. No hero, no narrative: a masthead, one search field, and the
- * catalogue itself in hairline-ruled rows. Two tracks — works and people — because a
- * catalogue is as much a directory of who made things as a list of the things.
+ * The page opens as a search field and nothing else. Works and agents share one
+ * alphabetical list — a catalogue is as much a directory of who made things as a list of
+ * the things — and the list is revealed by typing, ranked so a heading match leads.
+ * The counts live on their own page; a reader looking at a book does not need to be told
+ * how many books there are.
  */
 
 @import url("tokens.css");
@@ -156,26 +158,13 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
-/* ------------------------------------------------------------------ tracks
- * S4 inline section heads: a small-caps phrase that emerges inside the flow rather than
- * breaking it with a band. No numbering — these are two tracks, not two chapters.
- */
+/* ------------------------------------------------------------------ results */
 
-.track {
-  margin: var(--space-xl) 0 0;
-}
-
-.track > h2 {
-  margin: 0 0 var(--space-2xs);
-  color: var(--color-muted);
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: var(--text-sm);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
+/* A flex column, so a heading match can be lifted above a body-only match with `order`
+ * while both keep the alphabetical order the page was written in. */
 .entries {
+  display: flex;
+  flex-direction: column;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -213,27 +202,6 @@ a {
 .holdings,
 .meta {
   font-variant-numeric: tabular-nums;
-}
-
-/* The people track is a directory: one line each, name then what they did. */
-.person {
-  padding: var(--space-sm) 0;
-  border-top: var(--rule-hair) solid var(--color-rule);
-}
-
-.person a {
-  font-family: var(--font-display);
-  font-size: var(--text-base);
-  text-decoration: none;
-}
-
-.person a:hover {
-  text-decoration: underline;
-}
-
-.person .role {
-  color: var(--color-muted);
-  font-size: var(--text-sm);
 }
 
 .empty {
@@ -376,4 +344,79 @@ h3 {
   .entry {
     padding: var(--space-lg) 0;
   }
+}
+
+/* ------------------------------------------------------------------ statistics */
+
+.tallies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg) var(--space-xl);
+  margin: 0 0 var(--space-xl);
+  padding: var(--space-md) 0;
+  border-top: var(--rule-hair) solid var(--color-rule);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  list-style: none;
+}
+
+.tallies .figure {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.tallies .of {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.stat {
+  margin: 0 0 var(--space-xl);
+}
+
+.stat h2 {
+  margin: 0 0 var(--space-3xs);
+}
+
+.stat .hint {
+  margin: 0 0 var(--space-sm);
+}
+
+.stat table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat th,
+.stat td {
+  padding: var(--space-2xs) var(--space-sm) var(--space-2xs) 0;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  text-align: left;
+  font-weight: 400;
+}
+
+.stat td {
+  width: 4rem;
+  color: var(--color-muted);
+  font-family: var(--font-data);
+  font-size: var(--text-sm);
+}
+
+/* The bar is the figure drawn, not decoration: it is the same number as the column beside
+ * it, so it carries no separate label and is hidden from the reader who is being read to. */
+.stat td.bar {
+  width: 45%;
+  padding-inline-end: 0;
+}
+
+.stat td.bar span {
+  display: block;
+  width: var(--share);
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-accent);
+  opacity: 0.55;
 }

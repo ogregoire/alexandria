@@ -6,14 +6,19 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import be.imgn.alexandria.application.Reports;
 import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentId;
@@ -26,6 +31,7 @@ import be.imgn.alexandria.domain.shared.Role;
 import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.infrastructure.Escape;
+import be.imgn.alexandria.infrastructure.VariantNames;
 
 /**
  * Renders the catalogue as a static site: one page listing every Work, one page per Work showing the full WEMI descent,
@@ -34,6 +40,17 @@ import be.imgn.alexandria.infrastructure.Escape;
  * <p>No server, no build step in the page — the output is meant to be committed by CI and served by GitHub Pages.
  */
 public final class SiteGenerator {
+
+    /**
+     * Articles a title is filed past rather than under.
+     *
+     * <p>Definite and indefinite articles only. French "de" and "du" look like the others and are not articles but
+     * prepositions — filing <em>Du côté de chez Swann</em> under "côté" would be wrong. Forms ending in an apostrophe
+     * are not followed by a space; the rest are.
+     */
+    private static final List<String> NON_FILING = List.of(
+            "the", "a", "an", "le", "la", "les", "l'", "l’", "un", "une", "der", "die", "das", "ein", "eine", "el",
+            "los", "las", "il", "lo", "gli", "het", "een");
 
     private final Catalog catalog;
     private final AgentDirectory agents;
@@ -51,6 +68,7 @@ public final class SiteGenerator {
             Files.createDirectories(output.resolve("works"));
             Files.createDirectories(output.resolve("agents"));
             written.add(write(output.resolve("index.html"), indexPage()));
+            written.add(write(output.resolve("statistics.html"), statisticsPage()));
             written.add(write(output.resolve("search-index.json"), searchIndex()));
             written.add(write(output.resolve("tokens.css"), resource("/tokens.css")));
             written.add(write(output.resolve("catalog.css"), resource("/site/catalog.css")));
@@ -70,40 +88,22 @@ public final class SiteGenerator {
     // ------------------------------------------------------------- pages
 
     /**
-     * The index is the whole site: one search field over two tracks. Agents are a track of their own rather than a
-     * detail of the works, because "who translated this" is as good a way into a catalogue as "what do I own" — and
-     * because an agent page that nothing links to may as well not have been generated.
+     * The index is the whole site: one search field over one alphabetical list holding works and agents together.
+     *
+     * <p>Agents are listed beside the works rather than beneath them, because "who translated this" is as good a way
+     * into a catalogue as "what do I own" — and because an agent page nothing links to may as well not have been
+     * generated. Interleaving the two is what makes one field enough: there is no track to choose first.
+     *
+     * <p>The list is delivered whole and hidden by the script until something is typed. Delivering it and hiding it,
+     * rather than building rows from the index on demand, is what keeps the page working with no JavaScript at all —
+     * without the script the catalogue is simply all there, in order.
      */
     private String indexPage() {
-        String works = catalog.works().stream()
-                .map(work -> """
-                <li class="entry" data-id="work:%s">
-                  <a class="title" href="works/%s.html">%s</a>
-                  <p class="meta">%s · %s · %s</p>
-                  <p class="holdings">%s</p>
-                </li>
-                """.formatted(
-                                Escape.html(work.id().value()),
-                                Escape.html(work.id().value()),
-                                Escape.html(work.title().full()),
-                                Escape.html(work.byline()),
-                                Escape.html(work.created().display()),
-                                Escape.html(work.form().label()),
-                                Escape.html(holdingsSummary(work))))
-                .collect(Collectors.joining());
-
-        String people = catalog.agents().stream()
-                .sorted(Comparator.comparing(Agent::sortName))
-                .map(agent -> """
-                <li class="person" data-id="agent:%s">
-                  <a href="agents/%s.html">%s</a>
-                  <span class="role">%s</span>
-                </li>
-                """.formatted(
-                                Escape.html(agent.id().value()),
-                                Escape.html(agent.id().value()),
-                                Escape.html(agent.name()),
-                                Escape.html(standingOf(agent))))
+        String rows = Stream.concat(
+                        catalog.works().stream().map(this::workRow),
+                        catalog.agents().stream().map(this::agentRow))
+                .sorted(Comparator.comparing(Row::filing))
+                .map(Row::html)
                 .collect(Collectors.joining());
 
         return shell("The library", ".", """
@@ -111,23 +111,158 @@ public final class SiteGenerator {
                   <label for="q">Search</label>
                   <input type="search" id="q" autocomplete="off" autofocus
                          placeholder="A title, a name, a publisher, a subject, a shelf…">
-                  <p class="count" id="count"></p>
+                  <p class="count" id="count" role="status"></p>
                 </form>
-                <section class="track" data-track="works" data-one="work">
-                  <h2>Works</h2>
-                  <ul class="entries">%s</ul>
-                </section>
-                <section class="track" data-track="agents" data-one="agent">
-                  <h2>Agents</h2>
-                  <ul class="entries">%s</ul>
-                </section>
+                <ul class="entries" id="entries">%s</ul>
                 <p class="empty" id="empty" hidden>Nothing matches.</p>
-                """.formatted(works, people), true);
+                """.formatted(rows), true);
+    }
+
+    /** One line of the index, carrying the key it files under. */
+    private record Row(String filing, String html) {}
+
+    private Row workRow(Work work) {
+        return new Row(filing(work.title().main()), """
+                <li class="entry" data-id="work:%s">
+                  <a class="title" href="works/%s.html">%s</a>
+                  <p class="meta">%s · %s · %s</p>
+                  <p class="holdings">%s</p>
+                </li>
+                """.formatted(
+                        Escape.html(work.id().value()),
+                        Escape.html(work.id().value()),
+                        Escape.html(work.title().full()),
+                        Escape.html(work.byline()),
+                        Escape.html(work.created().display()),
+                        Escape.html(work.form().label()),
+                        Escape.html(holdingsSummary(work))));
+    }
+
+    private Row agentRow(Agent agent) {
+        return new Row(filing(agent.sortName()), """
+                <li class="entry person" data-id="agent:%s">
+                  <a class="title" href="agents/%s.html">%s</a>
+                  <p class="meta">%s</p>
+                </li>
+                """.formatted(
+                        Escape.html(agent.id().value()),
+                        Escape.html(agent.id().value()),
+                        Escape.html(agent.name()),
+                        Escape.html(standingOf(agent))));
+    }
+
+    /**
+     * The key a line files under: lowercased, stripped of accents so "Mallé" sits with "Malle", and without the article
+     * a title happens to open with.
+     *
+     * <p>A catalogue files <em>The Eye of the World</em> under E and <em>L'Œil du monde</em> under O. Sorting on the
+     * displayed string instead would gather half the shelf under T and L, which is why library catalogues have always
+     * dropped the non-filing article.
+     */
+    private static String filing(String text) {
+        String plain = Normalizer.normalize(text, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT)
+                .trim();
+        for (String article : NON_FILING) {
+            if (article.endsWith("'")) {
+                if (plain.startsWith(article)) {
+                    return plain.substring(article.length()).trim();
+                }
+            } else if (plain.startsWith(article + " ")) {
+                return plain.substring(article.length() + 1).trim();
+            }
+        }
+        return plain;
     }
 
     /** "1 work", "12 works" — a catalogue holding one of something should not read as a bug. */
     private static String count(int n, String noun) {
         return n + " " + noun + (n == 1 ? "" : "s");
+    }
+
+    /**
+     * The one page that counts things.
+     *
+     * <p>Everything here is read off the catalogue and nothing is inferred: a distribution with one entry says so
+     * rather than being padded out, and a shelf of two books is allowed to look like a shelf of two books.
+     */
+    private String statisticsPage() {
+        Map<String, Long> counts = Reports.counts(catalog);
+
+        String tallies = Stream.of("works", "expressions", "manifestations", "items", "agents")
+                .map(kind -> """
+                        <li><span class="figure">%d</span> <span class="of">%s</span></li>
+                        """.formatted(counts.getOrDefault(kind, 0L), Escape.html(kind)))
+                .collect(Collectors.joining());
+
+        String languages = distribution(
+                "Languages",
+                "the expressions, by the language they realise the work in",
+                catalog.works().stream()
+                        .flatMap(work -> work.expressions().stream())
+                        .collect(Collectors.groupingBy(
+                                expression -> expression.language().displayName(),
+                                TreeMap::new,
+                                Collectors.counting())));
+
+        String forms = distribution(
+                "Forms",
+                "the works, by what kind of thing they are",
+                catalog.works().stream()
+                        .collect(Collectors.groupingBy(
+                                work -> work.form().label(), TreeMap::new, Collectors.counting())));
+
+        String carriers = distribution(
+                "Carriers",
+                "the editions, by what they were printed or pressed as",
+                catalog.manifestations().stream()
+                        .collect(Collectors.groupingBy(
+                                edition -> edition.carrier().label(), TreeMap::new, Collectors.counting())));
+
+        String reading = distribution(
+                "Reading",
+                "the copies, by how far through them I am",
+                catalog.items().stream()
+                        .collect(Collectors.groupingBy(
+                                copy -> VariantNames.of(copy.reading()), TreeMap::new, Collectors.counting())));
+
+        return shell("Statistics", ".", """
+                <p class="crumb"><a href="index.html">The library</a></p>
+                <h1>What is in it</h1>
+                <ul class="tallies">%s</ul>
+                %s
+                %s
+                %s
+                %s
+                """.formatted(tallies, languages, forms, carriers, reading));
+    }
+
+    /**
+     * One named distribution, or nothing at all when there is none — an empty table tells the reader less than a gap.
+     */
+    private static String distribution(String heading, String explanation, Map<String, Long> tally) {
+        if (tally.isEmpty()) {
+            return "";
+        }
+        long total = tally.values().stream().mapToLong(Long::longValue).sum();
+        String rows = tally.entrySet().stream()
+                .map(entry -> """
+                        <tr>
+                          <th scope="row">%s</th>
+                          <td>%d</td>
+                          <td class="bar"><span style="--share: %d%%" aria-hidden="true"></span></td>
+                        </tr>
+                        """.formatted(
+                        Escape.html(entry.getKey()), entry.getValue(), Math.round(entry.getValue() * 100.0 / total)))
+                .collect(Collectors.joining());
+        return """
+                <section class="stat">
+                  <h2>%s</h2>
+                  <p class="hint">%s</p>
+                  <table><tbody>%s</tbody></table>
+                </section>
+                """.formatted(Escape.html(heading), Escape.html(explanation), rows);
     }
 
     /** What an agent is in this catalogue: the roles they are credited in, or their kind when nothing credits them. */
@@ -340,8 +475,9 @@ public final class SiteGenerator {
                         }
                     }
                     return """
-                    {"id":%s,"text":%s}""".formatted(
+                    {"id":%s,"title":%s,"text":%s}""".formatted(
                                     json("work:" + work.id().value()),
+                                    json(work.title().full().toLowerCase(Locale.ROOT)),
                                     json(String.join(" ", terms).toLowerCase(Locale.ROOT)));
                 })
                 .collect(Collectors.joining(",\n  "));
@@ -363,8 +499,13 @@ public final class SiteGenerator {
                     catalog.publishedBy(agent.id())
                             .forEach(edition -> terms.add(edition.title().full()));
                     return """
-                    {"id":%s,"text":%s}""".formatted(
+                    {"id":%s,"title":%s,"text":%s}""".formatted(
                                     json("agent:" + agent.id().value()),
+                                    // Every name the agent answers to is a heading match: arriving by an
+                                    // alias should rank them as highly as arriving by the name on the spine.
+                                    json(Stream.concat(agent.names(), Stream.of(agent.sortName()))
+                                            .collect(Collectors.joining(" "))
+                                            .toLowerCase(Locale.ROOT)),
                                     json(String.join(" ", terms).toLowerCase(Locale.ROOT)));
                 })
                 .collect(Collectors.joining(",\n  "));
@@ -423,8 +564,9 @@ public final class SiteGenerator {
     // ------------------------------------------------------------ layout
 
     /**
-     * The masthead names the catalogue on every page and the colophon closes it with what the catalogue actually is — a
-     * count of records and the file they came from. Neither invents anything: both are read off the catalogue.
+     * The masthead names the catalogue on every page; the colophon says what it is and points at the one page where the
+     * numbers live. The counts used to sit in both, on every page, where they were noise — a reader looking at a book
+     * does not need to be told how many books there are.
      */
     private String shell(String title, String root, String body) {
         return shell(title, root, body, false);
@@ -436,8 +578,6 @@ public final class SiteGenerator {
      *     record keeps the {@code h1} — headings stay in order either way.
      */
     private String shell(String title, String root, String body, boolean wordmarkLeads) {
-        int expressions =
-                catalog.works().stream().mapToInt(w -> w.expressions().size()).sum();
         return """
                 <!doctype html>
                 <html lang="en">
@@ -450,15 +590,14 @@ public final class SiteGenerator {
                 <body>
                   <header class="mast">
                     <%s class="mast-name"><a href="%s/index.html">Alexandria</a></%s>
-                    <p class="mast-line">%s · %s</p>
                     <hr class="mast-rule" aria-hidden="true">
                   </header>
                   <main>
                 %s
                   </main>
                   <footer class="colophon">
-                    <p>%s · %s · %s · %s · %s.
-                       A personal catalogue after IFLA-LRM, kept as JSON and rendered without a database.</p>
+                    <p>A personal catalogue after IFLA-LRM, kept as JSON and rendered without a
+                       database. <a href="%s/statistics.html">What is in it</a>.</p>
                   </footer>
                   <script src="%s/catalog.js"></script>
                 </body>
@@ -469,14 +608,8 @@ public final class SiteGenerator {
                         wordmarkLeads ? "h1" : "p",
                         root,
                         wordmarkLeads ? "h1" : "p",
-                        count(catalog.works().size(), "work"),
-                        count(catalog.agents().size(), "agent"),
                         body,
-                        count(catalog.works().size(), "work"),
-                        count(expressions, "expression"),
-                        count(catalog.manifestations().size(), "manifestation"),
-                        count(catalog.items().size(), "item"),
-                        count(catalog.agents().size(), "agent"),
+                        root,
                         root);
     }
 

@@ -45,11 +45,52 @@ class SiteGeneratorTest {
         String search = Files.readString(output.resolve("search-index.json"));
 
         assertThat(index)
-                .as("the people track links every agent page the generator wrote")
+                .as("the index links every agent page the generator wrote")
                 .contains("agents/edith-grossman.html");
         assertThat(search)
                 .as("and searching a translator's name matches the translator, not only the book")
                 .contains("\"agent:edith-grossman\"");
+    }
+
+    @Test
+    void filesWorksAndAgentsTogetherPastTheirArticles(@TempDir Path root, @TempDir Path output) throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+
+        new SiteGenerator(catalog).generateInto(output);
+        String index = Files.readString(output.resolve("index.html"));
+
+        // One list, so a work and an agent can sit next to each other; "Don Quixote" files
+        // under D and Cervantes under C, so the author comes first.
+        int cervantes = index.indexOf("agents/miguel-de-cervantes.html");
+        int quixote = index.indexOf("works/cervantes-don-quixote.html");
+        assertThat(cervantes).as("both are in the one list").isNotNegative();
+        assertThat(quixote).isNotNegative();
+        assertThat(cervantes)
+                .as("and the list is alphabetical, not works-then-agents")
+                .isLessThan(quixote);
+
+        assertThat(index)
+                .as("the search index carries a title of its own so a heading match can outrank a body match")
+                .doesNotContain("data-track");
+        assertThat(Files.readString(output.resolve("search-index.json"))).contains("\"title\":");
+    }
+
+    @Test
+    void countsLiveOnTheirOwnPageRatherThanEveryPage(@TempDir Path root, @TempDir Path output) throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+
+        new SiteGenerator(catalog).generateInto(output);
+
+        assertThat(Files.readString(output.resolve("statistics.html")))
+                .as("the tallies")
+                .contains("works")
+                .contains("manifestations")
+                .as("and the distributions read off the catalogue")
+                .contains("Languages")
+                .contains("English");
+        assertThat(Files.readString(output.resolve("works/cervantes-don-quixote.html")))
+                .as("a reader looking at a book is not told how many books there are")
+                .doesNotContain("expressions ·");
     }
 
     @Test

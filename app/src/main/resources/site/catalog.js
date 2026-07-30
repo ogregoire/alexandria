@@ -1,85 +1,89 @@
-// Client-side search over search-index.json, across both tracks the index renders: the
-// works and the people. Every query token must appear somewhere in an entry's text blob,
-// which holds titles, names, aliases, roles, publishers, series, subjects, shelves and
-// reading states — so "grossman penguin" narrows, and "lauzon" reaches the translator's
-// own page rather than only the book he translated.
+// Client-side search over search-index.json.
+//
+// The page ships the whole catalogue in alphabetical order and this script hides it until
+// something is typed — so with no JavaScript at all the catalogue is simply all there,
+// and with it the page opens as a search field and nothing else.
+//
+// Every query token must appear somewhere in an entry's text blob, which holds titles,
+// names, aliases, roles, publishers, series, subjects, shelves and reading states — so
+// "grossman penguin" narrows. An entry whose *heading* matches sorts above one that only
+// matches deeper in: searching "lauzon" wants the translator first and the book he
+// translated second.
 (function () {
   var box = document.getElementById('q');
-  if (!box) {
+  var list = document.getElementById('entries');
+  if (!box || !list) {
     return;
   }
   var count = document.getElementById('count');
   var empty = document.getElementById('empty');
+  var rows = Array.prototype.slice.call(list.querySelectorAll('[data-id]'));
   var index = {};
-
-  var tracks = Array.prototype.map.call(
-    document.querySelectorAll('[data-track]'),
-    function (section) {
-      var rows = Array.prototype.slice.call(section.querySelectorAll('[data-id]'));
-      return {
-        section: section,
-        rows: rows,
-        noun: section.dataset.track,
-        total: rows.length
-      };
-    }
-  ).filter(function (track) {
-    return track.total > 0;
-  });
 
   function fold(text) {
     return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 
-  // "3 works · 1 person" — and the plural is the noun's own, so "people" is not "persons".
-  function tally(track, shown) {
-    return shown + ' ' + (shown === 1 ? track.section.dataset.one : track.noun);
+  function show(row, rank) {
+    row.hidden = false;
+    // Rank rides on flex order, so the two groups reorder without touching the DOM and
+    // each stays in the alphabetical order the page was written in.
+    row.style.order = rank;
+  }
+
+  function hide(row) {
+    row.hidden = true;
+    row.style.order = '';
   }
 
   function filter() {
-    var tokens = fold(box.value).split(/\s+/).filter(Boolean);
-    var parts = [];
-    var found = 0;
+    var query = box.value.trim();
+    var tokens = fold(query).split(/\s+/).filter(Boolean);
 
-    tracks.forEach(function (track) {
-      var shown = 0;
-      track.rows.forEach(function (row) {
-        var blob = index[row.dataset.id] || '';
-        var match = tokens.every(function (token) {
-          return blob.indexOf(token) !== -1;
-        });
-        row.hidden = !match;
-        if (match) {
-          shown++;
-        }
-      });
-      // A track with nothing in it disappears rather than showing an empty heading.
-      track.section.hidden = shown === 0;
-      if (shown > 0) {
-        parts.push(tally(track, shown));
+    if (tokens.length === 0) {
+      rows.forEach(hide);
+      count.textContent = '';
+      empty.hidden = true;
+      return;
+    }
+
+    var shown = 0;
+    rows.forEach(function (row) {
+      var entry = index[row.dataset.id];
+      if (!entry) {
+        hide(row);
+        return;
       }
-      found += shown;
+      var everywhere = tokens.every(function (token) {
+        return entry.text.indexOf(token) !== -1;
+      });
+      if (!everywhere) {
+        hide(row);
+        return;
+      }
+      var inHeading = tokens.every(function (token) {
+        return entry.title.indexOf(token) !== -1;
+      });
+      show(row, inHeading ? 0 : 1);
+      shown++;
     });
 
-    count.textContent = parts.join(' · ');
-    empty.hidden = found !== 0;
+    count.textContent = shown + (shown === 1 ? ' result' : ' results');
+    empty.hidden = shown !== 0;
   }
 
   fetch('search-index.json')
     .then(function (response) { return response.json(); })
     .then(function (data) {
       data.forEach(function (entry) {
-        index[entry.id] = fold(entry.text);
+        index[entry.id] = { title: fold(entry.title), text: fold(entry.text + ' ' + entry.title) };
       });
       box.addEventListener('input', filter);
       filter();
     })
     .catch(function () {
-      // Opened straight from the filesystem, where fetch is blocked: keep the full list
-      // and take the search field away rather than leaving one that does nothing.
-      count.textContent = tracks.map(function (track) {
-        return tally(track, track.total);
-      }).join(' · ');
+      // Opened straight from the filesystem, where fetch is blocked: leave the catalogue
+      // showing in full and take away a field that would do nothing.
       box.closest('.find').hidden = true;
     });
 })();
