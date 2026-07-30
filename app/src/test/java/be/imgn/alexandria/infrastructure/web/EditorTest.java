@@ -1,18 +1,6 @@
 package be.imgn.alexandria.infrastructure.web;
 
-import be.imgn.alexandria.CatalogFixture;
-import be.imgn.alexandria.application.CatalogService;
-import be.imgn.alexandria.domain.agent.AgentId;
-import be.imgn.alexandria.domain.item.Acquisition;
-import be.imgn.alexandria.domain.item.Item;
-import be.imgn.alexandria.domain.item.ItemId;
-import be.imgn.alexandria.domain.item.Location;
-import be.imgn.alexandria.domain.work.WorkId;
-import be.imgn.alexandria.infrastructure.json.JsonCatalog;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -24,9 +12,25 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import be.imgn.alexandria.CatalogFixture;
+import be.imgn.alexandria.application.CatalogService;
+import be.imgn.alexandria.domain.agent.AgentId;
+import be.imgn.alexandria.domain.item.Acquisition;
+import be.imgn.alexandria.domain.item.Condition;
+import be.imgn.alexandria.domain.item.Item;
+import be.imgn.alexandria.domain.item.ItemId;
+import be.imgn.alexandria.domain.item.Location;
+import be.imgn.alexandria.domain.item.ReadingProgress;
+import be.imgn.alexandria.domain.work.WorkId;
+import be.imgn.alexandria.infrastructure.json.JsonCatalog;
 
 class EditorTest {
 
@@ -82,8 +86,8 @@ class EditorTest {
         assertThat(saved.title().full()).isEqualTo("The Hobbit : There and Back Again");
         assertThat(saved.byline()).isEqualTo("J. R. R. Tolkien");
         assertThat(saved.subjects()).containsExactly("fantasy", "quests");
-        assertThat(saved.expressions()).singleElement()
-                .satisfies(e -> assertThat(e.describe()).isEqualTo("English (original)"));
+        assertThat(saved.expressions()).singleElement().satisfies(e -> assertThat(e.describe())
+                .isEqualTo("English (original)"));
         assertThat(root().resolve("works/tolkien-the-hobbit.json")).exists();
     }
 
@@ -105,7 +109,9 @@ class EditorTest {
         postHobbitBy("J.R.R. Tolkien", "tolkien-the-silmarillion");
 
         assertThat(catalog.agents()).hasSize(before);
-        assertThat(catalog.work(WorkId.of("tolkien-the-silmarillion")).orElseThrow().creators())
+        assertThat(catalog.work(WorkId.of("tolkien-the-silmarillion"))
+                        .orElseThrow()
+                        .creators())
                 .extracting(c -> c.agent().value())
                 .containsExactly("j-r-r-tolkien");
     }
@@ -115,7 +121,9 @@ class EditorTest {
         // The fixture registers "Cervantes" as an alias of "Miguel de Cervantes".
         postHobbitBy("Cervantes", "cervantes-novelas-ejemplares");
 
-        assertThat(catalog.work(WorkId.of("cervantes-novelas-ejemplares")).orElseThrow().creators())
+        assertThat(catalog.work(WorkId.of("cervantes-novelas-ejemplares"))
+                        .orElseThrow()
+                        .creators())
                 .extracting(c -> c.agent().value())
                 .containsExactly("miguel-de-cervantes");
     }
@@ -134,12 +142,14 @@ class EditorTest {
 
     @Test
     void refusesAnAliasAnotherAgentAlreadyAnswersTo() throws Exception {
-        HttpResponse<String> response = post("/agents/edith-grossman", Map.of(
-                "id", "edith-grossman",
-                "name", "Edith Grossman",
-                "sortName", "Grossman, Edith",
-                "kind", "person",
-                "aliases", "Cervantes"));
+        HttpResponse<String> response = post(
+                "/agents/edith-grossman",
+                Map.of(
+                        "id", "edith-grossman",
+                        "name", "Edith Grossman",
+                        "sortName", "Grossman, Edith",
+                        "kind", "person",
+                        "aliases", "Cervantes"));
 
         assertThat(response.statusCode()).isEqualTo(400);
         assertThat(response.body()).contains("already belongs to Miguel de Cervantes");
@@ -159,14 +169,16 @@ class EditorTest {
         int before = catalog.agents().size();
 
         // No expression identifier, so reading the work fails after the creators are named.
-        HttpResponse<String> response = post("/works/new", Map.of(
-                "id", "nobody-nothing",
-                "title.main", "Nothing",
-                "form.type", "novel",
-                "created.type", "unknown",
-                "creators[0].name", "Someone Entirely New",
-                "creators[0].kind", "person",
-                "creators[0].role", "author"));
+        HttpResponse<String> response = post(
+                "/works/new",
+                Map.of(
+                        "id", "nobody-nothing",
+                        "title.main", "Nothing",
+                        "form.type", "novel",
+                        "created.type", "unknown",
+                        "creators[0].name", "Someone Entirely New",
+                        "creators[0].kind", "person",
+                        "creators[0].role", "author"));
 
         assertThat(response.statusCode()).isEqualTo(400);
         assertThat(catalog.agents()).hasSize(before);
@@ -200,13 +212,12 @@ class EditorTest {
         Item borrowed = new Item(
                 ItemId.of("borrowed-copy"),
                 CatalogFixture.ECCO,
-                new Acquisition.Borrowed("Marie",
-                        java.util.Optional.of(LocalDate.of(2024, 3, 1)),
-                        java.util.Optional.of(LocalDate.of(2024, 4, 1))),
+                new Acquisition.Borrowed(
+                        "Marie", Optional.of(LocalDate.of(2024, 3, 1)), Optional.of(LocalDate.of(2024, 4, 1))),
                 Location.shelf("desk"),
-                be.imgn.alexandria.domain.item.ReadingProgress.UNREAD,
-                be.imgn.alexandria.domain.item.Condition.GOOD,
-                java.util.Optional.empty());
+                ReadingProgress.UNREAD,
+                Condition.GOOD,
+                Optional.empty());
         catalog.save(borrowed);
 
         String page = get("/items/borrowed-copy").body();
@@ -250,8 +261,7 @@ class EditorTest {
 
     private HttpResponse<String> get(String path) throws Exception {
         return client.send(
-                HttpRequest.newBuilder(URI.create(base + path)).GET().build(),
-                HttpResponse.BodyHandlers.ofString());
+                HttpRequest.newBuilder(URI.create(base + path)).GET().build(), HttpResponse.BodyHandlers.ofString());
     }
 
     private HttpResponse<String> post(String path, Map<String, String> form) throws Exception {
@@ -261,7 +271,8 @@ class EditorTest {
         return HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NEVER)
                 .build()
-                .send(HttpRequest.newBuilder(URI.create(base + path))
+                .send(
+                        HttpRequest.newBuilder(URI.create(base + path))
                                 .header("Content-Type", "application/x-www-form-urlencoded")
                                 .POST(HttpRequest.BodyPublishers.ofString(body))
                                 .build(),

@@ -1,14 +1,22 @@
 package be.imgn.alexandria.infrastructure.json;
 
-import be.imgn.alexandria.CatalogFixture;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import be.imgn.alexandria.CatalogFixture;
+import be.imgn.alexandria.domain.item.Acquisition;
+import be.imgn.alexandria.domain.item.Condition;
+import be.imgn.alexandria.domain.item.Item;
+import be.imgn.alexandria.domain.item.ItemId;
+import be.imgn.alexandria.domain.item.Location;
+import be.imgn.alexandria.domain.item.ReadingProgress;
 
 class JsonCatalogTest {
 
@@ -64,14 +72,14 @@ class JsonCatalogTest {
     @Test
     void omitsProvenanceThatWasNeverRecorded(@TempDir Path root) throws Exception {
         JsonCatalog catalog = CatalogFixture.writeInto(root);
-        catalog.save(new be.imgn.alexandria.domain.item.Item(
-                be.imgn.alexandria.domain.item.ItemId.of("a-gift"),
+        catalog.save(new Item(
+                ItemId.of("a-gift"),
                 CatalogFixture.ECCO,
-                be.imgn.alexandria.domain.item.Acquisition.Gift.unattributed(),
-                be.imgn.alexandria.domain.item.Location.shelf("study"),
-                be.imgn.alexandria.domain.item.ReadingProgress.Finished.undated(),
-                be.imgn.alexandria.domain.item.Condition.UNGRADED,
-                java.util.Optional.empty()));
+                Acquisition.Gift.unattributed(),
+                Location.shelf("study"),
+                ReadingProgress.Finished.undated(),
+                Condition.UNGRADED,
+                Optional.empty()));
 
         String json = Files.readString(root.resolve("items/a-gift.json"));
 
@@ -83,8 +91,11 @@ class JsonCatalogTest {
                 .doesNotContain("date")
                 .doesNotContain("from")
                 .doesNotContain("null");
-        assertThat(new JsonCatalog(root).item(
-                be.imgn.alexandria.domain.item.ItemId.of("a-gift")).orElseThrow().reading().display())
+        assertThat(new JsonCatalog(root)
+                        .item(ItemId.of("a-gift"))
+                        .orElseThrow()
+                        .reading()
+                        .display())
                 .isEqualTo("read");
     }
 

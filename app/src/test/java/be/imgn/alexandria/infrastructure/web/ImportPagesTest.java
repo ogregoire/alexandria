@@ -1,20 +1,6 @@
 package be.imgn.alexandria.infrastructure.web;
 
-import be.imgn.alexandria.CatalogFixture;
-import be.imgn.alexandria.application.CatalogService;
-import be.imgn.alexandria.application.lookup.BookDraft;
-import be.imgn.alexandria.application.lookup.BookLookup;
-import be.imgn.alexandria.domain.agent.AgentId;
-import be.imgn.alexandria.domain.item.ItemId;
-import be.imgn.alexandria.domain.manifestation.Identifier;
-import be.imgn.alexandria.domain.manifestation.ManifestationId;
-import be.imgn.alexandria.domain.shared.Language;
-import be.imgn.alexandria.domain.work.WorkId;
-import be.imgn.alexandria.infrastructure.json.JsonCatalog;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -29,7 +15,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import be.imgn.alexandria.CatalogFixture;
+import be.imgn.alexandria.application.CatalogService;
+import be.imgn.alexandria.application.lookup.BookDraft;
+import be.imgn.alexandria.application.lookup.BookLookup;
+import be.imgn.alexandria.domain.agent.AgentId;
+import be.imgn.alexandria.domain.item.ItemId;
+import be.imgn.alexandria.domain.manifestation.Identifier;
+import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.shared.Language;
+import be.imgn.alexandria.domain.work.WorkId;
+import be.imgn.alexandria.infrastructure.json.JsonCatalog;
 
 /** The ISBN flow end to end, with a stubbed lookup so nothing reaches the network. */
 class ImportPagesTest {
@@ -83,17 +84,15 @@ class ImportPagesTest {
     void offersTheIsbnBoxWithTheCopyCheckboxTickedByDefault() throws Exception {
         String page = get("/import").body();
 
-        assertThat(page)
-                .contains("name=\"isbn\"")
-                .contains("name=\"addItem\"")
-                .contains("checked");
+        assertThat(page).contains("name=\"isbn\"").contains("name=\"addItem\"").contains("checked");
     }
 
     @Test
     void prefillsTheFormWithoutSavingAnything() throws Exception {
         int worksBefore = catalog.works().size();
 
-        String page = post("/import", Map.of("isbn", "9780060188702", "addItem", "yes")).body();
+        String page = post("/import", Map.of("isbn", "9780060188702", "addItem", "yes"))
+                .body();
 
         assertThat(page)
                 .contains("Prefilled from Stub Library")
@@ -132,11 +131,14 @@ class ImportPagesTest {
             assertThat(expression.describe()).contains("translated from Spanish by Edith Grossman");
         });
 
-        var edition = catalog.manifestation(ManifestationId.of("quixote-ecco-2003")).orElseThrow();
-        assertThat(edition.embodies()).containsExactly(work.expressions().getFirst().id());
+        var edition =
+                catalog.manifestation(ManifestationId.of("quixote-ecco-2003")).orElseThrow();
+        assertThat(edition.embodies())
+                .containsExactly(work.expressions().getFirst().id());
         assertThat(edition.identifier().display()).contains("9780060188702".substring(0, 3));
 
-        assertThat(catalog.copiesOf(edition.id())).singleElement()
+        assertThat(catalog.copiesOf(edition.id()))
+                .singleElement()
                 .satisfies(copy -> assertThat(copy.id().value()).isEqualTo("quixote-ecco-2003-1"));
     }
 
@@ -144,7 +146,8 @@ class ImportPagesTest {
     void leavesTheItemOutWhenTheCheckboxIsClear() throws Exception {
         post("/import/save", filledForm(false));
 
-        assertThat(catalog.manifestation(ManifestationId.of("quixote-ecco-2003"))).isPresent();
+        assertThat(catalog.manifestation(ManifestationId.of("quixote-ecco-2003")))
+                .isPresent();
         assertThat(catalog.item(ItemId.of("quixote-ecco-2003-1"))).isEmpty();
     }
 
@@ -156,7 +159,9 @@ class ImportPagesTest {
         post("/import/save", filledForm(false));
 
         assertThat(catalog.agents()).hasSize(before);
-        assertThat(catalog.work(WorkId.of("cervantes-don-quijote")).orElseThrow().creators())
+        assertThat(catalog.work(WorkId.of("cervantes-don-quijote"))
+                        .orElseThrow()
+                        .creators())
                 .extracting(c -> c.agent().value())
                 .containsExactly("miguel-de-cervantes");
     }
@@ -188,7 +193,9 @@ class ImportPagesTest {
         post("/import/save", filledForm(false));
         HttpResponse<String> second = post("/import/save", filledForm(false));
 
-        assertThat(second.statusCode()).as("the form comes back, it is not an error page").isEqualTo(200);
+        assertThat(second.statusCode())
+                .as("the form comes back, it is not an error page")
+                .isEqualTo(200);
         assertThat(second.body())
                 .contains("already exists")
                 .as("and still holds everything that was typed")
@@ -290,10 +297,10 @@ class ImportPagesTest {
 
         var work = catalog.work(WorkId.of("cervantes-don-quijote")).orElseThrow();
         assertThat(work.created().display()).isEqualTo("1605-1615");
-        assertThat(work.expressions()).singleElement().satisfies(expression ->
-                assertThat(expression.realised().display())
-                        .as("the translation is dated on its own, not borrowed from the work")
-                        .isEqualTo("2003"));
+        assertThat(work.expressions()).singleElement().satisfies(expression -> assertThat(
+                        expression.realised().display())
+                .as("the translation is dated on its own, not borrowed from the work")
+                .isEqualTo("2003"));
     }
 
     @Test
@@ -319,7 +326,8 @@ class ImportPagesTest {
         Editor other = new Editor(new CatalogService(catalog), stub(inverted));
         String otherBase = "http://127.0.0.1:" + other.start(0);
         try {
-            String page = postTo(otherBase, "/import", Map.of("isbn", "9780060188702")).body();
+            String page = postTo(otherBase, "/import", Map.of("isbn", "9780060188702"))
+                    .body();
 
             assertThat(page)
                     .as("the work files under Tolkien, not Reuel")
@@ -359,8 +367,8 @@ class ImportPagesTest {
 
         assertThat(post("/import/save", form).statusCode()).isEqualTo(303);
 
-        assertThat(catalog.items()).anySatisfy(item ->
-                assertThat(item.reading().display()).isEqualTo("read"));
+        assertThat(catalog.items())
+                .anySatisfy(item -> assertThat(item.reading().display()).isEqualTo("read"));
     }
 
     @Test
@@ -416,26 +424,29 @@ class ImportPagesTest {
     }
 
     private HttpResponse<String> get(String path) throws Exception {
-        return HttpClient.newHttpClient().send(
-                HttpRequest.newBuilder(URI.create(base + path)).GET().build(),
-                HttpResponse.BodyHandlers.ofString());
+        return HttpClient.newHttpClient()
+                .send(
+                        HttpRequest.newBuilder(URI.create(base + path)).GET().build(),
+                        HttpResponse.BodyHandlers.ofString());
     }
 
     private HttpResponse<String> post(String path, Map<String, String> form) throws Exception {
         return postTo(base, path, form);
     }
 
-    private HttpResponse<String> postTo(String at, String path, Map<String, String> form)
-            throws Exception {
+    private HttpResponse<String> postTo(String at, String path, Map<String, String> form) throws Exception {
         String body = form.entrySet().stream()
                 .map(e -> encode(e.getKey()) + "=" + encode(e.getValue()))
                 .collect(Collectors.joining("&"));
-        return HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build().send(
-                HttpRequest.newBuilder(URI.create(at + path))
-                        .header("Content-Type", "application/x-www-form-urlencoded")
-                        .POST(HttpRequest.BodyPublishers.ofString(body))
-                        .build(),
-                HttpResponse.BodyHandlers.ofString());
+        return HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build()
+                .send(
+                        HttpRequest.newBuilder(URI.create(at + path))
+                                .header("Content-Type", "application/x-www-form-urlencoded")
+                                .POST(HttpRequest.BodyPublishers.ofString(body))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString());
     }
 
     private static String encode(String value) {

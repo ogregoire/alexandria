@@ -1,7 +1,5 @@
 package be.imgn.alexandria.domain.agent;
 
-import be.imgn.alexandria.domain.shared.Slug;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -10,14 +8,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeSet;
 
+import be.imgn.alexandria.domain.shared.Slug;
+
 /**
- * A read-only index over the agent registry: it turns a typed-in name into the agent that
- * already exists, or reports that there is none.
+ * A read-only index over the agent registry: it turns a typed-in name into the agent that already exists, or reports
+ * that there is none.
  *
- * <p>Matching folds case, accents and punctuation through {@link Slug}, so "J.R.R. Tolkien"
- * finds "J. R. R. Tolkien", and it searches aliases as well as preferred names, so
- * "Penguin" finds "Penguin Books". Two agents claiming the same name would make the lookup
- * ambiguous, so that is reported as a {@link Conflict} rather than silently resolved.
+ * <p>Matching folds case, accents and punctuation through {@link Slug}, so "J.R.R. Tolkien" finds "J. R. R. Tolkien",
+ * and it searches aliases as well as preferred names, so "Penguin" finds "Penguin Books". Two agents claiming the same
+ * name would make the lookup ambiguous, so that is reported as a {@link Conflict} rather than silently resolved.
  */
 public final class AgentDirectory {
 
@@ -26,7 +25,8 @@ public final class AgentDirectory {
         @Override
         public String toString() {
             return "'" + name + "' is claimed by "
-                    + String.join(" and ", claimedBy.stream().map(AgentId::value).toList());
+                    + String.join(
+                            " and ", claimedBy.stream().map(AgentId::value).toList());
         }
     }
 
@@ -97,12 +97,13 @@ public final class AgentDirectory {
 
     /** Every name and alias, sorted — what the editor offers as completions. */
     public List<String> suggestions() {
-        return List.copyOf(new TreeSet<>(byId.values().stream().flatMap(Agent::names).toList()));
+        return List.copyOf(
+                new TreeSet<>(byId.values().stream().flatMap(Agent::names).toList()));
     }
 
     /**
-     * An id derived from the name that no other agent is using yet, so two different
-     * people who happen to slug identically can both be registered.
+     * An id derived from the name that no other agent is using yet, so two different people who happen to slug
+     * identically can both be registered.
      */
     public AgentId freeId(String name) {
         AgentId candidate = AgentId.forName(name);

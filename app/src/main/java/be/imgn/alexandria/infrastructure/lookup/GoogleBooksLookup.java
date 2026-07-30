@@ -1,41 +1,42 @@
 package be.imgn.alexandria.infrastructure.lookup;
 
-import be.imgn.alexandria.application.lookup.BookDraft;
-import be.imgn.alexandria.application.lookup.BookLookup;
-import be.imgn.alexandria.domain.manifestation.Identifier;
-import be.imgn.alexandria.domain.shared.Language;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import be.imgn.alexandria.application.lookup.BookDraft;
+import be.imgn.alexandria.application.lookup.BookLookup;
+import be.imgn.alexandria.domain.manifestation.Identifier;
+import be.imgn.alexandria.domain.shared.Language;
+
 /**
  * Google Books, used last.
  *
- * <p>Last for two practical reasons. Unkeyed requests draw on a quota shared by everyone
- * leaving the same address, so a 429 is ordinary rather than exceptional — it is treated as
- * a miss like any other. And it has no notion of a work distinct from an edition, so nothing
- * it returns can fill in an original title or a first publication year, which the two
- * providers ahead of it can.
+ * <p>Last for two practical reasons. Unkeyed requests draw on a quota shared by everyone leaving the same address, so a
+ * 429 is ordinary rather than exceptional — it is treated as a miss like any other. And it has no notion of a work
+ * distinct from an edition, so nothing it returns can fill in an original title or a first publication year, which the
+ * two providers ahead of it can.
  *
- * <p>Nothing it returns is retained: the response is rendered into the review form, the user
- * corrects it, and what reaches the catalogue is what the user submitted. The provider name
- * is shown on that form so the reader knows where the suggestion came from.
+ * <p>Nothing it returns is retained: the response is rendered into the review form, the user corrects it, and what
+ * reaches the catalogue is what the user submitted. The provider name is shown on that form so the reader knows where
+ * the suggestion came from.
  */
 public final class GoogleBooksLookup implements BookLookup {
 
     private static final String BASE = "https://www.googleapis.com/books/v1/volumes";
 
     /**
-     * Google documents a daily quota rather than a minimum interval, and asks for
-     * exponential backoff on a 429 — which {@link Http} does. This interval is only here to
-     * stop a held-down button turning into a burst.
+     * Google documents a daily quota rather than a minimum interval, and asks for exponential backoff on a 429 — which
+     * {@link Http} does. This interval is only here to stop a held-down button turning into a burst.
      */
-    private static final java.time.Duration INTERVAL = java.time.Duration.ofMillis(250);
+    private static final Duration INTERVAL = Duration.ofMillis(250);
+
     private static final Pattern YEAR = Pattern.compile("(\\d{4})");
 
     private final Http http;
@@ -81,9 +82,10 @@ public final class GoogleBooksLookup implements BookLookup {
                 .authors(strings(info.path("authors")))
                 .publisher(text(info, "publisher").orElse(null))
                 .publishedYear(year(text(info, "publishedDate")))
-                .pages(info.path("pageCount").isNumber()
-                        ? Optional.of(info.path("pageCount").asInt())
-                        : Optional.empty())
+                .pages(
+                        info.path("pageCount").isNumber()
+                                ? Optional.of(info.path("pageCount").asInt())
+                                : Optional.empty())
                 .language(language(text(info, "language")))
                 .subjects(strings(info.path("categories")))
                 .build();

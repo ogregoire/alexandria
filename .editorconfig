@@ -1,0 +1,50 @@
+# Kept in step with the spotless configuration in the parent POM. Spotless is the authority;
+# this file exists so an IDE agrees with it before the build has to correct anything.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.java]
+indent_style = space
+indent_size = 4
+# Palantir wraps at 120.
+max_line_length = 120
+
+# Import order, matching spotless's <order>java|javax,com,org,</order>: java and javax in one
+# block with no blank line between them, then com, then org, then everything else — which is
+# where be.imgn.alexandria belongs.
+#
+# IntelliJ does not read import layout from .editorconfig. Set it once under
+# Settings → Editor → Code Style → Java → Imports → Import Layout:
+#
+#     import java.**
+#     import javax.**
+#     <blank>
+#     import com.**
+#     <blank>
+#     import org.**
+#     <blank>
+#     import all other imports
+#     <blank>
+#     import static all other imports
+#
+# Without that, every import the IDE adds lands in the wrong group and spotless silently
+# rewrites it on the next build, which shows up as churn in an otherwise small diff.
+ij_java_class_count_to_use_import_on_demand = 999
+ij_java_names_count_to_use_static_import_on_demand = 999
+
+[*.{xml,yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.{json,md}]
+indent_style = space
+indent_size = 2
+
+[*.{css,js}]
+indent_style = space
+indent_size = 2

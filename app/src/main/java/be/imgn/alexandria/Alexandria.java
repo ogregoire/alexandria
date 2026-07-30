@@ -1,5 +1,10 @@
 package be.imgn.alexandria;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Optional;
+
 import be.imgn.alexandria.application.CatalogService;
 import be.imgn.alexandria.application.lookup.BookLookup;
 import be.imgn.alexandria.domain.catalog.ReferentialIntegrity;
@@ -7,11 +12,6 @@ import be.imgn.alexandria.infrastructure.json.JsonCatalog;
 import be.imgn.alexandria.infrastructure.lookup.ChainedLookup;
 import be.imgn.alexandria.infrastructure.web.Editor;
 import be.imgn.alexandria.site.SiteGenerator;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Locale;
-import java.util.Optional;
 
 /**
  * Entry point for the local editor.
@@ -24,8 +24,7 @@ import java.util.Optional;
  */
 public final class Alexandria {
 
-    private Alexandria() {
-    }
+    private Alexandria() {}
 
     public static void main(String[] args) throws Exception {
         Arguments arguments = Arguments.parse(args);
@@ -42,9 +41,7 @@ public final class Alexandria {
         }
 
         CatalogService service = new CatalogService(catalog);
-        BookLookup lookup = arguments.offline()
-                ? BookLookup.offline()
-                : ChainedLookup.standard(arguments.contact());
+        BookLookup lookup = arguments.offline() ? BookLookup.offline() : ChainedLookup.standard(arguments.contact());
         Editor editor = new Editor(service, lookup);
         int port = editor.start(arguments.port());
         String url = "http://127.0.0.1:" + port + "/";
@@ -59,8 +56,8 @@ public final class Alexandria {
         Thread.currentThread().join();
     }
 
-    private record Arguments(Path data, int port, boolean openBrowser, Path site,
-                             boolean offline, Optional<String> contact) {
+    private record Arguments(
+            Path data, int port, boolean openBrowser, Path site, boolean offline, Optional<String> contact) {
 
         static Arguments parse(String[] args) {
             Path data = Path.of("data");
@@ -81,7 +78,12 @@ public final class Alexandria {
                     default -> throw new IllegalArgumentException("unknown option " + args[i]);
                 }
             }
-            return new Arguments(data, port, openBrowser, site, offline,
+            return new Arguments(
+                    data,
+                    port,
+                    openBrowser,
+                    site,
+                    offline,
                     Optional.ofNullable(contact).filter(value -> !value.isBlank()));
         }
 
@@ -95,9 +97,11 @@ public final class Alexandria {
 
     private static void openBrowser(String url) {
         String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
-        String[] command = os.contains("mac") ? new String[]{"open", url}
-                : os.contains("win") ? new String[]{"rundll32", "url.dll,FileProtocolHandler", url}
-                : new String[]{"xdg-open", url};
+        String[] command = os.contains("mac")
+                ? new String[] {"open", url}
+                : os.contains("win")
+                        ? new String[] {"rundll32", "url.dll,FileProtocolHandler", url}
+                        : new String[] {"xdg-open", url};
         try {
             new ProcessBuilder(command).start();
         } catch (IOException e) {

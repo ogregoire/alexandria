@@ -1,9 +1,6 @@
 package be.imgn.alexandria.infrastructure.lookup;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,11 +12,15 @@ import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 /**
- * Drives the real {@link Http} against a local server, so the retry and pacing behaviour is
- * exercised for real rather than asserted about. Intervals are kept tiny to stay fast.
+ * Drives the real {@link Http} against a local server, so the retry and pacing behaviour is exercised for real rather
+ * than asserted about. Intervals are kept tiny to stay fast.
  */
 class HttpRetryTest {
 
@@ -48,8 +49,7 @@ class HttpRetryTest {
         void respond(HttpExchange exchange, int requestNumber) throws IOException;
     }
 
-    private static void reply(HttpExchange exchange, int status, String body, String retryAfter)
-            throws IOException {
+    private static void reply(HttpExchange exchange, int status, String body, String retryAfter) throws IOException {
         if (retryAfter != null) {
             exchange.getResponseHeaders().add("Retry-After", retryAfter);
         }
@@ -72,8 +72,8 @@ class HttpRetryTest {
 
     @Test
     void retriesAfterA429AndSucceedsOnTheSecondTry() throws Exception {
-        String url = start((exchange, number) ->
-                reply(exchange, number == 1 ? 429 : 200, number == 1 ? "" : "recovered", null));
+        String url = start(
+                (exchange, number) -> reply(exchange, number == 1 ? 429 : 200, number == 1 ? "" : "recovered", null));
 
         Optional<String> body = new Http(Duration.ZERO, "test").get(url);
 
@@ -83,8 +83,8 @@ class HttpRetryTest {
 
     @Test
     void honoursRetryAfterRatherThanItsOwnBackoff() throws Exception {
-        String url = start((exchange, number) ->
-                reply(exchange, number == 1 ? 429 : 200, number == 1 ? "" : "recovered", "1"));
+        String url = start(
+                (exchange, number) -> reply(exchange, number == 1 ? 429 : 200, number == 1 ? "" : "recovered", "1"));
 
         long before = System.nanoTime();
         assertThat(new Http(Duration.ZERO, "test").get(url)).contains("recovered");
@@ -120,10 +120,8 @@ class HttpRetryTest {
         http.get(url);
 
         assertThat(arrivals).hasSize(3);
-        assertThat(Duration.ofNanos(arrivals.get(1) - arrivals.get(0)))
-                .isGreaterThanOrEqualTo(Duration.ofMillis(280));
-        assertThat(Duration.ofNanos(arrivals.get(2) - arrivals.get(1)))
-                .isGreaterThanOrEqualTo(Duration.ofMillis(280));
+        assertThat(Duration.ofNanos(arrivals.get(1) - arrivals.get(0))).isGreaterThanOrEqualTo(Duration.ofMillis(280));
+        assertThat(Duration.ofNanos(arrivals.get(2) - arrivals.get(1))).isGreaterThanOrEqualTo(Duration.ofMillis(280));
     }
 
     @Test
@@ -136,7 +134,8 @@ class HttpRetryTest {
 
         new Http(Duration.ZERO, UserAgent.identifiedBy("me@example.org").header()).get(url);
 
-        assertThat(seen).singleElement().satisfies(agent ->
-                assertThat(agent).contains("Alexandria/1.0").contains("me@example.org"));
+        assertThat(seen)
+                .singleElement()
+                .satisfies(agent -> assertThat(agent).contains("Alexandria/1.0").contains("me@example.org"));
     }
 }

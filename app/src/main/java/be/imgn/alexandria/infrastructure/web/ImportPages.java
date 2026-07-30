@@ -1,5 +1,15 @@
 package be.imgn.alexandria.infrastructure.web;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import be.imgn.alexandria.application.CatalogService;
 import be.imgn.alexandria.application.lookup.BookDraft;
 import be.imgn.alexandria.application.lookup.BookLookup;
@@ -10,14 +20,11 @@ import be.imgn.alexandria.domain.agent.NameForm;
 import be.imgn.alexandria.domain.item.Condition;
 import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
-import be.imgn.alexandria.domain.item.ReadingProgress;
 import be.imgn.alexandria.domain.manifestation.Identifier;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
 import be.imgn.alexandria.domain.manifestation.Series;
-import be.imgn.alexandria.domain.shared.Contribution;
 import be.imgn.alexandria.domain.shared.Language;
-import be.imgn.alexandria.domain.shared.Role;
 import be.imgn.alexandria.domain.shared.Slug;
 import be.imgn.alexandria.domain.shared.Title;
 import be.imgn.alexandria.domain.work.Expression;
@@ -25,27 +32,16 @@ import be.imgn.alexandria.domain.work.ExpressionId;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.domain.work.WorkId;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 /**
  * Adding a book from its ISBN.
  *
- * <p>The lookup only ever <em>prefills</em>. Nothing is written until the filled-in form is
- * reviewed and submitted, because third-party metadata is routinely wrong about exactly the
- * things this model cares about — which name is on the title page, whether an edition is a
- * translation, what the series number is.
+ * <p>The lookup only ever <em>prefills</em>. Nothing is written until the filled-in form is reviewed and submitted,
+ * because third-party metadata is routinely wrong about exactly the things this model cares about — which name is on
+ * the title page, whether an edition is a translation, what the series number is.
  *
- * <p>One submission creates the whole descent at once: the Work with its first Expression,
- * the Manifestation embodying it, and optionally the Item that is your copy. If any of it is
- * rejected, the same form comes back holding everything that was typed, with each problem
- * shown against the field that caused it — nothing has to be entered twice.
+ * <p>One submission creates the whole descent at once: the Work with its first Expression, the Manifestation embodying
+ * it, and optionally the Item that is your copy. If any of it is rejected, the same form comes back holding everything
+ * that was typed, with each problem shown against the field that caused it — nothing has to be entered twice.
  */
 final class ImportPages {
 
@@ -61,8 +57,9 @@ final class ImportPages {
 
     /** The starting point: an ISBN and whether a copy is being shelved. */
     String ask(String isbn, String problem) {
-        String note = problem == null || problem.isBlank() ? "" :
-                "<div class=\"error\" role=\"alert\">" + Html.escape(problem) + "</div>";
+        String note = problem == null || problem.isBlank()
+                ? ""
+                : "<div class=\"error\" role=\"alert\">" + Html.escape(problem) + "</div>";
         FormState state = FormState.prefilled(Map.of("isbn", isbn == null ? "" : isbn));
         return Html.page("Add from ISBN", Html.link("/", "Home") + " / Add from ISBN", """
                 <h1>Add a book from its ISBN</h1>
@@ -77,14 +74,15 @@ final class ImportPages {
                   </fieldset>
                   <button type="submit">Look it up</button>
                 </form>
-                """.formatted(Html.escape(lookup.name()), note,
-                Html.input(state, "isbn", "ISBN-10 or ISBN-13", "text", "required isbn")));
+                """.formatted(
+                        Html.escape(lookup.name()),
+                        note,
+                        Html.input(state, "isbn", "ISBN-10 or ISBN-13", "text", "required isbn")));
     }
 
     /** The form after a lookup: suggested values, nothing wrong yet. */
     String review(Identifier isbn, Optional<BookDraft> found, boolean addItem) {
-        String provenance = found
-                .map(draft -> "<p class=\"ok\">Prefilled from " + Html.escape(draft.source())
+        String provenance = found.map(draft -> "<p class=\"ok\">Prefilled from " + Html.escape(draft.source())
                         + ". Check every field before saving.</p>")
                 .orElse("<p class=\"error\">No catalogue had this ISBN. "
                         + "The form is empty — fill it in by hand.</p>");
@@ -130,42 +128,38 @@ final class ImportPages {
                 Html.problemSummary(state, fieldLabels()),
                 Html.datalist(VariantForms.AGENT_LIST, agents.suggestions()),
                 WorkPages.hidden("isbn", state.value("isbn")),
-
                 Html.input(state, "id", "Work identifier (slug)", "text", "required slug"),
                 Html.input(state, "title.main", "Title in the original language", "text", "required"),
                 Html.input(state, "title.subtitle", "Subtitle", "text"),
                 SumTypeForms.render(state, "form", "Form", SumTypeForms.WORK_FORM),
                 SumTypeForms.render(state, "created", "First published", SumTypeForms.DATE),
                 Html.input(state, "subjects", "Subjects (comma separated)", "text"),
-
                 contributors(state, "creators", "Author", agents),
-
                 Html.input(state, "expressions[0].id", "Expression identifier (slug)", "text", "required slug"),
                 Html.input(state, "expressions[0].language", "Language code", "text", "required language"),
                 SumTypeForms.render(state, "expressions[0].kind", "Kind", SumTypeForms.EXPRESSION_KIND),
-                SumTypeForms.render(state, "expressions[0].realised",
-                        "Realised — when this text or translation was made", SumTypeForms.DATE),
+                SumTypeForms.render(
+                        state,
+                        "expressions[0].realised",
+                        "Realised — when this text or translation was made",
+                        SumTypeForms.DATE),
                 contributors(state, "expressions[0].contributors", "Translator and others", agents),
-
                 Html.input(state, "manifestation.id", "Edition identifier (slug)", "text", "required slug"),
                 Html.input(state, "manifestation.title.main", "Title on this edition", "text"),
                 Html.suggest(state, "manifestation.publisher", "Publisher", VariantForms.AGENT_LIST, null),
-                Html.choice(state, "manifestation.publisherKind", "If new",
-                        VariantForms.agentKinds(), "organisation"),
+                Html.choice(state, "manifestation.publisherKind", "If new", VariantForms.agentKinds(), "organisation"),
                 SumTypeForms.render(state, "manifestation.published", "Printed", SumTypeForms.DATE),
                 SumTypeForms.render(state, "manifestation.carrier", "Carrier", SumTypeForms.CARRIER),
                 SumTypeForms.render(state, "manifestation.identifier", "Identifier", SumTypeForms.IDENTIFIER),
                 SumTypeForms.render(state, "manifestation.extent", "Extent", SumTypeForms.EXTENT),
                 Html.input(state, "manifestation.series.name", "Series", "text"),
                 Html.input(state, "manifestation.series.number", "Series number", "text"),
-
                 state.checked("addItem") ? " checked" : "",
                 Html.input(state, "item.id", "Copy identifier (slug, blank to derive)", "text", "slug"),
                 SumTypeForms.render(state, "item.acquisition", "Acquired", SumTypeForms.ACQUISITION),
                 SumTypeForms.render(state, "item.location", "Location", SumTypeForms.LOCATION),
                 SumTypeForms.render(state, "item.reading", "Reading", SumTypeForms.READING),
-                Html.choice(state, "item.condition", "Condition",
-                        SumTypeForms.conditions(), Condition.UNGRADED.name()),
+                Html.choice(state, "item.condition", "Condition", SumTypeForms.conditions(), Condition.UNGRADED.name()),
                 Html.area(state, "item.notes", "Notes")));
     }
 
@@ -208,17 +202,14 @@ final class ImportPages {
         labels.put("creators", "Author");
         labels.put("expressions[0].id", "Expression identifier");
         labels.put("expressions[0].language", "Language code");
-        labels.putAll(SumTypeForms.fieldLabels("expressions[0].kind", "Kind",
-                SumTypeForms.EXPRESSION_KIND));
-        labels.putAll(SumTypeForms.fieldLabels("expressions[0].realised", "Realised",
-                SumTypeForms.DATE));
+        labels.putAll(SumTypeForms.fieldLabels("expressions[0].kind", "Kind", SumTypeForms.EXPRESSION_KIND));
+        labels.putAll(SumTypeForms.fieldLabels("expressions[0].realised", "Realised", SumTypeForms.DATE));
         labels.put("expressions[0].contributors", "Contributors");
         labels.put("manifestation.id", "Edition identifier");
         labels.put("manifestation.publisher", "Publisher");
         labels.putAll(SumTypeForms.fieldLabels("manifestation.published", "Printed", SumTypeForms.DATE));
         labels.putAll(SumTypeForms.fieldLabels("manifestation.carrier", "Carrier", SumTypeForms.CARRIER));
-        labels.putAll(SumTypeForms.fieldLabels("manifestation.identifier", "Identifier",
-                SumTypeForms.IDENTIFIER));
+        labels.putAll(SumTypeForms.fieldLabels("manifestation.identifier", "Identifier", SumTypeForms.IDENTIFIER));
         labels.putAll(SumTypeForms.fieldLabels("manifestation.extent", "Extent", SumTypeForms.EXTENT));
         labels.put("manifestation.series.name", "Series");
         labels.put("item.id", "Copy identifier");
@@ -237,8 +228,7 @@ final class ImportPages {
         String digits = isbn.isbnDigits().orElse("");
         values.put("isbn", digits);
         values.put("manifestation.identifier.type", digits.length() == 10 ? "isbn10" : "isbn13");
-        values.put("manifestation.identifier." + (digits.length() == 10 ? "isbn10" : "isbn13") + ".digits",
-                digits);
+        values.put("manifestation.identifier." + (digits.length() == 10 ? "isbn10" : "isbn13") + ".digits", digits);
         values.put("manifestation.carrier.type", "paperback");
         values.put("form.type", "novel");
         if (addItem) {
@@ -251,10 +241,16 @@ final class ImportPages {
         }
         BookDraft draft = found.get();
         // Providers hand out filing forms; a form field wants the form a title page uses.
-        String author = draft.authors().stream().findFirst().map(NameForm::ofPerson)
-                .map(NameForm::display).orElse("");
-        String translator = draft.translators().stream().findFirst().map(NameForm::ofPerson)
-                .map(NameForm::display).orElse("");
+        String author = draft.authors().stream()
+                .findFirst()
+                .map(NameForm::ofPerson)
+                .map(NameForm::display)
+                .orElse("");
+        String translator = draft.translators().stream()
+                .findFirst()
+                .map(NameForm::ofPerson)
+                .map(NameForm::display)
+                .orElse("");
         boolean translated = draft.looksTranslated();
         Language language = draft.language().orElse(null);
 
@@ -313,23 +309,20 @@ final class ImportPages {
     /** Either the four aggregates, or every reason the form cannot become them. */
     sealed interface Outcome {
 
-        record Book(Work work, Manifestation manifestation, Optional<Item> copy) implements Outcome {
-        }
+        record Book(Work work, Manifestation manifestation, Optional<Item> copy) implements Outcome {}
 
-        record Rejected(FormState state) implements Outcome {
-        }
+        record Rejected(FormState state) implements Outcome {}
     }
 
     Outcome read(FormData form, AgentResolution agents) {
         FormProblems problems = new FormProblems();
 
         Optional<WorkId> workId = problems.read("id", () -> WorkId.of(form.required("id")));
-        Optional<Title> workTitle = problems.read("title.main",
-                () -> new Title(form.required("title.main"), form.optional("title.subtitle")));
+        Optional<Title> workTitle = problems.read(
+                "title.main", () -> new Title(form.required("title.main"), form.optional("title.subtitle")));
         var created = problems.read("created.type", () -> VariantForms.readDate(form, "created"));
         var workForm = problems.read("form.type", () -> VariantForms.readWorkForm(form, "form"));
-        var creators = problems.read("creators",
-                () -> VariantForms.readContributions(form, "creators", agents));
+        var creators = problems.read("creators", () -> VariantForms.readContributions(form, "creators", agents));
 
         FormData expressionFields = form.at("expressions", 0);
         Optional<String> localId = problems.read("expressions[0].id", () -> {
@@ -337,76 +330,102 @@ final class ImportPages {
             Slug.validate(value, "expression identifier");
             return value;
         });
-        var language = problems.read("expressions[0].language",
-                () -> new Language(expressionFields.required("language")));
-        var kind = problems.read("expressions[0].kind.type",
-                () -> VariantForms.readExpressionKind(expressionFields, "kind"));
-        var realised = problems.read("expressions[0].realised.type",
-                () -> VariantForms.readDate(expressionFields, "realised"));
-        var contributors = problems.read("expressions[0].contributors",
+        var language =
+                problems.read("expressions[0].language", () -> new Language(expressionFields.required("language")));
+        var kind = problems.read(
+                "expressions[0].kind.type", () -> VariantForms.readExpressionKind(expressionFields, "kind"));
+        var realised = problems.read(
+                "expressions[0].realised.type", () -> VariantForms.readDate(expressionFields, "realised"));
+        var contributors = problems.read(
+                "expressions[0].contributors",
                 () -> VariantForms.readContributions(expressionFields, "contributors", agents));
 
         FormData edition = form.scope("manifestation.");
-        Optional<ManifestationId> editionId = problems.read("manifestation.id",
-                () -> ManifestationId.of(edition.required("id")));
-        var published = problems.read("manifestation.published.type",
-                () -> VariantForms.readDate(edition, "published"));
-        var carrier = problems.read("manifestation.carrier.type",
-                () -> VariantForms.readCarrier(edition, "carrier"));
-        var identifier = problems.read("manifestation.identifier.type",
-                () -> VariantForms.readIdentifier(edition, "identifier"));
-        var extent = problems.read("manifestation.extent.type",
-                () -> VariantForms.readExtent(edition, "extent"));
-        Optional<AgentId> publisher = edition.optional("publisher").flatMap(name ->
-                problems.read("manifestation.publisher", () -> agents.resolve(name,
-                        VariantForms.readAgentKind(edition.optional("publisherKind")
-                                .orElse("organisation")))));
-        Optional<Series> series = edition.optional("series.name").flatMap(name ->
-                problems.read("manifestation.series.name",
-                        () -> new Series(name, edition.optional("series.number"))));
+        Optional<ManifestationId> editionId =
+                problems.read("manifestation.id", () -> ManifestationId.of(edition.required("id")));
+        var published =
+                problems.read("manifestation.published.type", () -> VariantForms.readDate(edition, "published"));
+        var carrier = problems.read("manifestation.carrier.type", () -> VariantForms.readCarrier(edition, "carrier"));
+        var identifier = problems.read(
+                "manifestation.identifier.type", () -> VariantForms.readIdentifier(edition, "identifier"));
+        var extent = problems.read("manifestation.extent.type", () -> VariantForms.readExtent(edition, "extent"));
+        Optional<AgentId> publisher = edition.optional("publisher")
+                .flatMap(name -> problems.read(
+                        "manifestation.publisher",
+                        () -> agents.resolve(
+                                name,
+                                VariantForms.readAgentKind(
+                                        edition.optional("publisherKind").orElse("organisation")))));
+        Optional<Series> series = edition.optional("series.name")
+                .flatMap(name -> problems.read(
+                        "manifestation.series.name", () -> new Series(name, edition.optional("series.number"))));
 
-        if (problems.any() || workId.isEmpty() || localId.isEmpty() || language.isEmpty()
-                || kind.isEmpty() || realised.isEmpty() || editionId.isEmpty()) {
+        if (problems.any()
+                || workId.isEmpty()
+                || localId.isEmpty()
+                || language.isEmpty()
+                || kind.isEmpty()
+                || realised.isEmpty()
+                || editionId.isEmpty()) {
             return new Outcome.Rejected(FormState.submitted(form, problems));
         }
 
         ExpressionId expressionId = new ExpressionId(workId.get(), localId.get());
         // The expression has its own date: a 2014 translation of a 1949 novel is the normal
         // case, so borrowing the work's date here would quietly falsify it.
-        Optional<Expression> expression = problems.read("expressions[0].id", () -> new Expression(
-                expressionId, kind.get(), language.get(), contributors.orElse(List.of()), realised.get()));
+        Optional<Expression> expression = problems.read(
+                "expressions[0].id",
+                () -> new Expression(
+                        expressionId, kind.get(), language.get(), contributors.orElse(List.of()), realised.get()));
 
         Set<String> subjects = form.optional("subjects").stream()
-                .flatMap(value -> java.util.Arrays.stream(value.split(",")))
+                .flatMap(value -> Arrays.stream(value.split(",")))
                 .map(String::trim)
                 .filter(subject -> !subject.isEmpty())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        Optional<Work> work = expression.flatMap(realisation -> problems.read("title.main",
-                () -> new Work(workId.get(), workTitle.orElseThrow(), creators.orElse(List.of()),
-                        workForm.get(), created.get(), subjects, List.of(realisation))));
+        Optional<Work> work = expression.flatMap(realisation -> problems.read(
+                "title.main",
+                () -> new Work(
+                        workId.get(),
+                        workTitle.orElseThrow(),
+                        creators.orElse(List.of()),
+                        workForm.get(),
+                        created.get(),
+                        subjects,
+                        List.of(realisation))));
 
-        Optional<Manifestation> manifestation = problems.read("manifestation.id",
+        Optional<Manifestation> manifestation = problems.read(
+                "manifestation.id",
                 () -> new Manifestation(
-                        editionId.get(), List.of(expressionId),
-                        new Title(edition.optional("title.main")
-                                .orElse(workTitle.map(Title::main).orElse("Untitled")),
+                        editionId.get(),
+                        List.of(expressionId),
+                        new Title(
+                                edition.optional("title.main")
+                                        .orElse(workTitle.map(Title::main).orElse("Untitled")),
                                 edition.optional("title.subtitle")),
-                        publisher, published.get(), carrier.get(), identifier.get(), extent.get(),
-                        series, edition.optionalInt("edition")));
+                        publisher,
+                        published.get(),
+                        carrier.get(),
+                        identifier.get(),
+                        extent.get(),
+                        series,
+                        edition.optionalInt("edition")));
 
         Optional<Item> copy = Optional.empty();
         if (form.checked("addItem") && manifestation.isPresent()) {
             FormData item = form.scope("item.");
             ManifestationId owner = manifestation.get().id();
-            copy = problems.read("item.id", () -> new Item(
-                    ItemId.of(item.optional("id").orElseGet(() -> owner.value() + "-1")),
-                    owner,
-                    VariantForms.readAcquisition(item, "acquisition"),
-                    VariantForms.readLocation(item, "location"),
-                    VariantForms.readReading(item, "reading"),
-                    Condition.valueOf(item.optional("condition").orElse(Condition.UNGRADED.name())),
-                    item.optional("notes")));
+            copy = problems.read(
+                    "item.id",
+                    () -> new Item(
+                            ItemId.of(item.optional("id").orElseGet(() -> owner.value() + "-1")),
+                            owner,
+                            VariantForms.readAcquisition(item, "acquisition"),
+                            VariantForms.readLocation(item, "location"),
+                            VariantForms.readReading(item, "reading"),
+                            Condition.valueOf(item.optional("condition").orElse(Condition.UNGRADED.name())),
+                            item.optional("notes")));
             if (copy.isEmpty()) {
                 return new Outcome.Rejected(FormState.submitted(form, problems));
             }
@@ -424,9 +443,8 @@ final class ImportPages {
         if (title.isBlank()) {
             return "";
         }
-        String surname = author.isBlank()
-                ? ""
-                : Slug.of(NameForm.ofPerson(author).filingWord()) + "-";
+        String surname =
+                author.isBlank() ? "" : Slug.of(NameForm.ofPerson(author).filingWord()) + "-";
         return surname + Slug.of(title);
     }
 
@@ -444,10 +462,10 @@ final class ImportPages {
         if (!title.isBlank()) {
             parts.add(Slug.of(title));
         }
-        draft.publisher().ifPresent(publisher ->
-                parts.add(Slug.of(NameForm.ofOrganisation(publisher).filingWord())));
+        draft.publisher()
+                .ifPresent(publisher ->
+                        parts.add(Slug.of(NameForm.ofOrganisation(publisher).filingWord())));
         draft.publishedYear().ifPresent(year -> parts.add(String.valueOf(year)));
         return parts.isEmpty() ? "" : String.join("-", parts);
     }
-
 }

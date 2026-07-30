@@ -8,11 +8,10 @@ import java.util.Optional;
 /**
  * The values a form should display, and what is wrong with them.
  *
- * <p>One type serves both directions. A prefill from an ISBN lookup arrives as a map of field
- * names to suggested values; a rejected submission arrives as the values the user actually
- * typed plus the problems they caused. Because rendering only ever reads a {@link FormState},
- * a redisplay after an error shows the form exactly as it was left — which is the whole point:
- * a missing field should cost you that field, not the twenty you filled in correctly.
+ * <p>One type serves both directions. A prefill from an ISBN lookup arrives as a map of field names to suggested
+ * values; a rejected submission arrives as the values the user actually typed plus the problems they caused. Because
+ * rendering only ever reads a {@link FormState}, a redisplay after an error shows the form exactly as it was left —
+ * which is the whole point: a missing field should cost you that field, not the twenty you filled in correctly.
  */
 final class FormState {
 
@@ -76,8 +75,8 @@ final class FormState {
     }
 
     /**
-     * How many rows of a repeating group to render: enough for everything submitted, and
-     * never fewer than the minimum so there is always somewhere to type.
+     * How many rows of a repeating group to render: enough for everything submitted, and never fewer than the minimum
+     * so there is always somewhere to type.
      */
     int groupSize(String group, int minimum) {
         int highest = -1;

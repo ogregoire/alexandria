@@ -1,20 +1,21 @@
 package be.imgn.alexandria.infrastructure.web;
 
-import be.imgn.alexandria.application.CatalogService;
-import be.imgn.alexandria.domain.agent.Agent;
-import be.imgn.alexandria.domain.agent.AgentId;
-import be.imgn.alexandria.infrastructure.VariantNames;
-
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import be.imgn.alexandria.application.CatalogService;
+import be.imgn.alexandria.domain.agent.Agent;
+import be.imgn.alexandria.domain.agent.AgentId;
+import be.imgn.alexandria.infrastructure.VariantNames;
+
 /**
- * The agent registry: authors, translators, narrators and publishing houses, each held once
- * with the names it answers to.
+ * The agent registry: authors, translators, narrators and publishing houses, each held once with the names it answers
+ * to.
  */
 final class AgentPages {
 
@@ -43,8 +44,8 @@ final class AgentPages {
                    A zero in the last column means nothing refers to it — usually a typo.</p>
                 <p><a class="button" href="/agents/new">New agent</a></p>
                 %s
-                """.formatted(Html.table(
-                List.of("Name", "Files under", "Kind", "Aliases", "References"), rows)));
+                """.formatted(
+                        Html.table(List.of("Name", "Files under", "Kind", "Aliases", "References"), rows)));
     }
 
     String edit(Optional<Agent> existing) {
@@ -82,18 +83,20 @@ final class AgentPages {
                         : WorkPages.readOnly("Identifier", id) + WorkPages.hidden("id", id),
                 Html.textField("name", "Name", agent == null ? "" : agent.name()),
                 Html.textField("sortName", "Files under", agent == null ? "" : agent.sortName()),
-                Html.select("kind", "Kind", VariantForms.agentKinds(),
+                Html.select(
+                        "kind",
+                        "Kind",
+                        VariantForms.agentKinds(),
                         agent == null ? "person" : VariantNames.of(agent.kind())),
-                Html.textArea("aliases", "Aliases, one per line",
-                        agent == null ? "" : String.join("\n", agent.aliases())),
+                Html.textArea(
+                        "aliases", "Aliases, one per line", agent == null ? "" : String.join("\n", agent.aliases())),
                 references,
                 deleteButton));
     }
 
     /**
-     * The bibliography, split by the name each book was published under. One agent, so the
-     * whole output is here; one section per pseudonym, so each book is still credited the
-     * way it was issued.
+     * The bibliography, split by the name each book was published under. One agent, so the whole output is here; one
+     * section per pseudonym, so each book is still credited the way it was issued.
      */
     private String referencesOf(AgentId id) {
         var byName = service.catalog().creditsByName(id);
@@ -110,9 +113,10 @@ final class AgentPages {
                     .append(name.equals(preferred) ? "" : " <span class=\"hint\">(other name)</span>")
                     .append("</h2><ul>");
             credits.stream()
-                    .sorted(java.util.Comparator.comparing(c -> c.work().title().main()))
+                    .sorted(Comparator.comparing(c -> c.work().title().main()))
                     .forEach(credit -> out.append("<li>")
-                            .append(Html.link("/works/" + credit.work().id().value(),
+                            .append(Html.link(
+                                    "/works/" + credit.work().id().value(),
                                     credit.work().title().main()))
                             .append(" <span class=\"hint\">")
                             .append(Html.escape(credit.role().label()))
@@ -125,7 +129,8 @@ final class AgentPages {
         if (!published.isEmpty()) {
             out.append("<h2>Published</h2><ul>");
             published.forEach(manifestation -> out.append("<li>")
-                    .append(Html.link("/manifestations/" + manifestation.id().value(),
+                    .append(Html.link(
+                            "/manifestations/" + manifestation.id().value(),
                             manifestation.title().main()))
                     .append(" <span class=\"hint\">")
                     .append(Html.escape(manifestation.published().display()))

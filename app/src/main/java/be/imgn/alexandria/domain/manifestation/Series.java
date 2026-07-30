@@ -1,8 +1,8 @@
 package be.imgn.alexandria.domain.manifestation;
 
-import be.imgn.alexandria.domain.shared.Guard;
-
 import java.util.Optional;
+
+import be.imgn.alexandria.domain.shared.Guard;
 
 /** A publisher's series, e.g. "Penguin Classics" no. 42. */
 public record Series(String name, Optional<String> number) {

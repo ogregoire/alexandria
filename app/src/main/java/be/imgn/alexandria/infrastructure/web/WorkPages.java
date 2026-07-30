@@ -1,5 +1,13 @@
 package be.imgn.alexandria.infrastructure.web;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import be.imgn.alexandria.application.CatalogService;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentResolution;
@@ -8,16 +16,10 @@ import be.imgn.alexandria.domain.shared.Language;
 import be.imgn.alexandria.domain.shared.Title;
 import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.ExpressionId;
+import be.imgn.alexandria.domain.work.ExpressionKind;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.domain.work.WorkForm;
 import be.imgn.alexandria.domain.work.WorkId;
-
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /** Browsing and editing the Work aggregate, Expressions included. */
 final class WorkPages {
@@ -38,14 +40,17 @@ final class WorkPages {
                         Html.escape(work.created().display()),
                         String.valueOf(work.expressions().size()),
                         String.valueOf(work.expressions().stream()
-                                .mapToLong(e -> service.catalog().manifestationsOf(e.id()).size()).sum())))
+                                .mapToLong(e -> service.catalog()
+                                        .manifestationsOf(e.id())
+                                        .size())
+                                .sum())))
                 .toList();
         return Html.page("Works", Html.link("/", "Home") + " / Works", """
                 <h1>Works</h1>
                 <p><a class="button" href="/works/new">New work</a></p>
                 %s
-                """.formatted(Html.table(
-                List.of("Title", "Author", "Form", "Created", "Expressions", "Editions"), rows)));
+                """.formatted(
+                        Html.table(List.of("Title", "Author", "Form", "Created", "Expressions", "Editions"), rows)));
     }
 
     String edit(Optional<Work> existing) {
@@ -99,15 +104,16 @@ final class WorkPages {
                 work == null
                         ? Html.textField("id", "Identifier (slug)", "")
                         : readOnly("Identifier", id) + hidden("id", id),
-                Html.textField("title.main", "Title", work == null ? "" : work.title().main()),
-                Html.textField("title.subtitle", "Subtitle",
+                Html.textField(
+                        "title.main", "Title", work == null ? "" : work.title().main()),
+                Html.textField(
+                        "title.subtitle",
+                        "Subtitle",
                         work == null ? "" : work.title().subtitle().orElse("")),
                 VariantForms.workForm("form", "Form", work == null ? WorkForm.NOVEL : work.form()),
-                VariantForms.date("created", "Created",
-                        work == null ? BibliographicDate.UNKNOWN : work.created()),
+                VariantForms.date("created", "Created", work == null ? BibliographicDate.UNKNOWN : work.created()),
                 Html.textField("subjects", "Subjects (comma separated)", subjects),
-                VariantForms.contributions("creators", "Creators",
-                        work == null ? List.of() : work.creators(), agents),
+                VariantForms.contributions("creators", "Creators", work == null ? List.of() : work.creators(), agents),
                 expressions,
                 deleteButton));
     }
@@ -123,18 +129,28 @@ final class WorkPages {
                   %s
                 </fieldset>
                 """.formatted(
-                index + 1,
-                Html.textField(prefix + "id", "Identifier (slug)",
-                        expression == null ? "" : expression.id().value()),
-                Html.textField(prefix + "language", "Language code",
-                        expression == null ? "" : expression.language().code()),
-                VariantForms.expressionKind(prefix + "kind", "Kind",
-                        expression == null ? new be.imgn.alexandria.domain.work.ExpressionKind.Original()
-                                : expression.kind()),
-                VariantForms.date(prefix + "realised", "Realised",
-                        expression == null ? BibliographicDate.UNKNOWN : expression.realised()),
-                VariantForms.contributions(prefix + "contributors", "Contributors",
-                        expression == null ? List.of() : expression.contributors(), agents));
+                        index + 1,
+                        Html.textField(
+                                prefix + "id",
+                                "Identifier (slug)",
+                                expression == null ? "" : expression.id().value()),
+                        Html.textField(
+                                prefix + "language",
+                                "Language code",
+                                expression == null ? "" : expression.language().code()),
+                        VariantForms.expressionKind(
+                                prefix + "kind",
+                                "Kind",
+                                expression == null ? new ExpressionKind.Original() : expression.kind()),
+                        VariantForms.date(
+                                prefix + "realised",
+                                "Realised",
+                                expression == null ? BibliographicDate.UNKNOWN : expression.realised()),
+                        VariantForms.contributions(
+                                prefix + "contributors",
+                                "Contributors",
+                                expression == null ? List.of() : expression.contributors(),
+                                agents));
     }
 
     Work read(FormData form, AgentResolution agents) {
@@ -158,7 +174,7 @@ final class WorkPages {
                     "a work must have at least one expression — give the first one an identifier and a language");
         }
         Set<String> subjects = form.optional("subjects").stream()
-                .flatMap(value -> java.util.Arrays.stream(value.split(",")))
+                .flatMap(value -> Arrays.stream(value.split(",")))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -174,8 +190,8 @@ final class WorkPages {
     }
 
     static String readOnly(String label, String value) {
-        return "<label><span>" + Html.escape(label) + "</span><input type=\"text\" value=\""
-                + Html.escape(value) + "\" readonly></label>";
+        return "<label><span>" + Html.escape(label) + "</span><input type=\"text\" value=\"" + Html.escape(value)
+                + "\" readonly></label>";
     }
 
     static String hidden(String name, String value) {

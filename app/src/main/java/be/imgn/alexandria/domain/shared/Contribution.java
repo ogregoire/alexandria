@@ -1,22 +1,20 @@
 package be.imgn.alexandria.domain.shared;
 
+import java.util.Objects;
+
 import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentId;
 
-import java.util.Objects;
-
 /**
- * An agent acting in a {@link Role} upon some bibliographic entity, under the name that
- * appeared on the publication.
+ * An agent acting in a {@link Role} upon some bibliographic entity, under the name that appeared on the publication.
  *
- * <p>Identity and appearance are separate on purpose. {@code agent} is who it was, and it
- * groups every credit together however they were signed; {@code publishedAs} is what the
- * title page said, and it is a fact about that publication rather than about the person.
- * Robin Hobb and Megan Lindholm are one agent and two published names, so the catalogue can
- * both list her whole output together and keep each book credited as it was issued.
+ * <p>Identity and appearance are separate on purpose. {@code agent} is who it was, and it groups every credit together
+ * however they were signed; {@code publishedAs} is what the title page said, and it is a fact about that publication
+ * rather than about the person. Robin Hobb and Megan Lindholm are one agent and two published names, so the catalogue
+ * can both list her whole output together and keep each book credited as it was issued.
  *
- * <p>The published name is stored rather than derived so that renaming an agent in the
- * registry cannot rewrite the byline of a book that was never issued under the new name.
+ * <p>The published name is stored rather than derived so that renaming an agent in the registry cannot rewrite the
+ * byline of a book that was never issued under the new name.
  */
 public record Contribution(AgentId agent, Role role, String publishedAs) {
 

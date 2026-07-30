@@ -10,11 +10,10 @@ import java.util.function.Supplier;
 /**
  * Everything wrong with a submitted form, gathered rather than thrown.
  *
- * <p>The domain constructors reject bad input by throwing, which is right for the model and
- * useless for a form: the first blank field would abandon the parse and the user would be
- * told about one mistake at a time, having lost the rest of their typing. {@link #read}
- * catches each rejection, files it against the field that caused it, and carries on, so one
- * submission reports every problem at once.
+ * <p>The domain constructors reject bad input by throwing, which is right for the model and useless for a form: the
+ * first blank field would abandon the parse and the user would be told about one mistake at a time, having lost the
+ * rest of their typing. {@link #read} catches each rejection, files it against the field that caused it, and carries
+ * on, so one submission reports every problem at once.
  */
 final class FormProblems {
 
@@ -24,8 +23,7 @@ final class FormProblems {
     /**
      * Runs a parse that may reject its input.
      *
-     * @return the value, or empty if it was rejected — in which case the reason is now filed
-     *         against {@code field}
+     * @return the value, or empty if it was rejected — in which case the reason is now filed against {@code field}
      */
     <T> Optional<T> read(String field, Supplier<T> parse) {
         try {

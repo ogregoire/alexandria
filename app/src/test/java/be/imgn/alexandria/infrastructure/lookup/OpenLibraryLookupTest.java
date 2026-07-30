@@ -1,12 +1,13 @@
 package be.imgn.alexandria.infrastructure.lookup;
 
-import be.imgn.alexandria.application.lookup.BookDraft;
-import be.imgn.alexandria.domain.manifestation.Identifier;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+
+import be.imgn.alexandria.application.lookup.BookDraft;
+import be.imgn.alexandria.domain.manifestation.Identifier;
 
 /** Parses the exact payloads openlibrary.org returned for two real ISBNs. */
 class OpenLibraryLookupTest {
@@ -63,8 +64,9 @@ class OpenLibraryLookupTest {
 
         BookDraft draft = new OpenLibraryLookup(http, "").byIsbn(ETRANGER).orElseThrow();
 
-        assertThat(draft.language()).hasValueSatisfying(language ->
-                assertThat(language.code()).as("/languages/fre must become fr").isEqualTo("fr"));
+        assertThat(draft.language()).hasValueSatisfying(language -> assertThat(language.code())
+                .as("/languages/fre must become fr")
+                .isEqualTo("fr"));
     }
 
     @Test
@@ -95,8 +97,7 @@ class OpenLibraryLookupTest {
 
     @Test
     void reportsAMissRatherThanFailingWhenNothingIsFound() {
-        Optional<BookDraft> found = new OpenLibraryLookup(new StubHttp(), "")
-                .byIsbn(Identifier.isbn("9780306406157"));
+        Optional<BookDraft> found = new OpenLibraryLookup(new StubHttp(), "").byIsbn(Identifier.isbn("9780306406157"));
 
         assertThat(found).isEmpty();
     }
@@ -105,7 +106,8 @@ class OpenLibraryLookupTest {
     void doesNotReachTheNetworkForANonIsbnIdentifier() {
         StubHttp http = new StubHttp();
 
-        assertThat(new OpenLibraryLookup(http, "").byIsbn(new Identifier.Asin("B008FQ3G6M"))).isEmpty();
+        assertThat(new OpenLibraryLookup(http, "").byIsbn(new Identifier.Asin("B008FQ3G6M")))
+                .isEmpty();
         assertThat(http.requested()).isEmpty();
     }
 }

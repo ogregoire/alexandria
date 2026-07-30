@@ -80,6 +80,27 @@ Keep it bounded: a lookup happens while someone is waiting at a form.
 `BnfLookup` parses third-party XML, so its `DocumentBuilderFactory` has DTDs and external
 entities disabled. Do not relax that.
 
+## Formatting and style checks
+
+Both run in `validate`, spotless first so checkstyle judges what spotless left.
+
+- **Spotless applies on every build.** `./mvnw verify`, `test` or `install` rewrites source
+  files before compiling. **Never run `spotless:apply` while someone may be editing** — it
+  writes all 88 files at once, and doing that under an open IDE has already destroyed a
+  round of hand edits. If the tree might be in use, ask, or use the read-only
+  `spotless:check`.
+- **No fully qualified names outside imports.** `checkstyle.xml` enforces it with a regex.
+  `ignoreComments` covers comments but *not* string literals or text blocks, and this
+  codebase is full of text blocks — a dotted, capitalised name inside one will trip the rule
+  even though it is data, not code. Suppress that case rather than contorting the string.
+- **Import order is `java|javax, com, org, everything else`**, so `be.imgn.alexandria` sits in
+  the last group. `.editorconfig` documents the IntelliJ setting; without it every
+  IDE-inserted import drifts and spotless silently moves it on the next build.
+
+`./mvnw versions:display-dependency-updates` and `versions:display-plugin-updates` are
+filtered to stable releases only — no snapshots, milestones, release candidates or
+alpha/beta.
+
 ## Design constraints
 
 - **DDD with algebraic data types.** Anything with alternative shapes is a sealed interface

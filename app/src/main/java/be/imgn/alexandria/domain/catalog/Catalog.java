@@ -1,5 +1,12 @@
 package be.imgn.alexandria.domain.catalog;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
+
 import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentId;
@@ -12,16 +19,9 @@ import be.imgn.alexandria.domain.work.ExpressionId;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.domain.work.WorkId;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
-
 /**
- * The repository port for the four aggregate roots, kept in the domain so the model never
- * depends on how the catalogue is stored. Implemented by the JSON store.
+ * The repository port for the four aggregate roots, kept in the domain so the model never depends on how the catalogue
+ * is stored. Implemented by the JSON store.
  */
 public interface Catalog {
 
@@ -67,15 +67,17 @@ public interface Catalog {
     }
 
     default List<Item> copiesOf(ManifestationId manifestation) {
-        return items().stream().filter(i -> i.embodiedIn().equals(manifestation)).toList();
+        return items().stream()
+                .filter(i -> i.embodiedIn().equals(manifestation))
+                .toList();
     }
 
     /**
-     * Every work this agent is credited on, at either the work or the expression level,
-     * carrying the name it was published under.
+     * Every work this agent is credited on, at either the work or the expression level, carrying the name it was
+     * published under.
      *
-     * <p>Grouped by {@link Credit#publishedAs} this is an author's bibliography split by
-     * pseudonym; ungrouped it is their whole output regardless of how each book was signed.
+     * <p>Grouped by {@link Credit#publishedAs} this is an author's bibliography split by pseudonym; ungrouped it is
+     * their whole output regardless of how each book was signed.
      */
     default List<Credit> creditsOf(AgentId agent) {
         List<Credit> credits = new ArrayList<>();
@@ -92,16 +94,17 @@ public interface Catalog {
     }
 
     /**
-     * An agent's credits keyed by the name they were published under, that name first when
-     * it is the agent's preferred one so the primary identity leads.
+     * An agent's credits keyed by the name they were published under, that name first when it is the agent's preferred
+     * one so the primary identity leads.
      */
     default Map<String, List<Credit>> creditsByName(AgentId agent) {
         String preferred = agent(agent).map(Agent::name).orElse("");
-        Map<String, List<Credit>> grouped = new TreeMap<>(Comparator
-                .comparing((String name) -> name.equals(preferred) ? 0 : 1)
-                .thenComparing(Comparator.naturalOrder()));
+        Map<String, List<Credit>> grouped =
+                new TreeMap<>(Comparator.comparing((String name) -> name.equals(preferred) ? 0 : 1)
+                        .thenComparing(Comparator.naturalOrder()));
         for (Credit credit : creditsOf(agent)) {
-            grouped.computeIfAbsent(credit.publishedAs(), name -> new ArrayList<>()).add(credit);
+            grouped.computeIfAbsent(credit.publishedAs(), name -> new ArrayList<>())
+                    .add(credit);
         }
         return grouped;
     }

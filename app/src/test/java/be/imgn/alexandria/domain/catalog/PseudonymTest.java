@@ -1,5 +1,16 @@
 package be.imgn.alexandria.domain.catalog;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentId;
 import be.imgn.alexandria.domain.agent.AgentKind;
@@ -14,26 +25,15 @@ import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.domain.work.WorkForm;
 import be.imgn.alexandria.domain.work.WorkId;
 import be.imgn.alexandria.infrastructure.json.JsonCatalog;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Set;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * One person, two published names. The catalogue has to hold both truths at once: each book
- * keeps the byline it was issued under, and the whole output still gathers under one agent.
+ * One person, two published names. The catalogue has to hold both truths at once: each book keeps the byline it was
+ * issued under, and the whole output still gathers under one agent.
  */
 class PseudonymTest {
 
     private static final Agent HOBB = new Agent(
-            AgentId.of("robin-hobb"), AgentKind.PERSON,
-            "Robin Hobb", "Hobb, Robin", Set.of("Megan Lindholm"));
+            AgentId.of("robin-hobb"), AgentKind.PERSON, "Robin Hobb", "Hobb, Robin", Set.of("Megan Lindholm"));
 
     private Catalog catalog;
 
@@ -49,9 +49,13 @@ class PseudonymTest {
 
     @Test
     void keepsTheNameEachBookWasPublishedUnder() {
-        assertThat(catalog.work(WorkId.of("hobb-assassins-apprentice")).orElseThrow().byline())
+        assertThat(catalog.work(WorkId.of("hobb-assassins-apprentice"))
+                        .orElseThrow()
+                        .byline())
                 .isEqualTo("Robin Hobb");
-        assertThat(catalog.work(WorkId.of("lindholm-wizard-of-the-pigeons")).orElseThrow().byline())
+        assertThat(catalog.work(WorkId.of("lindholm-wizard-of-the-pigeons"))
+                        .orElseThrow()
+                        .byline())
                 .isEqualTo("Megan Lindholm");
     }
 
@@ -59,8 +63,7 @@ class PseudonymTest {
     void gathersTheWholeOutputUnderOneAgent() {
         assertThat(catalog.creditsOf(HOBB.id()))
                 .extracting(credit -> credit.work().title().main())
-                .containsExactlyInAnyOrder(
-                        "Assassin's Apprentice", "Royal Assassin", "Wizard of the Pigeons");
+                .containsExactlyInAnyOrder("Assassin's Apprentice", "Royal Assassin", "Wizard of the Pigeons");
     }
 
     @Test
@@ -119,7 +122,6 @@ class PseudonymTest {
                 BibliographicDate.year(year),
                 Set.of(),
                 List.of(Expression.original(
-                        new ExpressionId(workId, "original-en"), Language.ENGLISH,
-                        BibliographicDate.year(year))));
+                        new ExpressionId(workId, "original-en"), Language.ENGLISH, BibliographicDate.year(year))));
     }
 }

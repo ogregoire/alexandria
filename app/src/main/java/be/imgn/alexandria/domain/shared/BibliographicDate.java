@@ -4,9 +4,9 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 /**
- * Bibliographic dates are routinely imprecise: a title page may bear a year, a decade,
- * a circa marker, or nothing at all. Modelling that spread as a sum type keeps the
- * imprecision explicit instead of smuggling it into a nullable {@code LocalDate}.
+ * Bibliographic dates are routinely imprecise: a title page may bear a year, a decade, a circa marker, or nothing at
+ * all. Modelling that spread as a sum type keeps the imprecision explicit instead of smuggling it into a nullable
+ * {@code LocalDate}.
  */
 public sealed interface BibliographicDate {
 

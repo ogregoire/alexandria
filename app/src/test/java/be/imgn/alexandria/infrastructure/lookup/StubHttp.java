@@ -11,9 +11,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Serves the captured responses in {@code src/test/resources/lookup} instead of reaching the
- * network, so the parsers are tested against exactly what the real services returned and the
- * suite stays offline.
+ * Serves the captured responses in {@code src/test/resources/lookup} instead of reaching the network, so the parsers
+ * are tested against exactly what the real services returned and the suite stays offline.
  */
 final class StubHttp extends Http {
 

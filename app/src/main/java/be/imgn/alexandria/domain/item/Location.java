@@ -1,9 +1,9 @@
 package be.imgn.alexandria.domain.item;
 
-import be.imgn.alexandria.domain.shared.Guard;
-
 import java.time.LocalDate;
 import java.util.Optional;
+
+import be.imgn.alexandria.domain.shared.Guard;
 
 /** Where the copy currently is. */
 public sealed interface Location {

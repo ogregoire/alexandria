@@ -1,18 +1,5 @@
 package be.imgn.alexandria.infrastructure.json;
 
-import be.imgn.alexandria.domain.agent.Agent;
-import be.imgn.alexandria.domain.agent.AgentDirectory;
-import be.imgn.alexandria.domain.agent.AgentId;
-import be.imgn.alexandria.domain.catalog.Catalog;
-import be.imgn.alexandria.domain.item.Item;
-import be.imgn.alexandria.domain.item.ItemId;
-import be.imgn.alexandria.domain.manifestation.Manifestation;
-import be.imgn.alexandria.domain.manifestation.ManifestationId;
-import be.imgn.alexandria.domain.work.Work;
-import be.imgn.alexandria.domain.work.WorkId;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -26,12 +13,26 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
+import be.imgn.alexandria.domain.agent.Agent;
+import be.imgn.alexandria.domain.agent.AgentDirectory;
+import be.imgn.alexandria.domain.agent.AgentId;
+import be.imgn.alexandria.domain.catalog.Catalog;
+import be.imgn.alexandria.domain.item.Item;
+import be.imgn.alexandria.domain.item.ItemId;
+import be.imgn.alexandria.domain.manifestation.Manifestation;
+import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.work.Work;
+import be.imgn.alexandria.domain.work.WorkId;
+
 /**
- * The catalogue as a directory of JSON files — one file per aggregate root, named after
- * its id. These files are the catalogue, and git history is its history.
+ * The catalogue as a directory of JSON files — one file per aggregate root, named after its id. These files are the
+ * catalogue, and git history is its history.
  *
- * <p>The whole catalogue is held in memory. A personal library is thousands of records at
- * most, so paying for indexes or lazy loading would buy nothing.
+ * <p>The whole catalogue is held in memory. A personal library is thousands of records at most, so paying for indexes
+ * or lazy loading would buy nothing.
  */
 public final class JsonCatalog implements Catalog {
 
@@ -69,7 +70,9 @@ public final class JsonCatalog implements Catalog {
 
     @Override
     public List<Agent> agents() {
-        return agents.values().stream().sorted(Comparator.comparing(Agent::sortName)).toList();
+        return agents.values().stream()
+                .sorted(Comparator.comparing(Agent::sortName))
+                .toList();
     }
 
     @Override
@@ -89,7 +92,9 @@ public final class JsonCatalog implements Catalog {
 
     @Override
     public List<Item> items() {
-        return items.values().stream().sorted(Comparator.comparing(i -> i.id().value())).toList();
+        return items.values().stream()
+                .sorted(Comparator.comparing(i -> i.id().value()))
+                .toList();
     }
 
     @Override

@@ -1,22 +1,23 @@
 package be.imgn.alexandria.domain.item;
 
-import be.imgn.alexandria.domain.manifestation.ManifestationId;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import be.imgn.alexandria.domain.manifestation.ManifestationId;
 
 /**
- * That a book has been read is worth recording on its own. When it was read is often not
- * remembered, and demanding it would either block the record or invite an invented date.
+ * That a book has been read is worth recording on its own. When it was read is often not remembered, and demanding it
+ * would either block the record or invite an invented date.
  */
 class ReadingProgressTest {
 
     private static Item copy() {
-        return Item.shelved(ItemId.of("a-copy"), ManifestationId.of("an-edition"),
-                Acquisition.UNRECORDED, "study");
+        return Item.shelved(ItemId.of("a-copy"), ManifestationId.of("an-edition"), Acquisition.UNRECORDED, "study");
     }
 
     @Test
@@ -59,9 +60,9 @@ class ReadingProgressTest {
 
     @Test
     void keepsRequiringTheReasonForGivingUp() {
-        assertThat(org.junit.jupiter.api.Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> new ReadingProgress.Abandoned(Optional.empty(), Optional.empty(), " ")))
+        assertThat(Assertions.assertThrows(
+                        IllegalArgumentException.class,
+                        () -> new ReadingProgress.Abandoned(Optional.empty(), Optional.empty(), " ")))
                 .hasMessageContaining("why");
     }
 }

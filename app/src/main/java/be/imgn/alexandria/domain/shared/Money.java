@@ -1,6 +1,7 @@
 package be.imgn.alexandria.domain.shared;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Currency;
 import java.util.Objects;
 
@@ -13,7 +14,7 @@ public record Money(BigDecimal amount, Currency currency) {
         if (amount.signum() < 0) {
             throw new IllegalArgumentException("amount must not be negative");
         }
-        amount = amount.setScale(currency.getDefaultFractionDigits(), java.math.RoundingMode.HALF_UP);
+        amount = amount.setScale(currency.getDefaultFractionDigits(), RoundingMode.HALF_UP);
     }
 
     public static Money of(String amount, String currencyCode) {

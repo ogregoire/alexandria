@@ -14,9 +14,8 @@ public record AgentId(String value) {
     }
 
     /**
-     * Derives an id from a name. Because {@link Slug} folds case, accents and punctuation,
-     * "J. R. R. Tolkien" and "J.R.R. Tolkien" derive the same id — which is exactly the
-     * collision the registry wants to notice.
+     * Derives an id from a name. Because {@link Slug} folds case, accents and punctuation, "J. R. R. Tolkien" and
+     * "J.R.R. Tolkien" derive the same id — which is exactly the collision the registry wants to notice.
      */
     public static AgentId forName(String name) {
         return new AgentId(Slug.of(name));

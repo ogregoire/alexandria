@@ -1,5 +1,11 @@
 package be.imgn.alexandria;
 
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentId;
 import be.imgn.alexandria.domain.agent.AgentKind;
@@ -20,7 +26,6 @@ import be.imgn.alexandria.domain.shared.BibliographicDate;
 import be.imgn.alexandria.domain.shared.Contribution;
 import be.imgn.alexandria.domain.shared.Language;
 import be.imgn.alexandria.domain.shared.Money;
-import be.imgn.alexandria.domain.shared.Role;
 import be.imgn.alexandria.domain.shared.Title;
 import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.ExpressionId;
@@ -29,16 +34,9 @@ import be.imgn.alexandria.domain.work.WorkForm;
 import be.imgn.alexandria.domain.work.WorkId;
 import be.imgn.alexandria.infrastructure.json.JsonCatalog;
 
-import java.nio.file.Path;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
 /**
- * Three agents, one Work, two Expressions, one Manifestation, one Item — the smallest
- * catalogue that still exercises all four WEMI levels, an alias, and a spread of sum-type
- * variants.
+ * Three agents, one Work, two Expressions, one Manifestation, one Item — the smallest catalogue that still exercises
+ * all four WEMI levels, an alias, and a spread of sum-type variants.
  */
 public final class CatalogFixture {
 
@@ -52,8 +50,7 @@ public final class CatalogFixture {
     public static final ManifestationId ECCO = ManifestationId.of("quixote-ecco-2003-hb");
     public static final ItemId MY_COPY = ItemId.of("quixote-ecco-2003-hb-1");
 
-    private CatalogFixture() {
-    }
+    private CatalogFixture() {}
 
     public static JsonCatalog writeInto(Path root) {
         JsonCatalog catalog = new JsonCatalog(root);
@@ -64,8 +61,8 @@ public final class CatalogFixture {
         return catalog;
     }
 
-    public static final Agent CERVANTES_AGENT = new Agent(CERVANTES, AgentKind.PERSON,
-            "Miguel de Cervantes", "Cervantes, Miguel de", Set.of("Cervantes"));
+    public static final Agent CERVANTES_AGENT =
+            new Agent(CERVANTES, AgentKind.PERSON, "Miguel de Cervantes", "Cervantes, Miguel de", Set.of("Cervantes"));
     public static final Agent GROSSMAN_PERSON = Agent.person("Edith Grossman", "Grossman, Edith");
     public static final Agent ECCO_ORG = Agent.organisation("Ecco");
 
@@ -83,8 +80,12 @@ public final class CatalogFixture {
                 Set.of("satire", "chivalry"),
                 List.of(
                         Expression.original(SPANISH, Language.SPANISH, BibliographicDate.year(1605)),
-                        Expression.translation(GROSSMAN, Language.SPANISH, Language.ENGLISH,
-                                GROSSMAN_PERSON, BibliographicDate.year(2003))));
+                        Expression.translation(
+                                GROSSMAN,
+                                Language.SPANISH,
+                                Language.ENGLISH,
+                                GROSSMAN_PERSON,
+                                BibliographicDate.year(2003))));
     }
 
     public static Manifestation manifestation() {

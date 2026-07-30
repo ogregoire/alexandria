@@ -1,11 +1,10 @@
 package be.imgn.alexandria.domain.item;
 
 /**
- * Antiquarian condition grades. A plain enum rather than a sealed interface: the grades
- * are a closed, payload-free ordinal scale, which is exactly what an enum is.
+ * Antiquarian condition grades. A plain enum rather than a sealed interface: the grades are a closed, payload-free
+ * ordinal scale, which is exactly what an enum is.
  */
 public enum Condition {
-
     AS_NEW("as new"),
     FINE("fine"),
     VERY_GOOD("very good"),

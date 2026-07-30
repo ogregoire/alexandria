@@ -32,6 +32,12 @@
          chokes while scanning our own classes; overriding it is the whole fix. -->
     <asm.version>9.10.1</asm.version>
     <maven.reporting.version>4.0.0</maven.reporting.version>
+
+    <versions-plugin.version>2.21.0</versions-plugin.version>
+    <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+    <checkstyle.version>13.4.2</checkstyle.version>
+    <spotless-plugin.version>3.5.1</spotless-plugin.version>
+    <palantir-java-format.version>2.83.0</palantir-java-format.version>
   </properties>
 
   <dependencyManagement>
@@ -94,6 +100,19 @@
         </executions>
       </plugin>
 
+      <!--
+        Formatting first, then the style check, both in `validate`. Declared in this order on
+        purpose: spotless rewrites the source and checkstyle then judges what spotless left,
+        so the two can never disagree about the same file in one build.
+      -->
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+      </plugin>
     </plugins>
 
     <pluginManagement>
@@ -132,6 +151,108 @@
           <groupId>be.imgn.alexandria</groupId>
           <artifactId>alexandria-maven-plugin</artifactId>
           <version>${project.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>${spotless-plugin.version}</version>
+          <configuration>
+            <java>
+              <excludes>
+                <exclude>**/module-info.java</exclude>
+                <exclude>**/package-info.java</exclude>
+              </excludes>
+              <palantirJavaFormat>
+                <version>${palantir-java-format.version}</version>
+                <style>PALANTIR</style>
+                <formatJavadoc>true</formatJavadoc>
+              </palantirJavaFormat>
+              <removeUnusedImports/>
+              <!--
+                  java|javax groups the two into a single import block (no blank
+                  line between them); the trailing comma is the "everything else"
+                  group. Keep this in sync with checkstyle's import expectations.
+              -->
+              <importOrder>
+                <order>java|javax,com,org,</order>
+              </importOrder>
+              <trimTrailingWhitespace/>
+              <endWithNewline/>
+            </java>
+          </configuration>
+          <executions>
+            <execution>
+              <id>spotless-apply</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>apply</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>${maven-checkstyle-plugin.version}</version>
+          <dependencies>
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>${checkstyle.version}</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <configLocation>checkstyle.xml</configLocation>
+            <consoleOutput>true</consoleOutput>
+            <failsOnError>true</failsOnError>
+            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          </configuration>
+          <executions>
+            <execution>
+              <id>validate</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <!--
+          Only ever invoked by hand: `./mvnw versions:display-dependency-updates` and
+          `versions:display-plugin-updates`. The rules keep the answer to "what can I
+          upgrade?" free of snapshots, milestones, release candidates and previews, which
+          otherwise bury the stable releases.
+        -->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>${versions-plugin.version}</version>
+          <configuration>
+            <ruleSet>
+              <ignoreVersions>
+                <!--
+                  Exclude snapshots, milestones, release candidates.
+
+                  Two deviations from the recipe this came from, each found by an upgrade
+                  that got through: Jackson publishes "3.0-rc5" in lower case, so the
+                  pattern is case-insensitive; and Maven publishes "4.0.0-rc-5", so the
+                  digits may be separated from the qualifier.
+                -->
+                <ignoreVersion>
+                  <type>regex</type>
+                  <version>(?i).+-(SNAPSHOT|M[-.]?\d+|RC[-.]?\d+|CR[-.]?\d+|PRE[-.]?\d*|preview.*)</version>
+                </ignoreVersion>
+                <!-- Exclude alpha/beta versions, with or without a trailing qualifier -->
+                <ignoreVersion>
+                  <type>regex</type>
+                  <version>(?i).+-(alpha|beta).*</version>
+                </ignoreVersion>
+              </ignoreVersions>
+            </ruleSet>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

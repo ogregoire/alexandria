@@ -1,51 +1,53 @@
 package be.imgn.alexandria.infrastructure.lookup;
 
-import be.imgn.alexandria.application.lookup.BookDraft;
-import be.imgn.alexandria.application.lookup.BookLookup;
-import be.imgn.alexandria.domain.manifestation.Identifier;
-import be.imgn.alexandria.domain.manifestation.Isbn;
-import be.imgn.alexandria.domain.shared.Language;
+import java.io.StringReader;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import be.imgn.alexandria.application.lookup.BookDraft;
+import be.imgn.alexandria.application.lookup.BookLookup;
+import be.imgn.alexandria.domain.manifestation.Identifier;
+import be.imgn.alexandria.domain.manifestation.Isbn;
+import be.imgn.alexandria.domain.shared.Language;
 
 /**
- * The Bibliothèque nationale de France, via its SRU endpoint. Authoritative for French
- * publishing in a way no general-purpose service is.
+ * The Bibliothèque nationale de France, via its SRU endpoint. Authoritative for French publishing in a way no
+ * general-purpose service is.
  *
- * <p>Two quirks drive the code. The catalogue indexes the <em>ISBN-10</em> form for anything
- * published before the 2007 changeover, so a search for 9782070360024 returns nothing while
- * 2070360024 returns the record — both are tried. And its Dublin Core is prose rather than
- * fields: the author arrives as "Camus, Albert (1913-1960). Auteur du texte", the extent as
- * "1 volume 191 p ; 18 cm", the series as "Collection : Folio ; 2", so each is picked apart
- * with a pattern.
+ * <p>Two quirks drive the code. The catalogue indexes the <em>ISBN-10</em> form for anything published before the 2007
+ * changeover, so a search for 9782070360024 returns nothing while 2070360024 returns the record — both are tried. And
+ * its Dublin Core is prose rather than fields: the author arrives as "Camus, Albert (1913-1960). Auteur du texte", the
+ * extent as "1 volume 191 p ; 18 cm", the series as "Collection : Folio ; 2", so each is picked apart with a pattern.
  */
 public final class BnfLookup implements BookLookup {
 
     private static final String BASE = "https://catalogue.bnf.fr/api/SRU";
 
     /**
-     * The BnF publishes no rate limit for this endpoint. Two requests a second is a
-     * self-imposed courtesy, and it also paces the ISBN-13-then-ISBN-10 retry.
+     * The BnF publishes no rate limit for this endpoint. Two requests a second is a self-imposed courtesy, and it also
+     * paces the ISBN-13-then-ISBN-10 retry.
      */
-    private static final java.time.Duration INTERVAL = java.time.Duration.ofMillis(500);
+    private static final Duration INTERVAL = Duration.ofMillis(500);
+
     private static final Pattern AGENT = Pattern.compile("^([^(.]+?)\\s*(?:\\(([^)]*)\\))?\\s*\\.\\s*(.*)$");
     private static final Pattern PAGES = Pattern.compile("(\\d+)\\s*p\\b");
-    private static final Pattern SERIES = Pattern.compile("Collection\\s*:\\s*([^;]+)(?:;\\s*(\\S+))?",
-            Pattern.CASE_INSENSITIVE);
+    private static final Pattern SERIES =
+            Pattern.compile("Collection\\s*:\\s*([^;]+)(?:;\\s*(\\S+))?", Pattern.CASE_INSENSITIVE);
     private static final Pattern YEAR = Pattern.compile("(\\d{4})");
 
     private final Http http;
@@ -88,8 +90,7 @@ public final class BnfLookup implements BookLookup {
         }
         Set<String> forms = new LinkedHashSet<>();
         forms.add(digits.get());
-        (digits.get().length() == 13 ? Isbn.toIsbn10(digits.get()) : Isbn.toIsbn13(digits.get()))
-                .ifPresent(forms::add);
+        (digits.get().length() == 13 ? Isbn.toIsbn10(digits.get()) : Isbn.toIsbn13(digits.get())).ifPresent(forms::add);
         return List.copyOf(forms);
     }
 
@@ -147,7 +148,7 @@ public final class BnfLookup implements BookLookup {
     private static List<String> translators(List<String> raw) {
         List<String> names = new ArrayList<>();
         for (String entry : raw) {
-            if (entry.toLowerCase(java.util.Locale.ROOT).contains("traduct")) {
+            if (entry.toLowerCase(Locale.ROOT).contains("traduct")) {
                 Matcher matcher = AGENT.matcher(entry.trim());
                 names.add(matcher.matches() ? matcher.group(1).trim() : entry.trim());
             }
@@ -157,7 +158,8 @@ public final class BnfLookup implements BookLookup {
 
     /** "Gallimard (Paris)" — the place is not part of the name. */
     private static Optional<String> publisher(List<String> raw) {
-        return raw.stream().findFirst().map(value -> value.replaceAll("\\s*\\([^)]*\\)\\s*$", "").trim());
+        return raw.stream().findFirst().map(value -> value.replaceAll("\\s*\\([^)]*\\)\\s*$", "")
+                .trim());
     }
 
     private static Optional<Integer> pages(String extent) {
@@ -213,9 +215,8 @@ public final class BnfLookup implements BookLookup {
     }
 
     /**
-     * Parsed with external entities and DTDs switched off — this is third-party XML arriving
-     * over the network, and an entity-expansion payload must not be able to read local files
-     * or hang the editor.
+     * Parsed with external entities and DTDs switched off — this is third-party XML arriving over the network, and an
+     * entity-expansion payload must not be able to read local files or hang the editor.
      */
     private Optional<Document> parse(String xml) {
         try {

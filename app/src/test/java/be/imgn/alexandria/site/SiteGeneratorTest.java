@@ -1,18 +1,24 @@
 package be.imgn.alexandria.site;
 
-import be.imgn.alexandria.CatalogFixture;
-import be.imgn.alexandria.domain.item.Item;
-import be.imgn.alexandria.domain.item.ItemId;
-import be.imgn.alexandria.domain.manifestation.ManifestationId;
-import be.imgn.alexandria.infrastructure.json.JsonCatalog;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import be.imgn.alexandria.CatalogFixture;
+import be.imgn.alexandria.domain.item.Acquisition;
+import be.imgn.alexandria.domain.item.Condition;
+import be.imgn.alexandria.domain.item.Item;
+import be.imgn.alexandria.domain.item.ItemId;
+import be.imgn.alexandria.domain.item.Location;
+import be.imgn.alexandria.domain.item.ReadingProgress;
+import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.infrastructure.json.JsonCatalog;
 
 class SiteGeneratorTest {
 
@@ -84,11 +90,11 @@ class SiteGeneratorTest {
         catalog.save(new Item(
                 ItemId.of("orphan"),
                 ManifestationId.of("no-such-edition"),
-                be.imgn.alexandria.domain.item.Acquisition.UNRECORDED,
-                be.imgn.alexandria.domain.item.Location.MISSING,
-                be.imgn.alexandria.domain.item.ReadingProgress.UNREAD,
-                be.imgn.alexandria.domain.item.Condition.UNGRADED,
-                java.util.Optional.empty()));
+                Acquisition.UNRECORDED,
+                Location.MISSING,
+                ReadingProgress.UNREAD,
+                Condition.UNGRADED,
+                Optional.empty()));
 
         assertThatThrownBy(() -> new SiteGenerator(catalog).generateInto(output))
                 .isInstanceOf(IllegalStateException.class)

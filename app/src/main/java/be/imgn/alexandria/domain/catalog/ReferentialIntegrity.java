@@ -1,5 +1,10 @@
 package be.imgn.alexandria.domain.catalog;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentId;
@@ -10,22 +15,15 @@ import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.ExpressionId;
 import be.imgn.alexandria.domain.work.Work;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
- * Invariants that span aggregates and therefore cannot live inside any one of them: every
- * contribution and every publisher must name an agent that exists, no two agents may answer
- * to the same name, every manifestation must embody an expression that exists, and every
- * item must embody a manifestation that exists. Checked on save and again before the site
- * is generated.
+ * Invariants that span aggregates and therefore cannot live inside any one of them: every contribution and every
+ * publisher must name an agent that exists, no two agents may answer to the same name, every manifestation must embody
+ * an expression that exists, and every item must embody a manifestation that exists. Checked on save and again before
+ * the site is generated.
  */
 public final class ReferentialIntegrity {
 
-    private ReferentialIntegrity() {
-    }
+    private ReferentialIntegrity() {}
 
     public record Violation(String subject, String problem) {
         @Override
@@ -54,16 +52,16 @@ public final class ReferentialIntegrity {
         for (Work work : catalog.works()) {
             checkAgents(violations, "work " + work.id(), work.creators(), agents, directory);
             for (Expression expression : work.expressions()) {
-                checkAgents(violations, "expression " + expression.id(),
-                        expression.contributors(), agents, directory);
+                checkAgents(violations, "expression " + expression.id(), expression.contributors(), agents, directory);
             }
         }
 
         for (Manifestation manifestation : catalog.manifestations()) {
-            manifestation.publisher()
+            manifestation
+                    .publisher()
                     .filter(publisher -> !agents.contains(publisher.value()))
-                    .ifPresent(publisher -> violations.add(new Violation(
-                            "manifestation " + manifestation.id(), "unknown publisher " + publisher)));
+                    .ifPresent(publisher -> violations.add(
+                            new Violation("manifestation " + manifestation.id(), "unknown publisher " + publisher)));
             for (ExpressionId reference : manifestation.embodies()) {
                 if (!expressions.contains(reference.qualified())) {
                     violations.add(new Violation(
@@ -74,8 +72,7 @@ public final class ReferentialIntegrity {
 
         for (Item item : catalog.items()) {
             if (!manifestations.contains(item.embodiedIn().value())) {
-                violations.add(new Violation(
-                        "item " + item.id(), "unknown manifestation " + item.embodiedIn()));
+                violations.add(new Violation("item " + item.id(), "unknown manifestation " + item.embodiedIn()));
             }
         }
         return List.copyOf(violations);
@@ -88,9 +85,12 @@ public final class ReferentialIntegrity {
                 .toList();
     }
 
-    private static void checkAgents(List<Violation> violations, String subject,
-                                    List<Contribution> contributions, Set<String> agents,
-                                    AgentDirectory directory) {
+    private static void checkAgents(
+            List<Violation> violations,
+            String subject,
+            List<Contribution> contributions,
+            Set<String> agents,
+            AgentDirectory directory) {
         for (Contribution contribution : contributions) {
             AgentId agent = contribution.agent();
             if (!agents.contains(agent.value())) {
@@ -100,9 +100,11 @@ public final class ReferentialIntegrity {
             // The credited name must be one the agent is on file under, otherwise the
             // pseudonym has been dropped from the registry and the link is no longer
             // findable from that name.
-            directory.find(agent)
+            directory
+                    .find(agent)
                     .filter(known -> !known.answersTo(contribution.publishedAs()))
-                    .ifPresent(known -> violations.add(new Violation(subject,
+                    .ifPresent(known -> violations.add(new Violation(
+                            subject,
                             "credited as '" + contribution.publishedAs() + "' but " + known.name()
                                     + " is not on file under that name — add it as an alias")));
         }
@@ -112,7 +114,8 @@ public final class ReferentialIntegrity {
         List<Violation> violations = check(catalog);
         if (!violations.isEmpty()) {
             throw new IllegalStateException("catalogue is inconsistent:\n  "
-                    + String.join("\n  ", violations.stream().map(Violation::toString).toList()));
+                    + String.join(
+                            "\n  ", violations.stream().map(Violation::toString).toList()));
         }
     }
 }

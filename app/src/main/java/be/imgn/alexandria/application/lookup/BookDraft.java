@@ -1,23 +1,22 @@
 package be.imgn.alexandria.application.lookup;
 
-import be.imgn.alexandria.domain.manifestation.Identifier;
-import be.imgn.alexandria.domain.shared.Language;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import be.imgn.alexandria.domain.manifestation.Identifier;
+import be.imgn.alexandria.domain.shared.Language;
+
 /**
- * What a lookup service could tell us about one ISBN, before any of it becomes a catalogue
- * record.
+ * What a lookup service could tell us about one ISBN, before any of it becomes a catalogue record.
  *
- * <p>Deliberately not domain types: this is unverified third-party data on its way to a
- * form the user will correct. Only {@code title} is required, because that is all some
- * providers reliably return; everything else is optional and simply leaves its field blank.
+ * <p>Deliberately not domain types: this is unverified third-party data on its way to a form the user will correct.
+ * Only {@code title} is required, because that is all some providers reliably return; everything else is optional and
+ * simply leaves its field blank.
  *
- * @param title        the edition's title, which for a translation is the translated one
- * @param originalTitle the work's title in its original language, when the provider models
- *                     works separately from editions
+ * @param title the edition's title, which for a translation is the translated one
+ * @param originalTitle the work's title in its original language, when the provider models works separately from
+ *     editions
  * @param originalYear when the work was first published, as opposed to this printing
  */
 public record BookDraft(
@@ -67,7 +66,9 @@ public record BookDraft(
     /** True when the edition is not in the language the work was written in. */
     public boolean looksTranslated() {
         return !translators.isEmpty()
-                || originalTitle.filter(original -> !original.equalsIgnoreCase(title)).isPresent();
+                || originalTitle
+                        .filter(original -> !original.equalsIgnoreCase(title))
+                        .isPresent();
     }
 
     private static <T> Optional<T> orEmpty(Optional<T> value) {
@@ -160,9 +161,22 @@ public record BookDraft(
         }
 
         public BookDraft build() {
-            return new BookDraft(title, subtitle, originalTitle, authors, translators, publisher,
-                    publishedYear, originalYear, language, pages, series, seriesNumber, subjects,
-                    identifier, source);
+            return new BookDraft(
+                    title,
+                    subtitle,
+                    originalTitle,
+                    authors,
+                    translators,
+                    publisher,
+                    publishedYear,
+                    originalYear,
+                    language,
+                    pages,
+                    series,
+                    seriesNumber,
+                    subjects,
+                    identifier,
+                    source);
         }
 
         private static Optional<String> blankToEmpty(String value) {

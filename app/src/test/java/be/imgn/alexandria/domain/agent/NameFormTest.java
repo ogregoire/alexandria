@@ -1,8 +1,8 @@
 package be.imgn.alexandria.domain.agent;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 class NameFormTest {
 
@@ -84,15 +84,15 @@ class NameFormTest {
         NameForm name = NameForm.ofOrganisation("Christian Bourgois éditeur");
 
         assertThat(name.filingWord()).as("not éditeur").isEqualTo("Bourgois");
-        assertThat(name.display()).as("the name itself is untouched")
-                .isEqualTo("Christian Bourgois éditeur");
+        assertThat(name.display()).as("the name itself is untouched").isEqualTo("Christian Bourgois éditeur");
         assertThat(name.sortName()).isEqualTo("Christian Bourgois éditeur");
     }
 
     @Test
     void dropsEnglishTypeWordsToo() {
         assertThat(NameForm.ofOrganisation("Penguin Books").filingWord()).isEqualTo("Penguin");
-        assertThat(NameForm.ofOrganisation("Harvard University Press").filingWord()).isEqualTo("University");
+        assertThat(NameForm.ofOrganisation("Harvard University Press").filingWord())
+                .isEqualTo("University");
         assertThat(NameForm.ofOrganisation("Allen & Unwin Ltd.").filingWord()).isEqualTo("Unwin");
     }
 
@@ -109,7 +109,8 @@ class NameFormTest {
 
     @Test
     void picksTheRuleFromTheKind() {
-        assertThat(NameForm.of("Penguin Books", AgentKind.ORGANISATION).filingWord()).isEqualTo("Penguin");
+        assertThat(NameForm.of("Penguin Books", AgentKind.ORGANISATION).filingWord())
+                .isEqualTo("Penguin");
         assertThat(NameForm.of("Penguin Books", AgentKind.PERSON).filingWord()).isEqualTo("Books");
     }
 }

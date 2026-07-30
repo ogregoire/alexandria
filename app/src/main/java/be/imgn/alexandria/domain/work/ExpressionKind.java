@@ -4,15 +4,14 @@ import be.imgn.alexandria.domain.shared.Guard;
 import be.imgn.alexandria.domain.shared.Language;
 
 /**
- * How an Expression realises its Work. This is the level at which a translation lives:
- * Grossman's English <em>Don Quixote</em> and Rutherford's are two Expressions of one Work,
- * and every printing of either is a Manifestation below them.
+ * How an Expression realises its Work. This is the level at which a translation lives: Grossman's English <em>Don
+ * Quixote</em> and Rutherford's are two Expressions of one Work, and every printing of either is a Manifestation below
+ * them.
  */
 public sealed interface ExpressionKind {
 
     /** The text as its creator issued it. */
-    record Original() implements ExpressionKind {
-    }
+    record Original() implements ExpressionKind {}
 
     record Translation(Language from) implements ExpressionKind {
         public Translation {
@@ -29,8 +28,7 @@ public sealed interface ExpressionKind {
         }
     }
 
-    record Abridgement() implements ExpressionKind {
-    }
+    record Abridgement() implements ExpressionKind {}
 
     /** A change of form that stays within the Work, e.g. a graphic-novel treatment. */
     record Adaptation(String into) implements ExpressionKind {
@@ -40,8 +38,7 @@ public sealed interface ExpressionKind {
     }
 
     /** A read-aloud realisation; the narrator is a contributor of this Expression. */
-    record Narration() implements ExpressionKind {
-    }
+    record Narration() implements ExpressionKind {}
 
     ExpressionKind ORIGINAL = new Original();
     ExpressionKind ABRIDGED = new Abridgement();

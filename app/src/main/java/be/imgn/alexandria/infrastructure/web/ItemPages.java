@@ -1,17 +1,14 @@
 package be.imgn.alexandria.infrastructure.web;
 
-import be.imgn.alexandria.application.CatalogService;
-import be.imgn.alexandria.domain.item.Acquisition;
-import be.imgn.alexandria.domain.item.Condition;
-import be.imgn.alexandria.domain.item.Item;
-import be.imgn.alexandria.domain.item.ItemId;
-import be.imgn.alexandria.domain.item.Location;
-import be.imgn.alexandria.domain.item.ReadingProgress;
-import be.imgn.alexandria.domain.manifestation.ManifestationId;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import be.imgn.alexandria.application.CatalogService;
+import be.imgn.alexandria.domain.item.Condition;
+import be.imgn.alexandria.domain.item.Item;
+import be.imgn.alexandria.domain.item.ItemId;
+import be.imgn.alexandria.domain.manifestation.ManifestationId;
 
 /** Browsing and editing the Item aggregate — the copy you actually own. */
 final class ItemPages {
@@ -26,8 +23,11 @@ final class ItemPages {
         List<List<String>> rows = service.catalog().items().stream()
                 .map(item -> List.of(
                         Html.link("/items/" + item.id().value(), item.id().value()),
-                        service.catalog().manifestation(item.embodiedIn())
-                                .map(m -> Html.link("/manifestations/" + m.id().value(), m.title().main()))
+                        service.catalog()
+                                .manifestation(item.embodiedIn())
+                                .map(m -> Html.link(
+                                        "/manifestations/" + m.id().value(),
+                                        m.title().main()))
                                 .orElse("<span class=\"broken\">missing edition</span>"),
                         Html.escape(item.location().display()),
                         Html.escape(item.reading().display()),
@@ -37,7 +37,8 @@ final class ItemPages {
                 <h1>Items</h1>
                 <p><a class="button" href="/items/new">New item</a></p>
                 %s
-                """.formatted(Html.table(List.of("Copy", "Edition", "Where", "Reading", "Condition"), rows)));
+                """.formatted(
+                        Html.table(List.of("Copy", "Edition", "Where", "Reading", "Condition"), rows)));
     }
 
     String edit(Optional<Item> existing) {
@@ -47,7 +48,9 @@ final class ItemPages {
         Map<String, String> editions = service.manifestationChoices();
 
         if (editions.isEmpty()) {
-            return Html.page(heading, Html.link("/items", "Items"),
+            return Html.page(
+                    heading,
+                    Html.link("/items", "Items"),
                     "<h1>New item</h1><p class=\"hint\">Create a manifestation first — "
                             + "an item is always a copy of one.</p>");
         }
@@ -80,16 +83,24 @@ final class ItemPages {
                 item == null
                         ? Html.textField("id", "Identifier (slug)", "")
                         : WorkPages.readOnly("Identifier", id) + WorkPages.hidden("id", id),
-                Html.select("manifestation", "Edition", editions,
-                        item == null ? editions.keySet().iterator().next() : item.embodiedIn().value()),
-                Html.select("condition", "Condition", VariantForms.conditions(),
-                        item == null ? Condition.UNGRADED.name() : item.condition().name()),
+                Html.select(
+                        "manifestation",
+                        "Edition",
+                        editions,
+                        item == null
+                                ? editions.keySet().iterator().next()
+                                : item.embodiedIn().value()),
+                Html.select(
+                        "condition",
+                        "Condition",
+                        VariantForms.conditions(),
+                        item == null
+                                ? Condition.UNGRADED.name()
+                                : item.condition().name()),
                 Html.textArea("notes", "Notes", item == null ? "" : item.notes().orElse("")),
-                VariantForms.acquisition("acquisition", "Acquired",
-                        item == null ? null : item.acquisition()),
+                VariantForms.acquisition("acquisition", "Acquired", item == null ? null : item.acquisition()),
                 VariantForms.location("location", "Location", item == null ? null : item.location()),
-                VariantForms.reading("reading", "Progress",
-                        item == null ? null : item.reading()),
+                VariantForms.reading("reading", "Progress", item == null ? null : item.reading()),
                 deleteButton));
     }
 

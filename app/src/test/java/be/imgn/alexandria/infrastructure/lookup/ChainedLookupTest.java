@@ -1,15 +1,16 @@
 package be.imgn.alexandria.infrastructure.lookup;
 
-import be.imgn.alexandria.application.lookup.BookDraft;
-import be.imgn.alexandria.application.lookup.BookLookup;
-import be.imgn.alexandria.domain.manifestation.Identifier;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+
+import be.imgn.alexandria.application.lookup.BookDraft;
+import be.imgn.alexandria.application.lookup.BookLookup;
+import be.imgn.alexandria.domain.manifestation.Identifier;
 
 class ChainedLookupTest {
 
@@ -75,7 +76,8 @@ class ChainedLookupTest {
 
     @Test
     void reportsAMissWhenNobodyHasTheBook() {
-        assertThat(new ChainedLookup(List.of(Stub.silent("a"), Stub.silent("b"))).byIsbn(ISBN)).isEmpty();
+        assertThat(new ChainedLookup(List.of(Stub.silent("a"), Stub.silent("b"))).byIsbn(ISBN))
+                .isEmpty();
     }
 
     @Test
@@ -85,7 +87,6 @@ class ChainedLookupTest {
 
     @Test
     void triesTheProvidersInTheDocumentedOrder() {
-        assertThat(ChainedLookup.standard().name())
-                .isEqualTo("Open Library, then BnF, then Google Books");
+        assertThat(ChainedLookup.standard().name()).isEqualTo("Open Library, then BnF, then Google Books");
     }
 }

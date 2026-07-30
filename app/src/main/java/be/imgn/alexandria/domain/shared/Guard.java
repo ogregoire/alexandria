@@ -8,8 +8,7 @@ import java.util.Set;
 /** Invariant checks shared by the value objects and entities of the model. */
 public final class Guard {
 
-    private Guard() {
-    }
+    private Guard() {}
 
     public static String notBlank(String value, String field) {
         if (value == null || value.isBlank()) {
@@ -27,14 +26,15 @@ public final class Guard {
     }
 
     /**
-     * Hash-set iteration order is not something to commit to git: an unchanged set would
-     * diff differently between runs. Sets that reach a file go through here.
+     * Hash-set iteration order is not something to commit to git: an unchanged set would diff differently between runs.
+     * Sets that reach a file go through here.
      */
     public static <T extends Comparable<T>> Set<T> sortedCopyOf(Set<T> value) {
         if (value == null || value.isEmpty()) {
             return Set.of();
         }
-        return Collections.unmodifiableSet(new LinkedHashSet<>(value.stream().sorted().toList()));
+        return Collections.unmodifiableSet(
+                new LinkedHashSet<>(value.stream().sorted().toList()));
     }
 
     public static <T> List<T> notEmpty(List<T> value, String field) {

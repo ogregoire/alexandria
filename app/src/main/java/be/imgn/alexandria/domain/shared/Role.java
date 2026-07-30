@@ -1,8 +1,8 @@
 package be.imgn.alexandria.domain.shared;
 
 /**
- * The relationship an {@link Agent} has to a Work, Expression or Manifestation.
- * Open-ended by nature, hence the {@link Other} escape hatch rather than an enum.
+ * The relationship an {@link Agent} has to a Work, Expression or Manifestation. Open-ended by nature, hence the
+ * {@link Other} escape hatch rather than an enum.
  */
 public sealed interface Role {
 

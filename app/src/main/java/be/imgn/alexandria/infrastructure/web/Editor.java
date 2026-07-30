@@ -1,35 +1,37 @@
 package be.imgn.alexandria.infrastructure.web;
 
-import be.imgn.alexandria.application.CatalogService;
-import be.imgn.alexandria.application.Reports;
-import be.imgn.alexandria.application.lookup.BookLookup;
-import be.imgn.alexandria.domain.agent.AgentId;
-import be.imgn.alexandria.domain.manifestation.Identifier;
-import be.imgn.alexandria.domain.agent.AgentResolution;
-import be.imgn.alexandria.domain.item.ItemId;
-import be.imgn.alexandria.domain.manifestation.Manifestation;
-import be.imgn.alexandria.domain.manifestation.ManifestationId;
-import be.imgn.alexandria.domain.work.Work;
-import be.imgn.alexandria.domain.work.WorkId;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
+
+import be.imgn.alexandria.application.CatalogService;
+import be.imgn.alexandria.application.Reports;
+import be.imgn.alexandria.application.lookup.BookLookup;
+import be.imgn.alexandria.domain.agent.AgentId;
+import be.imgn.alexandria.domain.agent.AgentResolution;
+import be.imgn.alexandria.domain.item.ItemId;
+import be.imgn.alexandria.domain.manifestation.Identifier;
+import be.imgn.alexandria.domain.manifestation.Manifestation;
+import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.work.Work;
+import be.imgn.alexandria.domain.work.WorkId;
+
 /**
  * The local editing app: the JDK's own HTTP server, server-rendered forms, no framework.
  *
- * <p>It binds to loopback only. This is a single-user tool editing files in a git working
- * copy, so it has no authentication and must not be reachable from the network.
+ * <p>It binds to loopback only. This is a single-user tool editing files in a git working copy, so it has no
+ * authentication and must not be reachable from the network.
  */
 public final class Editor {
 
@@ -81,16 +83,17 @@ public final class Editor {
     private void routes() {
         router.get("/", request -> Router.Response.html(home()));
 
-        router.get("/import", request ->
-                Router.Response.html(imports.ask(request.query().orEmpty("isbn"), null)));
+        router.get(
+                "/import",
+                request -> Router.Response.html(imports.ask(request.query().orEmpty("isbn"), null)));
         router.post("/import", request -> {
             String typed = request.body().orEmpty("isbn");
             Identifier isbn;
             try {
                 isbn = Identifier.isbn(typed);
             } catch (RuntimeException e) {
-                return Router.Response.html(imports.ask(typed,
-                        "'" + typed + "' is not a valid ISBN: " + e.getMessage()));
+                return Router.Response.html(
+                        imports.ask(typed, "'" + typed + "' is not a valid ISBN: " + e.getMessage()));
             }
             return Router.Response.html(
                     imports.review(isbn, lookup.byIsbn(isbn), request.body().checked("addItem")));
@@ -99,8 +102,7 @@ public final class Editor {
         router.post("/import/save", request -> {
             AgentResolution resolution = service.newResolution();
             return switch (imports.read(request.body(), resolution)) {
-                case ImportPages.Outcome.Rejected(FormState state) ->
-                        Router.Response.html(imports.reviewAgain(state));
+                case ImportPages.Outcome.Rejected(FormState state) -> Router.Response.html(imports.reviewAgain(state));
                 case ImportPages.Outcome.Book(Work work, Manifestation manifestation, var copy) -> {
                     try {
                         service.saveNewBook(work, manifestation, copy, resolution);
@@ -108,8 +110,7 @@ public final class Editor {
                     } catch (IllegalArgumentException | IllegalStateException e) {
                         FormProblems clash = new FormProblems();
                         clash.general(e.getMessage() == null ? e.toString() : e.getMessage());
-                        yield Router.Response.html(imports.reviewAgain(
-                                FormState.submitted(request.body(), clash)));
+                        yield Router.Response.html(imports.reviewAgain(FormState.submitted(request.body(), clash)));
                     }
                 }
             };
@@ -117,7 +118,8 @@ public final class Editor {
 
         router.get("/agents", request -> Router.Response.html(agents.list()));
         router.get("/agents/new", request -> Router.Response.html(agents.edit(Optional.empty())));
-        router.get("/agents/{id}", request -> service.catalog().agent(AgentId.of(request.param("id")))
+        router.get("/agents/{id}", request -> service.catalog()
+                .agent(AgentId.of(request.param("id")))
                 .map(agent -> Router.Response.html(agents.edit(Optional.of(agent))))
                 .orElseGet(() -> Router.Response.error(404, "No agent " + request.param("id"))));
         router.post("/agents/{id}", request -> {
@@ -131,7 +133,8 @@ public final class Editor {
 
         router.get("/works", request -> Router.Response.html(works.list()));
         router.get("/works/new", request -> Router.Response.html(works.edit(Optional.empty())));
-        router.get("/works/{id}", request -> service.catalog().work(WorkId.of(request.param("id")))
+        router.get("/works/{id}", request -> service.catalog()
+                .work(WorkId.of(request.param("id")))
                 .map(work -> Router.Response.html(works.edit(Optional.of(work))))
                 .orElseGet(() -> Router.Response.error(404, "No work " + request.param("id"))));
         router.post("/works/{id}", request -> {
@@ -146,12 +149,11 @@ public final class Editor {
         });
 
         router.get("/manifestations", request -> Router.Response.html(manifestations.list()));
-        router.get("/manifestations/new", request ->
-                Router.Response.html(manifestations.edit(Optional.empty())));
-        router.get("/manifestations/{id}", request ->
-                service.catalog().manifestation(ManifestationId.of(request.param("id")))
-                        .map(manifestation -> Router.Response.html(manifestations.edit(Optional.of(manifestation))))
-                        .orElseGet(() -> Router.Response.error(404, "No manifestation " + request.param("id"))));
+        router.get("/manifestations/new", request -> Router.Response.html(manifestations.edit(Optional.empty())));
+        router.get("/manifestations/{id}", request -> service.catalog()
+                .manifestation(ManifestationId.of(request.param("id")))
+                .map(manifestation -> Router.Response.html(manifestations.edit(Optional.of(manifestation))))
+                .orElseGet(() -> Router.Response.error(404, "No manifestation " + request.param("id"))));
         router.post("/manifestations/{id}", request -> {
             AgentResolution resolution = service.newResolution();
             Manifestation manifestation = manifestations.read(request.body(), resolution);
@@ -165,7 +167,8 @@ public final class Editor {
 
         router.get("/items", request -> Router.Response.html(items.list()));
         router.get("/items/new", request -> Router.Response.html(items.edit(Optional.empty())));
-        router.get("/items/{id}", request -> service.catalog().item(ItemId.of(request.param("id")))
+        router.get("/items/{id}", request -> service.catalog()
+                .item(ItemId.of(request.param("id")))
                 .map(item -> Router.Response.html(items.edit(Optional.of(item))))
                 .orElseGet(() -> Router.Response.error(404, "No item " + request.param("id"))));
         router.post("/items/{id}", request -> {
@@ -190,10 +193,10 @@ public final class Editor {
         String problems = service.problems().isEmpty()
                 ? "<p class=\"ok\">The catalogue is consistent.</p>"
                 : "<div class=\"error\"><h2>Problems</h2><ul>"
-                + service.problems().stream()
-                .map(problem -> "<li>" + Html.escape(problem.toString()) + "</li>")
-                .collect(Collectors.joining())
-                + "</ul></div>";
+                        + service.problems().stream()
+                                .map(problem -> "<li>" + Html.escape(problem.toString()) + "</li>")
+                                .collect(Collectors.joining())
+                        + "</ul></div>";
 
         return Html.page("Alexandria", "Home", """
                 <h1>Alexandria</h1>
@@ -212,12 +215,12 @@ public final class Editor {
                 <p>Saving writes a JSON file under <code>data/</code>. Commit that file and the
                    change is in the catalogue's history.</p>
                 """.formatted(
-                problems,
-                counts.get("agents"),
-                counts.get("works"),
-                counts.get("expressions"),
-                counts.get("manifestations"),
-                counts.get("items")));
+                        problems,
+                        counts.get("agents"),
+                        counts.get("works"),
+                        counts.get("expressions"),
+                        counts.get("manifestations"),
+                        counts.get("items")));
     }
 
     private Router.Response asset(String file) {
@@ -226,9 +229,9 @@ public final class Editor {
             if (in == null) {
                 return Router.Response.error(404, "No asset " + file);
             }
-            String type = file.endsWith(".css") ? "text/css; charset=utf-8"
-                    : file.endsWith(".js") ? "text/javascript; charset=utf-8"
-                    : "application/octet-stream";
+            String type = file.endsWith(".css")
+                    ? "text/css; charset=utf-8"
+                    : file.endsWith(".js") ? "text/javascript; charset=utf-8" : "application/octet-stream";
             return Router.Response.asset(type, in.readAllBytes());
         } catch (IOException e) {
             return Router.Response.error(500, e.getMessage());
@@ -258,7 +261,7 @@ public final class Editor {
     }
 
     private static String describe(RuntimeException e) {
-        List<String> frames = java.util.Arrays.stream(e.getStackTrace())
+        List<String> frames = Arrays.stream(e.getStackTrace())
                 .limit(8)
                 .map(StackTraceElement::toString)
                 .toList();

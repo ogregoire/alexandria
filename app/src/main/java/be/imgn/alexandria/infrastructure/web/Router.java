@@ -1,20 +1,21 @@
 package be.imgn.alexandria.infrastructure.web;
 
-import com.sun.net.httpserver.HttpExchange;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.sun.net.httpserver.HttpExchange;
+
 /**
- * Enough routing for a single-user local editor: literal segments and {@code {name}}
- * placeholders, matched in registration order.
+ * Enough routing for a single-user local editor: literal segments and {@code {name}} placeholders, matched in
+ * registration order.
  */
 public final class Router {
 
@@ -22,13 +23,12 @@ public final class Router {
     public record Response(int status, String contentType, byte[] body, Map<String, String> headers) {
 
         public static Response html(String body) {
-            return new Response(200, "text/html; charset=utf-8",
-                    body.getBytes(StandardCharsets.UTF_8), Map.of());
+            return new Response(200, "text/html; charset=utf-8", body.getBytes(StandardCharsets.UTF_8), Map.of());
         }
 
         public static Response json(String body) {
-            return new Response(200, "application/json; charset=utf-8",
-                    body.getBytes(StandardCharsets.UTF_8), Map.of());
+            return new Response(
+                    200, "application/json; charset=utf-8", body.getBytes(StandardCharsets.UTF_8), Map.of());
         }
 
         public static Response asset(String contentType, byte[] body) {
@@ -40,9 +40,14 @@ public final class Router {
         }
 
         public static Response error(int status, String message) {
-            return new Response(status, "text/html; charset=utf-8",
-                    Html.page("Error", "", "<h1>" + status + "</h1><pre class=\"error\">"
-                            + Html.escape(message) + "</pre>").getBytes(StandardCharsets.UTF_8),
+            return new Response(
+                    status,
+                    "text/html; charset=utf-8",
+                    Html.page(
+                                    "Error",
+                                    "",
+                                    "<h1>" + status + "</h1><pre class=\"error\">" + Html.escape(message) + "</pre>")
+                            .getBytes(StandardCharsets.UTF_8),
                     Map.of());
         }
     }
@@ -64,8 +69,7 @@ public final class Router {
         Response handle(Request request);
     }
 
-    private record Route(String method, List<String> segments, Handler handler) {
-    }
+    private record Route(String method, List<String> segments, Handler handler) {}
 
     private final List<Route> routes = new ArrayList<>();
 
@@ -97,7 +101,8 @@ public final class Router {
                 return route.handler().handle(new Request(parameters.get(), query, body));
             }
         }
-        return Response.error(404, "No route for " + method + " " + exchange.getRequestURI().getPath());
+        return Response.error(
+                404, "No route for " + method + " " + exchange.getRequestURI().getPath());
     }
 
     private static FormData readBody(HttpExchange exchange) throws IOException {
@@ -114,7 +119,8 @@ public final class Router {
         for (int i = 0; i < pattern.size(); i++) {
             String expected = pattern.get(i);
             if (expected.startsWith("{") && expected.endsWith("}")) {
-                parameters.put(expected.substring(1, expected.length() - 1),
+                parameters.put(
+                        expected.substring(1, expected.length() - 1),
                         URLDecoder.decode(actual.get(i), StandardCharsets.UTF_8));
             } else if (!expected.equals(actual.get(i))) {
                 return Optional.empty();
@@ -124,6 +130,6 @@ public final class Router {
     }
 
     private static List<String> split(String path) {
-        return java.util.Arrays.stream(path.split("/")).filter(s -> !s.isEmpty()).toList();
+        return Arrays.stream(path.split("/")).filter(s -> !s.isEmpty()).toList();
     }
 }

@@ -1,32 +1,32 @@
 package be.imgn.alexandria.maven;
 
-import be.imgn.alexandria.domain.catalog.Catalog;
-import be.imgn.alexandria.domain.catalog.ReferentialIntegrity;
-import be.imgn.alexandria.infrastructure.json.JsonCatalog;
-import be.imgn.alexandria.site.SiteGenerator;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
+import be.imgn.alexandria.domain.catalog.Catalog;
+import be.imgn.alexandria.domain.catalog.ReferentialIntegrity;
+import be.imgn.alexandria.infrastructure.json.JsonCatalog;
+import be.imgn.alexandria.site.SiteGenerator;
 
 /**
  * Writes the catalogue into the site directory during {@code mvn site}.
  *
- * <p>A plain mojo rather than a {@code MavenReport}. It was a report once, and being one cost
- * more than it gave: Maven surrounds reports with a report index, a skin and a set of
- * project-information pages, none of which belong in front of a library. The catalogue needs
- * its own layout and a JSON search index, neither of which a Doxia sink can express, so it
- * was writing its pages straight to disk anyway and using the sink only for a landing page
- * nobody asked for.
+ * <p>A plain mojo rather than a {@code MavenReport}. It was a report once, and being one cost more than it gave: Maven
+ * surrounds reports with a report index, a skin and a set of project-information pages, none of which belong in front
+ * of a library. The catalogue needs its own layout and a JSON search index, neither of which a Doxia sink can express,
+ * so it was writing its pages straight to disk anyway and using the sink only for a landing page nobody asked for.
  *
- * <p>What is published is now exactly the catalogue: an index, a page per work, a page per
- * agent, a stylesheet, a script and the search index.
+ * <p>What is published is now exactly the catalogue: an index, a page per work, a page per agent, a stylesheet, a
+ * script and the search index.
  */
 @Mojo(name = "catalog", defaultPhase = LifecyclePhase.SITE, requiresProject = true, threadSafe = true)
 public class CatalogMojo extends AbstractMojo {
@@ -73,7 +73,9 @@ public class CatalogMojo extends AbstractMojo {
         getLog().info("Alexandria published %d works, %d expressions, %d manifestations, %d items as %d files in %s"
                 .formatted(
                         catalog.works().size(),
-                        catalog.works().stream().mapToInt(work -> work.expressions().size()).sum(),
+                        catalog.works().stream()
+                                .mapToInt(work -> work.expressions().size())
+                                .sum(),
                         catalog.manifestations().size(),
                         catalog.items().size(),
                         written.size(),
@@ -81,8 +83,6 @@ public class CatalogMojo extends AbstractMojo {
     }
 
     private static String join(List<ReferentialIntegrity.Violation> violations) {
-        return violations.stream()
-                .map(ReferentialIntegrity.Violation::toString)
-                .collect(java.util.stream.Collectors.joining("\n  "));
+        return violations.stream().map(ReferentialIntegrity.Violation::toString).collect(Collectors.joining("\n  "));
     }
 }

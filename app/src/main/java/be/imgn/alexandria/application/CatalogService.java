@@ -1,5 +1,10 @@
 package be.imgn.alexandria.application;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentId;
@@ -15,17 +20,12 @@ import be.imgn.alexandria.domain.work.ExpressionId;
 import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.domain.work.WorkId;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 /**
  * The application service the editor talks to.
  *
- * <p>It owns the checks the web layer must not be trusted with: that a reference points at
- * something real, that an identifier is not already taken, and that nothing is deleted while
- * something still names it. Writes go straight to the JSON files, which are the catalogue.
+ * <p>It owns the checks the web layer must not be trusted with: that a reference points at something real, that an
+ * identifier is not already taken, and that nothing is deleted while something still names it. Writes go straight to
+ * the JSON files, which are the catalogue.
  */
 public final class CatalogService {
 
@@ -52,8 +52,9 @@ public final class CatalogService {
 
     /** Rejects a name or alias that another agent already answers to, naming the clash. */
     public void save(Agent agent) {
-        AgentDirectory others = AgentDirectory.of(
-                catalog.agents().stream().filter(existing -> !existing.id().equals(agent.id())).toList());
+        AgentDirectory others = AgentDirectory.of(catalog.agents().stream()
+                .filter(existing -> !existing.id().equals(agent.id()))
+                .toList());
         agent.names().forEach(name -> others.resolve(name).ifPresent(clash -> {
             throw new IllegalArgumentException(
                     "'" + name + "' already belongs to " + clash.name() + " (" + clash.id() + ")");
@@ -73,8 +74,8 @@ public final class CatalogService {
     // -------------------------------------------------- bibliographic saves
 
     /**
-     * Saves the agents the form invented before the aggregate that names them, so the
-     * catalogue on disk is never momentarily dangling.
+     * Saves the agents the form invented before the aggregate that names them, so the catalogue on disk is never
+     * momentarily dangling.
      */
     public void save(Work work, AgentResolution resolution) {
         register(resolution);
@@ -99,22 +100,18 @@ public final class CatalogService {
     }
 
     /**
-     * Saves a whole book at once: the agents it names, the work, the edition, and the copy
-     * if one is being recorded.
+     * Saves a whole book at once: the agents it names, the work, the edition, and the copy if one is being recorded.
      *
-     * <p>Written in dependency order — agents, then work, then manifestation, then item —
-     * so a failure part-way through leaves records that reference only things already on
-     * disk. There is no transaction across four files; ordering is what keeps the catalogue
-     * readable if the process dies mid-save.
+     * <p>Written in dependency order — agents, then work, then manifestation, then item — so a failure part-way through
+     * leaves records that reference only things already on disk. There is no transaction across four files; ordering is
+     * what keeps the catalogue readable if the process dies mid-save.
      */
-    public void saveNewBook(Work work, Manifestation manifestation, Optional<Item> copy,
-                            AgentResolution resolution) {
+    public void saveNewBook(Work work, Manifestation manifestation, Optional<Item> copy, AgentResolution resolution) {
         if (catalog.work(work.id()).isPresent()) {
             throw new IllegalArgumentException("a work with id " + work.id() + " already exists");
         }
         if (catalog.manifestation(manifestation.id()).isPresent()) {
-            throw new IllegalArgumentException(
-                    "a manifestation with id " + manifestation.id() + " already exists");
+            throw new IllegalArgumentException("a manifestation with id " + manifestation.id() + " already exists");
         }
         copy.ifPresent(item -> {
             if (catalog.item(item.id()).isPresent()) {
@@ -133,8 +130,8 @@ public final class CatalogService {
     }
 
     /**
-     * Deleting a Work would orphan every Manifestation embodying its Expressions, so the
-     * cross-aggregate check runs before the file is removed rather than after.
+     * Deleting a Work would orphan every Manifestation embodying its Expressions, so the cross-aggregate check runs
+     * before the file is removed rather than after.
      */
     public void deleteWork(WorkId id) {
         List<String> blocked = catalog.work(id).stream()
@@ -151,10 +148,10 @@ public final class CatalogService {
     }
 
     public void deleteManifestation(ManifestationId id) {
-        List<String> blocked = catalog.copiesOf(id).stream().map(item -> item.id().value()).toList();
+        List<String> blocked =
+                catalog.copiesOf(id).stream().map(item -> item.id().value()).toList();
         if (!blocked.isEmpty()) {
-            throw new IllegalStateException(
-                    "cannot delete " + id + ": still held as " + String.join(", ", blocked));
+            throw new IllegalStateException("cannot delete " + id + ": still held as " + String.join(", ", blocked));
         }
         catalog.deleteManifestation(id);
     }
@@ -175,8 +172,7 @@ public final class CatalogService {
         Map<String, String> choices = new LinkedHashMap<>();
         for (Work work : catalog.works()) {
             for (Expression expression : work.expressions()) {
-                choices.put(expression.id().qualified(),
-                        work.title().main() + " — " + expression.describe());
+                choices.put(expression.id().qualified(), work.title().main() + " — " + expression.describe());
             }
         }
         return choices;
@@ -186,8 +182,8 @@ public final class CatalogService {
         AgentDirectory agents = directory();
         Map<String, String> choices = new LinkedHashMap<>();
         for (Manifestation manifestation : catalog.manifestations()) {
-            choices.put(manifestation.id().value(),
-                    manifestation.title().main() + " — " + manifestation.imprint(agents));
+            choices.put(
+                    manifestation.id().value(), manifestation.title().main() + " — " + manifestation.imprint(agents));
         }
         return choices;
     }

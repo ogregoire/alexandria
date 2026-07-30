@@ -1,10 +1,12 @@
 package be.imgn.alexandria.domain.manifestation;
 
+import java.util.Locale;
+
 import be.imgn.alexandria.domain.shared.Guard;
 
 /**
- * The physical or digital carrier a Manifestation is issued on. This is what makes two
- * printings of the same Expression two Manifestations.
+ * The physical or digital carrier a Manifestation is issued on. This is what makes two printings of the same Expression
+ * two Manifestations.
  */
 public sealed interface Carrier {
 
@@ -58,7 +60,7 @@ public sealed interface Carrier {
 
         @Override
         public String label() {
-            return "ebook (" + format.name().toLowerCase(java.util.Locale.ROOT) + ")";
+            return "ebook (" + format.name().toLowerCase(Locale.ROOT) + ")";
         }
 
         @Override
@@ -95,7 +97,11 @@ public sealed interface Carrier {
     }
 
     enum EbookFormat {
-        EPUB, PDF, MOBI, AZW3, DJVU
+        EPUB,
+        PDF,
+        MOBI,
+        AZW3,
+        DJVU
     }
 
     Carrier HARDCOVER = new Hardcover();

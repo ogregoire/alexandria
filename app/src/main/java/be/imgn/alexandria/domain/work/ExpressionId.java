@@ -1,13 +1,13 @@
 package be.imgn.alexandria.domain.work;
 
-import be.imgn.alexandria.domain.shared.Slug;
-
 import java.util.Objects;
 
+import be.imgn.alexandria.domain.shared.Slug;
+
 /**
- * Identity of an {@link Expression}. An Expression is an entity <em>inside</em> the Work
- * aggregate, so its identity is qualified by the owning {@link WorkId}: that keeps the
- * reference held by a Manifestation globally resolvable without a lookup table.
+ * Identity of an {@link Expression}. An Expression is an entity <em>inside</em> the Work aggregate, so its identity is
+ * qualified by the owning {@link WorkId}: that keeps the reference held by a Manifestation globally resolvable without
+ * a lookup table.
  */
 public record ExpressionId(WorkId work, String value) {
 

@@ -1,16 +1,15 @@
 package be.imgn.alexandria.application.lookup;
 
-import be.imgn.alexandria.domain.manifestation.Identifier;
-
 import java.util.Optional;
+
+import be.imgn.alexandria.domain.manifestation.Identifier;
 
 /**
  * Looks an ISBN up somewhere outside the catalogue.
  *
- * <p>A port, so the editor never knows which service answered and the tests never touch the
- * network. Implementations must not throw for a book they simply do not have: a miss is an
- * empty result, and only a genuine failure — no network, a malformed reply — is an
- * exception.
+ * <p>A port, so the editor never knows which service answered and the tests never touch the network. Implementations
+ * must not throw for a book they simply do not have: a miss is an empty result, and only a genuine failure — no
+ * network, a malformed reply — is an exception.
  */
 public interface BookLookup {
 

@@ -1,8 +1,8 @@
 package be.imgn.alexandria.domain.manifestation;
 
-import be.imgn.alexandria.domain.shared.Guard;
-
 import java.time.Duration;
+
+import be.imgn.alexandria.domain.shared.Guard;
 
 /** How much of it there is. Pages and playing time are not interchangeable, so they are variants. */
 public sealed interface Extent {

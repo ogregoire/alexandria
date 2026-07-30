@@ -1,17 +1,5 @@
 package be.imgn.alexandria.site;
 
-import be.imgn.alexandria.domain.catalog.Catalog;
-import be.imgn.alexandria.domain.catalog.ReferentialIntegrity;
-import be.imgn.alexandria.domain.item.Item;
-import be.imgn.alexandria.domain.manifestation.Manifestation;
-import be.imgn.alexandria.domain.agent.Agent;
-import be.imgn.alexandria.domain.agent.AgentDirectory;
-import be.imgn.alexandria.domain.agent.AgentId;
-import be.imgn.alexandria.domain.shared.Contribution;
-import be.imgn.alexandria.domain.work.Expression;
-import be.imgn.alexandria.domain.work.Work;
-import be.imgn.alexandria.infrastructure.Escape;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -19,17 +7,31 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import be.imgn.alexandria.domain.agent.Agent;
+import be.imgn.alexandria.domain.agent.AgentDirectory;
+import be.imgn.alexandria.domain.agent.AgentId;
+import be.imgn.alexandria.domain.catalog.Catalog;
+import be.imgn.alexandria.domain.catalog.ReferentialIntegrity;
+import be.imgn.alexandria.domain.item.Item;
+import be.imgn.alexandria.domain.manifestation.Manifestation;
+import be.imgn.alexandria.domain.shared.Contribution;
+import be.imgn.alexandria.domain.shared.Role;
+import be.imgn.alexandria.domain.work.Expression;
+import be.imgn.alexandria.domain.work.Work;
+import be.imgn.alexandria.infrastructure.Escape;
+
 /**
- * Renders the catalogue as a static site: one page listing every Work, one page per Work
- * showing the full WEMI descent, and a JSON index the page filters in the browser.
+ * Renders the catalogue as a static site: one page listing every Work, one page per Work showing the full WEMI descent,
+ * and a JSON index the page filters in the browser.
  *
- * <p>No server, no build step in the page — the output is meant to be committed by CI and
- * served by GitHub Pages.
+ * <p>No server, no build step in the page — the output is meant to be committed by CI and served by GitHub Pages.
  */
 public final class SiteGenerator {
 
@@ -67,20 +69,22 @@ public final class SiteGenerator {
     // ------------------------------------------------------------- pages
 
     private String indexPage() {
-        String rows = catalog.works().stream().map(work -> """
+        String rows = catalog.works().stream()
+                .map(work -> """
                 <li class="entry" data-id="%s">
                   <a class="title" href="works/%s.html">%s</a>
                   <p class="meta">%s · %s · %s</p>
                   <p class="holdings">%s</p>
                 </li>
                 """.formatted(
-                Escape.html(work.id().value()),
-                Escape.html(work.id().value()),
-                Escape.html(work.title().full()),
-                Escape.html(work.byline()),
-                Escape.html(work.created().display()),
-                Escape.html(work.form().label()),
-                Escape.html(holdingsSummary(work)))).collect(Collectors.joining());
+                                Escape.html(work.id().value()),
+                                Escape.html(work.id().value()),
+                                Escape.html(work.title().full()),
+                                Escape.html(work.byline()),
+                                Escape.html(work.created().display()),
+                                Escape.html(work.form().label()),
+                                Escape.html(holdingsSummary(work))))
+                .collect(Collectors.joining());
 
         return shell("The library", ".", """
                 <h1>The library</h1>
@@ -99,22 +103,26 @@ public final class SiteGenerator {
     }
 
     private String workPage(Work work) {
-        String expressions = work.expressions().stream().map(expression -> """
+        String expressions = work.expressions().stream()
+                .map(expression -> """
                 <section class="expression">
                   <h3>%s</h3>
                   %s
                   %s
                 </section>
                 """.formatted(
-                Escape.html(expression.describe()),
-                contributors(expression.contributors()),
-                editionsOf(expression))).collect(Collectors.joining());
+                                Escape.html(expression.describe()),
+                                contributors(expression.contributors()),
+                                editionsOf(expression)))
+                .collect(Collectors.joining());
 
-        String subjects = work.subjects().isEmpty() ? "" : """
+        String subjects = work.subjects().isEmpty()
+                ? ""
+                : """
                 <p class="subjects">%s</p>
                 """.formatted(work.subjects().stream()
-                .map(s -> "<span class=\"tag\">" + Escape.html(s) + "</span>")
-                .collect(Collectors.joining(" ")));
+                        .map(s -> "<span class=\"tag\">" + Escape.html(s) + "</span>")
+                        .collect(Collectors.joining(" ")));
 
         return shell(work.title().main(), "..", """
                 <p class="crumb"><a href="../index.html">The library</a></p>
@@ -123,19 +131,18 @@ public final class SiteGenerator {
                 %s
                 %s
                 """.formatted(
-                Escape.html(work.title().full()),
-                bylineLinks(work),
-                Escape.html(work.created().display()),
-                Escape.html(work.form().label()),
-                subjects,
-                expressions));
+                        Escape.html(work.title().full()),
+                        bylineLinks(work),
+                        Escape.html(work.created().display()),
+                        Escape.html(work.form().label()),
+                        subjects,
+                        expressions));
     }
 
     /**
-     * One page per agent, listing everything they are credited on, sectioned by the name
-     * each book was published under — so arriving here from "Megan Lindholm" shows both the
-     * Lindholm books and the Robin Hobb ones, and arriving from "Robin Hobb" shows the same
-     * page.
+     * One page per agent, listing everything they are credited on, sectioned by the name each book was published under
+     * — so arriving here from "Megan Lindholm" shows both the Lindholm books and the Robin Hobb ones, and arriving from
+     * "Robin Hobb" shows the same page.
      */
     private String agentPage(Agent agent) {
         StringBuilder sections = new StringBuilder();
@@ -143,15 +150,15 @@ public final class SiteGenerator {
 
         byName.forEach((name, credits) -> {
             String works = credits.stream()
-                    .sorted(java.util.Comparator.comparing(c -> c.work().title().main()))
+                    .sorted(Comparator.comparing(c -> c.work().title().main()))
                     .map(credit -> """
                             <li><a href="../works/%s.html">%s</a>
                               <span class="detail">%s · %s</span></li>
                             """.formatted(
-                            Escape.html(credit.work().id().value()),
-                            Escape.html(credit.work().title().full()),
-                            Escape.html(credit.role().label()),
-                            Escape.html(credit.work().created().display())))
+                                    Escape.html(credit.work().id().value()),
+                                    Escape.html(credit.work().title().full()),
+                                    Escape.html(credit.role().label()),
+                                    Escape.html(credit.work().created().display())))
                     .collect(Collectors.joining());
             sections.append("""
                     <section class="as">
@@ -159,18 +166,19 @@ public final class SiteGenerator {
                       <ul class="works">%s</ul>
                     </section>
                     """.formatted(
-                    Escape.html(name),
-                    name.equals(agent.name()) ? "" : " <span class=\"detail\">— other name</span>",
-                    works));
+                            Escape.html(name),
+                            name.equals(agent.name()) ? "" : " <span class=\"detail\">— other name</span>",
+                            works));
         });
 
         List<Manifestation> published = catalog.publishedBy(agent.id());
         if (!published.isEmpty()) {
-            String editions = published.stream().map(edition -> """
+            String editions = published.stream()
+                    .map(edition ->
+                            """
                     <li>%s <span class="detail">%s</span></li>
-                    """.formatted(
-                    Escape.html(edition.title().full()),
-                    Escape.html(edition.imprint(agents)))).collect(Collectors.joining());
+                    """.formatted(Escape.html(edition.title().full()), Escape.html(edition.imprint(agents))))
+                    .collect(Collectors.joining());
             sections.append("""
                     <section class="as"><h2>published</h2><ul class="works">%s</ul></section>
                     """.formatted(editions));
@@ -180,7 +188,8 @@ public final class SiteGenerator {
             sections.append("<p class=\"none\">Nothing in the catalogue credits this agent.</p>");
         }
 
-        String otherNames = agent.aliases().isEmpty() ? "" : """
+        String otherNames =
+                agent.aliases().isEmpty() ? "" : """
                 <p class="meta">also known as %s</p>
                 """.formatted(Escape.html(String.join(", ", agent.aliases())));
 
@@ -191,10 +200,7 @@ public final class SiteGenerator {
                 %s
                 %s
                 """.formatted(
-                Escape.html(agent.name()),
-                Escape.html(agent.kind().label()),
-                otherNames,
-                sections));
+                        Escape.html(agent.name()), Escape.html(agent.kind().label()), otherNames, sections));
     }
 
     private String editionsOf(Expression expression) {
@@ -202,18 +208,23 @@ public final class SiteGenerator {
         if (editions.isEmpty()) {
             return "<p class=\"none\">No edition held.</p>";
         }
-        return editions.stream().map(edition -> """
+        return editions.stream()
+                .map(edition -> """
                 <div class="edition">
                   <p class="imprint">%s%s</p>
                   %s
                   %s
                 </div>
                 """.formatted(
-                Escape.html(edition.imprint(agents)),
-                edition.identifier().display().isEmpty()
-                        ? "" : " · " + Escape.html(edition.identifier().display()),
-                edition.series().map(s -> "<p class=\"series\">" + Escape.html(s.display()) + "</p>").orElse(""),
-                copiesOf(edition))).collect(Collectors.joining());
+                        Escape.html(edition.imprint(agents)),
+                        edition.identifier().display().isEmpty()
+                                ? ""
+                                : " · " + Escape.html(edition.identifier().display()),
+                        edition.series()
+                                .map(s -> "<p class=\"series\">" + Escape.html(s.display()) + "</p>")
+                                .orElse(""),
+                        copiesOf(edition)))
+                .collect(Collectors.joining());
     }
 
     private String copiesOf(Manifestation edition) {
@@ -221,79 +232,84 @@ public final class SiteGenerator {
         if (copies.isEmpty()) {
             return "<p class=\"none\">Not held.</p>";
         }
-        return copies.stream().map(copy -> """
+        return copies.stream()
+                .map(copy -> """
                 <p class="copy">%s · %s%s</p>
                 """.formatted(
-                Escape.html(copy.reading().display()),
-                Escape.html(copy.location().display()),
-                copy.notes().map(n -> " · " + Escape.html(n)).orElse(""))).collect(Collectors.joining());
+                                Escape.html(copy.reading().display()),
+                                Escape.html(copy.location().display()),
+                                copy.notes().map(n -> " · " + Escape.html(n)).orElse("")))
+                .collect(Collectors.joining());
     }
 
     private String contributors(List<Contribution> contributions) {
         if (contributions.isEmpty()) {
             return "";
         }
-        return "<p class=\"contributors\">" + contributions.stream()
-                .map(c -> agentLink(c.agent(), c.publishedAs()) + " (" + Escape.html(c.role().label()) + ")")
-                .collect(Collectors.joining(", ")) + "</p>";
+        return "<p class=\"contributors\">"
+                + contributions.stream()
+                        .map(c -> agentLink(c.agent(), c.publishedAs()) + " ("
+                                + Escape.html(c.role().label()) + ")")
+                        .collect(Collectors.joining(", "))
+                + "</p>";
     }
 
     // ------------------------------------------------------------ search
 
     /**
-     * One entry per Work, carrying every string a reader might search by — including the
-     * translator, publisher and shelf of copies below it, so that "Grossman" or "Penguin"
-     * finds the Work even though neither word appears in its title.
+     * One entry per Work, carrying every string a reader might search by — including the translator, publisher and
+     * shelf of copies below it, so that "Grossman" or "Penguin" finds the Work even though neither word appears in its
+     * title.
      *
-     * <p>Every alias an agent is registered under goes in too: someone who knows the author
-     * as "U. K. Le Guin" should not have to guess the form the catalogue prefers.
+     * <p>Every alias an agent is registered under goes in too: someone who knows the author as "U. K. Le Guin" should
+     * not have to guess the form the catalogue prefers.
      */
     private String searchIndex() {
-        String entries = catalog.works().stream().map(work -> {
-            Set<String> terms = new LinkedHashSet<>();
-            terms.add(work.title().full());
-            terms.add(work.byline());
-            terms.add(work.form().label());
-            terms.add(work.created().display());
-            terms.addAll(work.subjects());
-            work.creators().forEach(c -> addAgent(terms, c.agent()));
-            for (Expression expression : work.expressions()) {
-                terms.add(expression.language().displayName());
-                terms.add(expression.describe());
-                expression.contributors().forEach(c -> addAgent(terms, c.agent()));
-                for (Manifestation edition : catalog.manifestationsOf(expression.id())) {
-                    terms.add(edition.title().full());
-                    edition.publisher().ifPresent(publisher -> addAgent(terms, publisher));
-                    edition.series().ifPresent(s -> terms.add(s.display()));
-                    terms.add(edition.identifier().display());
-                    terms.add(edition.carrier().label());
-                    catalog.copiesOf(edition.id()).forEach(copy -> {
-                        terms.add(copy.location().display());
-                        terms.add(copy.reading().display());
-                    });
-                }
-            }
-            return """
+        String entries = catalog.works().stream()
+                .map(work -> {
+                    Set<String> terms = new LinkedHashSet<>();
+                    terms.add(work.title().full());
+                    terms.add(work.byline());
+                    terms.add(work.form().label());
+                    terms.add(work.created().display());
+                    terms.addAll(work.subjects());
+                    work.creators().forEach(c -> addAgent(terms, c.agent()));
+                    for (Expression expression : work.expressions()) {
+                        terms.add(expression.language().displayName());
+                        terms.add(expression.describe());
+                        expression.contributors().forEach(c -> addAgent(terms, c.agent()));
+                        for (Manifestation edition : catalog.manifestationsOf(expression.id())) {
+                            terms.add(edition.title().full());
+                            edition.publisher().ifPresent(publisher -> addAgent(terms, publisher));
+                            edition.series().ifPresent(s -> terms.add(s.display()));
+                            terms.add(edition.identifier().display());
+                            terms.add(edition.carrier().label());
+                            catalog.copiesOf(edition.id()).forEach(copy -> {
+                                terms.add(copy.location().display());
+                                terms.add(copy.reading().display());
+                            });
+                        }
+                    }
+                    return """
                     {"id":%s,"title":%s,"author":%s,"text":%s}""".formatted(
-                    json(work.id().value()),
-                    json(work.title().full()),
-                    json(work.byline()),
-                    json(String.join(" ", terms).toLowerCase(java.util.Locale.ROOT)));
-        }).collect(Collectors.joining(",\n  "));
+                                    json(work.id().value()),
+                                    json(work.title().full()),
+                                    json(work.byline()),
+                                    json(String.join(" ", terms).toLowerCase(Locale.ROOT)));
+                })
+                .collect(Collectors.joining(",\n  "));
         return "[\n  " + entries + "\n]\n";
     }
 
     /** The author line, each name linking to the agent behind it. */
     private String bylineLinks(Work work) {
         List<Contribution> authors = work.creators().stream()
-                .filter(c -> c.role().equals(be.imgn.alexandria.domain.shared.Role.AUTHOR))
+                .filter(c -> c.role().equals(Role.AUTHOR))
                 .toList();
         if (authors.isEmpty()) {
             return "Anonymous";
         }
-        return authors.stream()
-                .map(c -> agentLink(c.agent(), c.publishedAs()))
-                .collect(Collectors.joining(", "));
+        return authors.stream().map(c -> agentLink(c.agent(), c.publishedAs())).collect(Collectors.joining(", "));
     }
 
     /** Links a credit to its agent page while showing the name the book was published under. */
@@ -301,8 +317,7 @@ public final class SiteGenerator {
         if (agents.find(agent).isEmpty()) {
             return Escape.html(publishedAs);
         }
-        return "<a href=\"../agents/" + Escape.html(agent.value()) + ".html\">"
-                + Escape.html(publishedAs) + "</a>";
+        return "<a href=\"../agents/" + Escape.html(agent.value()) + ".html\">" + Escape.html(publishedAs) + "</a>";
     }
 
     /** Adds every name the agent answers to: preferred form, filing form and aliases. */
@@ -357,16 +372,18 @@ public final class SiteGenerator {
 
     private String holdingsSummary(Work work) {
         long editions = work.expressions().stream()
-                .mapToLong(e -> catalog.manifestationsOf(e.id()).size()).sum();
+                .mapToLong(e -> catalog.manifestationsOf(e.id()).size())
+                .sum();
         long copies = work.expressions().stream()
                 .flatMap(e -> catalog.manifestationsOf(e.id()).stream())
-                .mapToLong(m -> catalog.copiesOf(m.id()).size()).sum();
+                .mapToLong(m -> catalog.copiesOf(m.id()).size())
+                .sum();
         String languages = work.expressions().stream()
                 .map(e -> e.language().displayName())
                 .distinct()
                 .collect(Collectors.joining(", "));
-        return languages + " · " + editions + " edition" + (editions == 1 ? "" : "s")
-                + " · " + copies + " cop" + (copies == 1 ? "y" : "ies");
+        return languages + " · " + editions + " edition" + (editions == 1 ? "" : "s") + " · " + copies + " cop"
+                + (copies == 1 ? "y" : "ies");
     }
 
     private static Path write(Path file, String content) throws IOException {

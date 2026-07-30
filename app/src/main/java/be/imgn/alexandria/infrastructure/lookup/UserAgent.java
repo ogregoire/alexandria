@@ -5,10 +5,9 @@ import java.util.Optional;
 /**
  * How Alexandria introduces itself, and whether that introduction earns the faster tier.
  *
- * <p>Open Library allows one request per second to callers it cannot identify and three to
- * those sending a User-Agent naming the application and a contact address. Claiming the
- * faster tier without actually supplying a contact would be dishonest and would breach the
- * limit, so the interval is derived from whether a contact is really present rather than
+ * <p>Open Library allows one request per second to callers it cannot identify and three to those sending a User-Agent
+ * naming the application and a contact address. Claiming the faster tier without actually supplying a contact would be
+ * dishonest and would breach the limit, so the interval is derived from whether a contact is really present rather than
  * assumed.
  */
 record UserAgent(Optional<String> contact) {
@@ -20,13 +19,12 @@ record UserAgent(Optional<String> contact) {
     }
 
     /**
-     * @param contact an email address or URL the service can use to reach the operator;
-     *                blank is treated as no contact at all
+     * @param contact an email address or URL the service can use to reach the operator; blank is treated as no contact
+     *     at all
      */
     static UserAgent identifiedBy(String contact) {
-        return new UserAgent(Optional.ofNullable(contact)
-                .map(UserAgent::sanitise)
-                .filter(value -> !value.isBlank()));
+        return new UserAgent(
+                Optional.ofNullable(contact).map(UserAgent::sanitise).filter(value -> !value.isBlank()));
     }
 
     boolean identified() {
@@ -34,8 +32,7 @@ record UserAgent(Optional<String> contact) {
     }
 
     String header() {
-        return contact
-                .map(value -> PRODUCT + " (personal book catalogue; " + value + ")")
+        return contact.map(value -> PRODUCT + " (personal book catalogue; " + value + ")")
                 .orElse(PRODUCT + " (personal book catalogue; no contact given)");
     }
 

@@ -49,8 +49,10 @@ Other options:
 | `./alexandria --site out/` | render the static site locally and exit |
 | `./alexandria --data examples/library` | open the sample library instead of your own |
 | `./alexandria --offline` | never contact an ISBN lookup service |
-| `./mvnw verify` | run the tests |
+| `./mvnw verify` | format, check style, run the tests |
 | `./mvnw install -DskipTests && ./mvnw alexandria:catalog` | publish the catalogue to `target/site` |
+| `./mvnw versions:display-dependency-updates` | stable dependency updates only |
+| `./mvnw versions:display-plugin-updates` | stable plugin updates only |
 
 Publishing is two commands rather than one because the goal comes from
 `alexandria-maven-plugin`, built in this same reactor: it has to reach the local repository

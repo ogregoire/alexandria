@@ -1,16 +1,16 @@
 package be.imgn.alexandria.domain.item;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
 
 /**
- * Provenance is frequently half-remembered. That a book was a gift is worth recording on its
- * own, so nothing here demands a date or a name — except the lender of a borrowed copy.
+ * Provenance is frequently half-remembered. That a book was a gift is worth recording on its own, so nothing here
+ * demands a date or a name — except the lender of a borrowed copy.
  */
 class AcquisitionTest {
 
@@ -33,8 +33,7 @@ class AcquisitionTest {
 
     @Test
     void recordsAGiftOnADateFromNobodyRemembered() {
-        Acquisition.Gift gift = new Acquisition.Gift(
-                Optional.of(LocalDate.of(2021, 12, 25)), Optional.empty());
+        Acquisition.Gift gift = new Acquisition.Gift(Optional.of(LocalDate.of(2021, 12, 25)), Optional.empty());
 
         assertThat(gift.on()).contains(LocalDate.of(2021, 12, 25));
         assertThat(gift.from()).isEmpty();
@@ -42,7 +41,8 @@ class AcquisitionTest {
 
     @Test
     void treatsABlankGiverAsNoGiver() {
-        assertThat(new Acquisition.Gift(Optional.empty(), Optional.of("   ")).from()).isEmpty();
+        assertThat(new Acquisition.Gift(Optional.empty(), Optional.of("   ")).from())
+                .isEmpty();
     }
 
     @Test
@@ -53,16 +53,14 @@ class AcquisitionTest {
 
     @Test
     void stillDemandsTheLenderOfABorrowedCopy() {
-        assertThatThrownBy(() -> new Acquisition.Borrowed(
-                " ", Optional.empty(), Optional.empty()))
+        assertThatThrownBy(() -> new Acquisition.Borrowed(" ", Optional.empty(), Optional.empty()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("from");
     }
 
     @Test
     void borrowsWithoutKnowingWhen() {
-        Acquisition.Borrowed borrowed = new Acquisition.Borrowed(
-                "Hugo", Optional.empty(), Optional.empty());
+        Acquisition.Borrowed borrowed = new Acquisition.Borrowed("Hugo", Optional.empty(), Optional.empty());
 
         assertThat(borrowed.owned()).isFalse();
         assertThat(borrowed.on()).isEmpty();
@@ -70,9 +68,8 @@ class AcquisitionTest {
 
     @Test
     void stillRejectsADueDateBeforeTheLoanBegan() {
-        assertThatThrownBy(() -> new Acquisition.Borrowed("Hugo",
-                Optional.of(LocalDate.of(2026, 5, 1)),
-                Optional.of(LocalDate.of(2026, 4, 1))))
+        assertThatThrownBy(() -> new Acquisition.Borrowed(
+                        "Hugo", Optional.of(LocalDate.of(2026, 5, 1)), Optional.of(LocalDate.of(2026, 4, 1))))
                 .hasMessageContaining("must not precede");
     }
 

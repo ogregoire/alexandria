@@ -2,6 +2,7 @@ package be.imgn.alexandria.infrastructure.web;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,9 +12,8 @@ import java.util.Optional;
 /**
  * A parsed {@code application/x-www-form-urlencoded} body.
  *
- * <p>Naming convention, matching what {@link Html#variantField} renders: {@code field.type}
- * selects a variant of a sum type and {@code field.<variant>.<name>} carries its payload.
- * Repeating groups are indexed, {@code creators[0].name}.
+ * <p>Naming convention, matching what {@link Html#variantField} renders: {@code field.type} selects a variant of a sum
+ * type and {@code field.<variant>.<name>} carries its payload. Repeating groups are indexed, {@code creators[0].name}.
  */
 public final class FormData {
 
@@ -60,16 +60,19 @@ public final class FormData {
         return optional(key).map(Integer::parseInt);
     }
 
-    public Optional<java.time.LocalDate> optionalDate(String key) {
-        return optional(key).map(java.time.LocalDate::parse);
+    public Optional<LocalDate> optionalDate(String key) {
+        return optional(key).map(LocalDate::parse);
     }
 
-    public java.time.LocalDate requiredDate(String key) {
-        return java.time.LocalDate.parse(required(key));
+    public LocalDate requiredDate(String key) {
+        return LocalDate.parse(required(key));
     }
 
     public List<String> all(String key) {
-        return values.getOrDefault(key, List.of()).stream().filter(v -> !v.isBlank()).map(String::trim).toList();
+        return values.getOrDefault(key, List.of()).stream()
+                .filter(v -> !v.isBlank())
+                .map(String::trim)
+                .toList();
     }
 
     /** The variant chosen for a sum-typed field. */
@@ -80,8 +83,8 @@ public final class FormData {
     /**
      * The variant chosen, or a default when the field was not submitted at all.
      *
-     * <p>Only for sum types whose default carries no payload, so that omitting the field
-     * entirely is a meaningful state rather than a missing answer.
+     * <p>Only for sum types whose default carries no payload, so that omitting the field entirely is a meaningful state
+     * rather than a missing answer.
      */
     public String variantOr(String field, String fallback) {
         return optional(field + ".type").orElse(fallback);
@@ -93,9 +96,8 @@ public final class FormData {
     }
 
     /**
-     * Everything under a prefix, with the prefix stripped — so a combined form can nest a
-     * whole aggregate's fields under {@code manifestation.} and hand the inner view to the
-     * same readers that parse a standalone one.
+     * Everything under a prefix, with the prefix stripped — so a combined form can nest a whole aggregate's fields
+     * under {@code manifestation.} and hand the inner view to the same readers that parse a standalone one.
      */
     public FormData scope(String prefix) {
         Map<String, List<String>> scoped = new LinkedHashMap<>();

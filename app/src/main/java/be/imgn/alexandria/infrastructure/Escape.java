@@ -3,8 +3,7 @@ package be.imgn.alexandria.infrastructure;
 /** HTML escaping, shared by the editor and the generated site. */
 public final class Escape {
 
-    private Escape() {
-    }
+    private Escape() {}
 
     public static String html(String raw) {
         if (raw == null) {

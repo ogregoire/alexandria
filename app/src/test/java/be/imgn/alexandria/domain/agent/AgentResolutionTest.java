@@ -1,18 +1,21 @@
 package be.imgn.alexandria.domain.agent;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
 
 class AgentResolutionTest {
 
     private static final Agent CERVANTES = new Agent(
-            AgentId.of("miguel-de-cervantes"), AgentKind.PERSON,
-            "Miguel de Cervantes", "Cervantes, Miguel de", Set.of("Cervantes"));
+            AgentId.of("miguel-de-cervantes"),
+            AgentKind.PERSON,
+            "Miguel de Cervantes",
+            "Cervantes, Miguel de",
+            Set.of("Cervantes"));
 
     private AgentResolution resolution() {
         return new AgentResolution(AgentDirectory.of(List.of(CERVANTES)));
@@ -51,8 +54,8 @@ class AgentResolutionTest {
 
         resolution.resolve("Penguin Classics", AgentKind.ORGANISATION);
 
-        assertThat(resolution.created()).singleElement()
-                .satisfies(agent -> assertThat(agent.sortName()).isEqualTo("Penguin Classics"));
+        assertThat(resolution.created()).singleElement().satisfies(agent -> assertThat(agent.sortName())
+                .isEqualTo("Penguin Classics"));
     }
 
     @Test

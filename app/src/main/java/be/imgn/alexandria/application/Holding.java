@@ -1,24 +1,22 @@
 package be.imgn.alexandria.application;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import be.imgn.alexandria.domain.catalog.Catalog;
 import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.Work;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * One copy, fully placed: the item, the edition it is, the expression that edition embodies,
- * and the work behind it.
+ * One copy, fully placed: the item, the edition it is, the expression that edition embodies, and the work behind it.
  *
- * <p>This is the descent every report used to spell out as a four-table join. Doing it once
- * here is what let the SQL projection go: the joining was the only thing a database was
- * really being asked for.
+ * <p>This is the descent every report used to spell out as a four-table join. Doing it once here is what let the SQL
+ * projection go: the joining was the only thing a database was really being asked for.
  *
- * <p>A copy of an omnibus yields one holding per expression it embodies, exactly as the join
- * produced one row per expression.
+ * <p>A copy of an omnibus yields one holding per expression it embodies, exactly as the join produced one row per
+ * expression.
  */
 public record Holding(Item item, Manifestation manifestation, Expression expression, Work work) {
 

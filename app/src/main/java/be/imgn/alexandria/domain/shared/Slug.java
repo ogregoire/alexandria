@@ -5,8 +5,8 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * Identifiers in Alexandria are readable slugs rather than opaque UUIDs: they are the
- * file names committed to git, so a diff should say what changed without a lookup.
+ * Identifiers in Alexandria are readable slugs rather than opaque UUIDs: they are the file names committed to git, so a
+ * diff should say what changed without a lookup.
  */
 public final class Slug {
 
@@ -15,8 +15,7 @@ public final class Slug {
     private static final Pattern NON_SLUG = Pattern.compile("[^a-z0-9]+");
     private static final int MAX_SEGMENT = 60;
 
-    private Slug() {
-    }
+    private Slug() {}
 
     public static void validate(String value, String field) {
         Guard.notBlank(value, field);

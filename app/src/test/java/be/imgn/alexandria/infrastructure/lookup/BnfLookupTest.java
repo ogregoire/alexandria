@@ -1,10 +1,13 @@
 package be.imgn.alexandria.infrastructure.lookup;
 
-import be.imgn.alexandria.application.lookup.BookDraft;
-import be.imgn.alexandria.domain.manifestation.Identifier;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import be.imgn.alexandria.application.lookup.BookDraft;
+import be.imgn.alexandria.domain.manifestation.Identifier;
 
 /** Parses the exact SRU response catalogue.bnf.fr returned for a real French ISBN. */
 class BnfLookupTest {
@@ -41,13 +44,13 @@ class BnfLookupTest {
 
     @Test
     void convertsTheBibliographicLanguageCode() {
-        assertThat(lookUp().language()).hasValueSatisfying(language ->
-                assertThat(language.code()).isEqualTo("fr"));
+        assertThat(lookUp().language())
+                .hasValueSatisfying(language -> assertThat(language.code()).isEqualTo("fr"));
     }
 
     /**
-     * The decisive behaviour for French books: the BnF indexes the pre-2007 ISBN-10, so the
-     * ISBN-13 search returns nothing and the second attempt has to find it.
+     * The decisive behaviour for French books: the BnF indexes the pre-2007 ISBN-10, so the ISBN-13 search returns
+     * nothing and the second attempt has to find it.
      */
     @Test
     void retriesWithTheIsbn10FormBecauseThatIsWhatTheBnfIndexes() {
@@ -84,8 +87,8 @@ class BnfLookupTest {
                 """;
         Http http = new Http() {
             @Override
-            java.util.Optional<String> get(String url) {
-                return java.util.Optional.of(attack);
+            Optional<String> get(String url) {
+                return Optional.of(attack);
             }
         };
 

@@ -1,16 +1,13 @@
 package be.imgn.alexandria.infrastructure.lookup;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
-/**
- * Driven by a fake clock, so the rate-limit arithmetic is checked without the suite ever
- * sleeping.
- */
+/** Driven by a fake clock, so the rate-limit arithmetic is checked without the suite ever sleeping. */
 class ThrottleTest {
 
     private final AtomicLong now = new AtomicLong(0);

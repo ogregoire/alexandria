@@ -1,5 +1,17 @@
 package be.imgn.alexandria.application;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentKind;
@@ -15,43 +27,26 @@ import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.ExpressionKind;
 import be.imgn.alexandria.domain.work.Work;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 /**
  * The questions worth asking of a personal library, answered over the aggregates.
  *
- * <p>These were SQL against a projected copy of the catalogue. The projection was 476 lines
- * whose only job was to make this file possible, and everything else in the application had
- * long since gone back to walking the aggregates directly, so the joining moved into
- * {@link Holding} and the database went away.
+ * <p>These were SQL against a projected copy of the catalogue. The projection was 476 lines whose only job was to make
+ * this file possible, and everything else in the application had long since gone back to walking the aggregates
+ * directly, so the joining moved into {@link Holding} and the database went away.
  */
 public final class Reports {
 
     /** A report's identity and prose, without computing it. */
-    public record Definition(String id, String title, String explanation) {
-    }
+    public record Definition(String id, String title, String explanation) {}
 
     /** A computed report, ready for a table. */
-    public record Table(Definition definition, List<String> columns, List<List<String>> rows) {
-    }
+    public record Table(Definition definition, List<String> columns, List<List<String>> rows) {}
 
-    private record Spec(Definition definition, Function<Catalog, Table> compute) {
-    }
+    private record Spec(Definition definition, Function<Catalog, Table> compute) {}
 
     private static final List<Spec> SPECS = specs();
 
-    private Reports() {
-    }
+    private Reports() {}
 
     public static List<Definition> index() {
         return SPECS.stream().map(Spec::definition).toList();
@@ -69,7 +64,9 @@ public final class Reports {
     private static List<Spec> specs() {
         List<Spec> specs = new ArrayList<>();
 
-        specs.add(report("unread", "Unread copies",
+        specs.add(report(
+                "unread",
+                "Unread copies",
                 "Copies on the shelf that have never been started.",
                 List.of("Work", "Expression", "Edition", "Where"),
                 catalog -> byReading(catalog, ReadingProgress.Unread.class).stream()
@@ -80,7 +77,9 @@ public final class Reports {
                                 h.item().location().display()))
                         .toList()));
 
-        specs.add(report("reading", "Currently reading",
+        specs.add(report(
+                "reading",
+                "Currently reading",
                 "Started and not yet finished.",
                 List.of("Work", "Progress", "Where"),
                 catalog -> byReading(catalog, ReadingProgress.Reading.class).stream()
@@ -90,7 +89,9 @@ public final class Reports {
                                 h.item().location().display()))
                         .toList()));
 
-        specs.add(report("loans", "Out and in",
+        specs.add(report(
+                "loans",
+                "Out and in",
                 "Copies lent to someone, and copies borrowed that are not yours.",
                 List.of("Direction", "Work", "Detail", "Since"),
                 catalog -> sorted(Holding.of(catalog)).stream()
@@ -100,10 +101,16 @@ public final class Reports {
                                 h.item().acquisition().owned() ? "lent out" : "borrowed",
                                 h.work().title().main(),
                                 h.item().location().display(),
-                                h.item().acquisition().on().map(LocalDate::toString).orElse("")))
+                                h.item()
+                                        .acquisition()
+                                        .on()
+                                        .map(LocalDate::toString)
+                                        .orElse("")))
                         .toList()));
 
-        specs.add(report("publishers", "Publishers",
+        specs.add(report(
+                "publishers",
+                "Publishers",
                 "Which houses the shelf is actually made of.",
                 List.of("Publisher", "Editions", "Copies"),
                 catalog -> {
@@ -117,16 +124,16 @@ public final class Reports {
                         });
                     }
                     return tally.entrySet().stream()
-                            .sorted(Comparator.<Map.Entry<String, long[]>>comparingLong(
-                                            e -> -e.getValue()[1])
+                            .sorted(Comparator.<Map.Entry<String, long[]>>comparingLong(e -> -e.getValue()[1])
                                     .thenComparing(Map.Entry::getKey))
-                            .map(e -> List.of(e.getKey(),
-                                    String.valueOf(e.getValue()[0]),
-                                    String.valueOf(e.getValue()[1])))
+                            .map(e -> List.of(
+                                    e.getKey(), String.valueOf(e.getValue()[0]), String.valueOf(e.getValue()[1])))
                             .toList();
                 }));
 
-        specs.add(report("people", "People",
+        specs.add(report(
+                "people",
+                "People",
                 "Everyone in the registry and what they did, aliases included.",
                 List.of("Files under", "Name", "Roles", "Works", "Aliases"),
                 catalog -> catalog.agents().stream()
@@ -138,7 +145,10 @@ public final class Reports {
                                     .distinct()
                                     .sorted()
                                     .collect(Collectors.joining(", "));
-                            long works = credits.stream().map(c -> c.work().id()).distinct().count();
+                            long works = credits.stream()
+                                    .map(c -> c.work().id())
+                                    .distinct()
+                                    .count();
                             return List.of(
                                     agent.sortName(),
                                     agent.name(),
@@ -148,7 +158,9 @@ public final class Reports {
                         })
                         .toList()));
 
-        specs.add(report("orphan-agents", "Agents nothing refers to",
+        specs.add(report(
+                "orphan-agents",
+                "Agents nothing refers to",
                 "Usually a name typed once with a typo. Safe to delete.",
                 List.of("Name", "Kind"),
                 catalog -> catalog.agents().stream()
@@ -157,15 +169,17 @@ public final class Reports {
                         .map(agent -> List.of(agent.name(), agent.kind().label()))
                         .toList()));
 
-        specs.add(report("languages", "By language",
+        specs.add(report(
+                "languages",
+                "By language",
                 "Which expressions the library actually holds, by language.",
                 List.of("Language", "Expressions", "Copies"),
                 catalog -> {
                     Map<String, long[]> tally = new TreeMap<>();
                     for (Work work : catalog.works()) {
                         for (Expression expression : work.expressions()) {
-                            long[] counts = tally.computeIfAbsent(
-                                    expression.language().displayName(), k -> new long[2]);
+                            long[] counts =
+                                    tally.computeIfAbsent(expression.language().displayName(), k -> new long[2]);
                             counts[0]++;
                             counts[1] += catalog.manifestationsOf(expression.id()).stream()
                                     .mapToLong(m -> catalog.copiesOf(m.id()).size())
@@ -173,16 +187,16 @@ public final class Reports {
                         }
                     }
                     return tally.entrySet().stream()
-                            .sorted(Comparator.<Map.Entry<String, long[]>>comparingLong(
-                                            e -> -e.getValue()[1])
+                            .sorted(Comparator.<Map.Entry<String, long[]>>comparingLong(e -> -e.getValue()[1])
                                     .thenComparing(Map.Entry::getKey))
-                            .map(e -> List.of(e.getKey(),
-                                    String.valueOf(e.getValue()[0]),
-                                    String.valueOf(e.getValue()[1])))
+                            .map(e -> List.of(
+                                    e.getKey(), String.valueOf(e.getValue()[0]), String.valueOf(e.getValue()[1])))
                             .toList();
                 }));
 
-        specs.add(report("translations", "Works held in translation",
+        specs.add(report(
+                "translations",
+                "Works held in translation",
                 "Works where what is on the shelf is not the original language.",
                 List.of("Work", "From", "Into", "Expression"),
                 catalog -> catalog.works().stream()
@@ -191,33 +205,42 @@ public final class Reports {
                                 .map(e -> List.of(
                                         work.title().main(),
                                         e.kind() instanceof ExpressionKind.Translation(var from)
-                                                ? from.displayName() : "",
+                                                ? from.displayName()
+                                                : "",
                                         e.language().displayName(),
                                         e.describe())))
                         .toList()));
 
-        specs.add(report("decades", "By decade",
+        specs.add(report(
+                "decades",
+                "By decade",
                 "When the works were created, not when the copies were printed.",
                 List.of("Decade", "Works"),
                 catalog -> {
                     Map<Integer, Long> tally = new TreeMap<>();
                     for (Work work : catalog.works()) {
-                        work.created().sortYear().ifPresent(year ->
-                                tally.merge(Math.floorDiv(year, 10) * 10, 1L, Long::sum));
+                        work.created()
+                                .sortYear()
+                                .ifPresent(year -> tally.merge(Math.floorDiv(year, 10) * 10, 1L, Long::sum));
                     }
                     return tally.entrySet().stream()
                             .map(e -> List.of(String.valueOf(e.getKey()), String.valueOf(e.getValue())))
                             .toList();
                 }));
 
-        specs.add(report("ratings", "Ratings",
+        specs.add(report(
+                "ratings",
+                "Ratings",
                 "Everything finished and rated, best first.",
                 List.of("Rating", "Work", "Expression", "Finished"),
                 catalog -> Holding.of(catalog).stream()
                         .filter(h -> rating(h.item()).isPresent())
-                        .sorted(Comparator
-                                .comparingInt((Holding h) -> -rating(h.item()).orElseThrow().stars())
-                                .thenComparing(h -> finished(h.item()).map(LocalDate::toString).orElse(""),
+                        .sorted(Comparator.comparingInt((Holding h) ->
+                                        -rating(h.item()).orElseThrow().stars())
+                                .thenComparing(
+                                        h -> finished(h.item())
+                                                .map(LocalDate::toString)
+                                                .orElse(""),
                                         Comparator.reverseOrder()))
                         .map(h -> List.of(
                                 String.valueOf(rating(h.item()).orElseThrow().stars()),
@@ -226,22 +249,24 @@ public final class Reports {
                                 finished(h.item()).map(LocalDate::toString).orElse("")))
                         .toList()));
 
-        specs.add(report("shelves", "Shelves",
+        specs.add(report(
+                "shelves",
+                "Shelves",
                 "How the physical library is distributed.",
                 List.of("Location", "Copies"),
                 catalog -> {
                     Map<String, Long> tally = new TreeMap<>();
-                    catalog.items().forEach(item ->
-                            tally.merge(item.location().display(), 1L, Long::sum));
+                    catalog.items().forEach(item -> tally.merge(item.location().display(), 1L, Long::sum));
                     return tally.entrySet().stream()
-                            .sorted(Comparator.<Map.Entry<String, Long>>comparingLong(
-                                            e -> -e.getValue())
+                            .sorted(Comparator.<Map.Entry<String, Long>>comparingLong(e -> -e.getValue())
                                     .thenComparing(Map.Entry::getKey))
                             .map(e -> List.of(e.getKey(), String.valueOf(e.getValue())))
                             .toList();
                 }));
 
-        specs.add(report("spending", "Spending",
+        specs.add(report(
+                "spending",
+                "Spending",
                 "What the library cost, by year and currency.",
                 List.of("Year", "Currency", "Spent", "Copies"),
                 catalog -> {
@@ -255,9 +280,14 @@ public final class Reports {
                     Map<Bucket, BigDecimal> spent = new TreeMap<>();
                     Map<Bucket, Long> copies = new TreeMap<>();
                     for (Item item : catalog.items()) {
-                        if (item.acquisition() instanceof Acquisition.Purchased(
-                                Optional<LocalDate> on, Optional<Money> price, var ignored)
-                                && price.isPresent() && on.isPresent()) {
+                        if (item.acquisition()
+                                        instanceof
+                                        Acquisition.Purchased(
+                                                Optional<LocalDate> on,
+                                                Optional<Money> price,
+                                                var ignored)
+                                && price.isPresent()
+                                && on.isPresent()) {
                             Bucket bucket = new Bucket(
                                     on.get().getYear(), price.get().currency().getCurrencyCode());
                             spent.merge(bucket, price.get().amount(), BigDecimal::add);
@@ -278,8 +308,12 @@ public final class Reports {
 
     // ----------------------------------------------------------------- helpers
 
-    private static Spec report(String id, String title, String explanation,
-                               List<String> columns, Function<Catalog, List<List<String>>> rows) {
+    private static Spec report(
+            String id,
+            String title,
+            String explanation,
+            List<String> columns,
+            Function<Catalog, List<List<String>>> rows) {
         Definition definition = new Definition(id, title, explanation);
         return new Spec(definition, catalog -> new Table(definition, columns, rows.apply(catalog)));
     }
@@ -313,8 +347,11 @@ public final class Reports {
         Map<String, Long> counts = new LinkedHashMap<>();
         counts.put("agents", (long) catalog.agents().size());
         counts.put("works", (long) catalog.works().size());
-        counts.put("expressions", catalog.works().stream()
-                .mapToLong(work -> work.expressions().size()).sum());
+        counts.put(
+                "expressions",
+                catalog.works().stream()
+                        .mapToLong(work -> work.expressions().size())
+                        .sum());
         counts.put("manifestations", (long) catalog.manifestations().size());
         counts.put("items", (long) catalog.items().size());
         return counts;

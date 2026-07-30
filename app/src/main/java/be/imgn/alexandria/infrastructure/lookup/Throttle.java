@@ -3,19 +3,18 @@ package be.imgn.alexandria.infrastructure.lookup;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
 
 /**
  * Keeps requests to one host at least a fixed interval apart.
  *
- * <p>Open Library documents one request per second for unidentified callers, and a single
- * ISBN lookup there needs three calls — the edition, the resolved names, the work — so
- * without this the very first lookup would breach the limit three times over.
+ * <p>Open Library documents one request per second for unidentified callers, and a single ISBN lookup there needs three
+ * calls — the edition, the resolved names, the work — so without this the very first lookup would breach the limit
+ * three times over.
  *
- * <p>It reserves slots rather than merely checking the clock: each caller is told how long to
- * wait and the next slot is booked immediately, so several calls issued at once queue behind
- * each other instead of all seeing an idle host and firing together.
+ * <p>It reserves slots rather than merely checking the clock: each caller is told how long to wait and the next slot is
+ * booked immediately, so several calls issued at once queue behind each other instead of all seeing an idle host and
+ * firing together.
  */
 final class Throttle {
 
@@ -50,9 +49,9 @@ final class Throttle {
     /**
      * Holds a host off for at least this long from now, after a 429 or a 503.
      *
-     * <p>Measured from now rather than added to the slot already booked, so a
-     * {@code Retry-After: 3} means three seconds from now — which is what the service asked
-     * for — instead of three on top of whatever interval was pending.
+     * <p>Measured from now rather than added to the slot already booked, so a {@code Retry-After: 3} means three
+     * seconds from now — which is what the service asked for — instead of three on top of whatever interval was
+     * pending.
      */
     synchronized void backOff(String host, Duration extra) {
         long now = clock.getAsLong();

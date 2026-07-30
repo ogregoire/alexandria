@@ -1,13 +1,8 @@
 package be.imgn.alexandria.infrastructure.json;
 
-import be.imgn.alexandria.domain.agent.AgentId;
-import be.imgn.alexandria.domain.item.ItemId;
-import be.imgn.alexandria.domain.item.Rating;
-import be.imgn.alexandria.domain.manifestation.ManifestationId;
-import be.imgn.alexandria.domain.shared.Language;
-import be.imgn.alexandria.domain.shared.Money;
-import be.imgn.alexandria.domain.work.ExpressionId;
-import be.imgn.alexandria.domain.work.WorkId;
+import java.io.IOException;
+import java.util.function.Function;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -24,21 +19,25 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import java.io.IOException;
-import java.util.function.Function;
+import be.imgn.alexandria.domain.agent.AgentId;
+import be.imgn.alexandria.domain.item.ItemId;
+import be.imgn.alexandria.domain.item.Rating;
+import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.shared.Language;
+import be.imgn.alexandria.domain.shared.Money;
+import be.imgn.alexandria.domain.work.ExpressionId;
+import be.imgn.alexandria.domain.work.WorkId;
 
 /**
  * The one place that knows how the catalogue is written to disk.
  *
- * <p>Every setting here exists to make the committed files behave under git: keys in a
- * fixed order, two-space indent, LF endings, absent optionals omitted instead of written
- * as nulls, and identifiers rendered as plain strings rather than wrapper objects. A
- * one-field change should produce a one-line diff.
+ * <p>Every setting here exists to make the committed files behave under git: keys in a fixed order, two-space indent,
+ * LF endings, absent optionals omitted instead of written as nulls, and identifiers rendered as plain strings rather
+ * than wrapper objects. A one-field change should produce a one-line diff.
  */
 public final class AlexandriaJson {
 
-    private AlexandriaJson() {
-    }
+    private AlexandriaJson() {}
 
     public static ObjectMapper mapper() {
         ObjectMapper mapper = new ObjectMapper()
@@ -88,8 +87,8 @@ public final class AlexandriaJson {
         return module;
     }
 
-    private static <T> void text(SimpleModule module, Class<T> type,
-                                 Function<T, String> write, Function<String, T> read) {
+    private static <T> void text(
+            SimpleModule module, Class<T> type, Function<T, String> write, Function<String, T> read) {
         module.addSerializer(type, new JsonSerializer<>() {
             @Override
             public void serialize(T value, JsonGenerator json, SerializerProvider provider) throws IOException {
@@ -103,5 +102,4 @@ public final class AlexandriaJson {
             }
         });
     }
-
 }

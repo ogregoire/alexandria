@@ -1,5 +1,7 @@
 package be.imgn.alexandria.domain.manifestation;
 
+import java.util.Optional;
+
 import be.imgn.alexandria.domain.shared.Guard;
 
 /** The publisher-assigned identifier printed on a Manifestation, if any. */
@@ -76,11 +78,11 @@ public sealed interface Identifier {
     }
 
     /** The digits, whichever ISBN length this is; empty for everything else. */
-    default java.util.Optional<String> isbnDigits() {
+    default Optional<String> isbnDigits() {
         return switch (this) {
-            case Isbn13(String digits) -> java.util.Optional.of(digits);
-            case Isbn10(String digits) -> java.util.Optional.of(digits);
-            default -> java.util.Optional.empty();
+            case Isbn13(String digits) -> Optional.of(digits);
+            case Isbn10(String digits) -> Optional.of(digits);
+            default -> Optional.empty();
         };
     }
 }

@@ -2,20 +2,20 @@ package be.imgn.alexandria.infrastructure.lookup;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Optional;
 
 /**
- * The one place that makes outbound calls, and the one place that respects the services'
- * rate limits.
+ * The one place that makes outbound calls, and the one place that respects the services' rate limits.
  *
- * <p>Everything here is deliberately meek: a short timeout, a bounded number of retries, and
- * a miss for any status that is not 200. A lookup is a convenience while cataloguing a book
- * by hand, so a slow, absent or annoyed service must degrade to an empty form rather than
- * hang the editor.
+ * <p>Everything here is deliberately meek: a short timeout, a bounded number of retries, and a miss for any status that
+ * is not 200. A lookup is a convenience while cataloguing a book by hand, so a slow, absent or annoyed service must
+ * degrade to an empty form rather than hang the editor.
  */
 class Http {
 
@@ -47,9 +47,9 @@ class Http {
     /**
      * The body of a 200 response, or empty for anything else.
      *
-     * <p>Waits for this host's next free slot before asking, and on a 429 or a 503 backs the
-     * host off — honouring {@code Retry-After} when the service sends one — before trying
-     * again. Overridden in tests, which never reach the network and so never sleep.
+     * <p>Waits for this host's next free slot before asking, and on a 429 or a 503 backs the host off — honouring
+     * {@code Retry-After} when the service sends one — before trying again. Overridden in tests, which never reach the
+     * network and so never sleep.
      */
     Optional<String> get(String url) {
         String host = hostOf(url);
@@ -97,11 +97,12 @@ class Http {
     }
 
     /**
-     * {@code Retry-After} if the service sent one, otherwise doubling — the exponential
-     * backoff Google asks for on a 429 — and never longer than {@link #MAXIMUM_BACKOFF}.
+     * {@code Retry-After} if the service sent one, otherwise doubling — the exponential backoff Google asks for on a
+     * 429 — and never longer than {@link #MAXIMUM_BACKOFF}.
      */
     private static Duration backoffFor(HttpResponse<String> response, int attempt) {
-        Duration requested = response.headers().firstValue("Retry-After")
+        Duration requested = response.headers()
+                .firstValue("Retry-After")
                 .flatMap(Http::parseRetryAfter)
                 .orElse(Duration.ofMillis(500L << attempt));
         return requested.compareTo(MAXIMUM_BACKOFF) > 0 ? MAXIMUM_BACKOFF : requested;
@@ -140,6 +141,6 @@ class Http {
     }
 
     static String encode(String value) {
-        return java.net.URLEncoder.encode(value, java.nio.charset.StandardCharsets.UTF_8);
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 }
