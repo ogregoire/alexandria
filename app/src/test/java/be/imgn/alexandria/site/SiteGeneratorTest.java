@@ -53,26 +53,51 @@ class SiteGeneratorTest {
     }
 
     @Test
-    void filesWorksAndAgentsTogetherPastTheirArticles(@TempDir Path root, @TempDir Path output) throws Exception {
+    void listsTheEditionsHeldRatherThanTheWorksBehindThem(@TempDir Path root, @TempDir Path output) throws Exception {
         JsonCatalog catalog = CatalogFixture.writeInto(root);
 
         new SiteGenerator(catalog).generateInto(output);
         String index = Files.readString(output.resolve("index.html"));
-
-        // One list, so a work and an agent can sit next to each other; "Don Quixote" files
-        // under D and Cervantes under C, so the author comes first.
-        int cervantes = index.indexOf("agents/miguel-de-cervantes.html");
-        int quixote = index.indexOf("works/cervantes-don-quixote.html");
-        assertThat(cervantes).as("both are in the one list").isNotNegative();
-        assertThat(quixote).isNotNegative();
-        assertThat(cervantes)
-                .as("and the list is alphabetical, not works-then-agents")
-                .isLessThan(quixote);
+        String search = Files.readString(output.resolve("search-index.json"));
 
         assertThat(index)
-                .as("the search index carries a title of its own so a heading match can outrank a body match")
-                .doesNotContain("data-track");
-        assertThat(Files.readString(output.resolve("search-index.json"))).contains("\"title\":");
+                .as("the shelf is editions and agents")
+                .contains("editions/quixote-ecco-2003-hb.html")
+                .contains("agents/edith-grossman.html")
+                .as("not the abstractions behind them")
+                .doesNotContain("href=\"works/");
+
+        // One list, alphabetical across both kinds: Cervantes files under C, his Don Quixote
+        // edition under D.
+        int cervantes = index.indexOf("agents/miguel-de-cervantes.html");
+        int quixote = index.indexOf("editions/quixote-ecco-2003-hb.html");
+        assertThat(cervantes).isNotNegative();
+        assertThat(quixote).isNotNegative();
+        assertThat(cervantes).as("interleaved, not editions-then-agents").isLessThan(quixote);
+
+        assertThat(search)
+                .as("an edition is searchable by the work it embodies, so its original title still finds it")
+                .contains("\"edition:quixote-ecco-2003-hb\"")
+                .contains("don quixote");
+    }
+
+    @Test
+    void givesEveryEditionAPageOfItsOwn(@TempDir Path root, @TempDir Path output) throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+
+        new SiteGenerator(catalog).generateInto(output);
+        String page = Files.readString(output.resolve("editions/quixote-ecco-2003-hb.html"));
+
+        assertThat(page)
+                .as("what was printed")
+                .contains("Ecco")
+                .contains("hardcover")
+                .contains("940 pp.")
+                .as("the expression it embodies, linked up to its work")
+                .contains("works/cervantes-don-quixote.html")
+                .contains("English, translated from Spanish by Edith Grossman")
+                .as("and the copy on the shelf")
+                .contains("living room (shelf 3)");
     }
 
     @Test

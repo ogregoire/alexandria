@@ -13,6 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -34,8 +35,8 @@ import be.imgn.alexandria.infrastructure.Escape;
 import be.imgn.alexandria.infrastructure.VariantNames;
 
 /**
- * Renders the catalogue as a static site: one page listing every Work, one page per Work showing the full WEMI descent,
- * and a JSON index the page filters in the browser.
+ * Renders the catalogue as a static site: a searchable index of the editions held and the agents behind them, a page
+ * per edition, work and agent, and a JSON index the page filters in the browser.
  *
  * <p>No server, no build step in the page — the output is meant to be committed by CI and served by GitHub Pages.
  */
@@ -66,6 +67,7 @@ public final class SiteGenerator {
         List<Path> written = new ArrayList<>();
         try {
             Files.createDirectories(output.resolve("works"));
+            Files.createDirectories(output.resolve("editions"));
             Files.createDirectories(output.resolve("agents"));
             written.add(write(output.resolve("index.html"), indexPage()));
             written.add(write(output.resolve("statistics.html"), statisticsPage()));
@@ -75,6 +77,9 @@ public final class SiteGenerator {
             written.add(write(output.resolve("catalog.js"), resource("/site/catalog.js")));
             for (Work work : catalog.works()) {
                 written.add(write(output.resolve("works/" + work.id().value() + ".html"), workPage(work)));
+            }
+            for (Manifestation edition : catalog.manifestations()) {
+                written.add(write(output.resolve("editions/" + edition.id().value() + ".html"), editionPage(edition)));
             }
             for (Agent agent : catalog.agents()) {
                 written.add(write(output.resolve("agents/" + agent.id().value() + ".html"), agentPage(agent)));
@@ -88,11 +93,14 @@ public final class SiteGenerator {
     // ------------------------------------------------------------- pages
 
     /**
-     * The index is the whole site: one search field over one alphabetical list holding works and agents together.
+     * The index is the whole site: one search field over one alphabetical list holding editions and agents together.
      *
-     * <p>Agents are listed beside the works rather than beneath them, because "who translated this" is as good a way
-     * into a catalogue as "what do I own" — and because an agent page nothing links to may as well not have been
-     * generated. Interleaving the two is what makes one field enough: there is no track to choose first.
+     * <p>Editions rather than works, because an edition is the thing on the shelf — a personal catalogue is a record of
+     * what was bought and read, not of abstractions. The work is still reachable, from the edition that embodies it.
+     *
+     * <p>Agents are listed beside them rather than beneath, because "who translated this" is as good a way into a
+     * catalogue as "what do I own" — and because an agent page nothing links to may as well not have been generated.
+     * Interleaving the two is what makes one field enough: there is no track to choose first.
      *
      * <p>The list is delivered whole and hidden by the script until something is typed. Delivering it and hiding it,
      * rather than building rows from the index on demand, is what keeps the page working with no JavaScript at all —
@@ -100,7 +108,7 @@ public final class SiteGenerator {
      */
     private String indexPage() {
         String rows = Stream.concat(
-                        catalog.works().stream().map(this::workRow),
+                        catalog.manifestations().stream().map(this::editionRow),
                         catalog.agents().stream().map(this::agentRow))
                 .sorted(Comparator.comparing(Row::filing))
                 .map(Row::html)
@@ -121,21 +129,48 @@ public final class SiteGenerator {
     /** One line of the index, carrying the key it files under. */
     private record Row(String filing, String html) {}
 
-    private Row workRow(Work work) {
-        return new Row(filing(work.title().main()), """
-                <li class="entry" data-id="work:%s">
-                  <a class="title" href="works/%s.html">%s</a>
-                  <p class="meta">%s · %s · %s</p>
-                  <p class="holdings">%s</p>
+    /**
+     * A held edition, which is the thing on the shelf: the index lists what is owned rather than the abstract works
+     * behind it. The work's own title is carried in the line beneath whenever the edition renamed it, so searching "The
+     * Eye of the World" still reaches the French printing of it.
+     */
+    private Row editionRow(Manifestation edition) {
+        List<Work> behind = worksBehind(edition);
+        String byline = behind.stream().map(Work::byline).distinct().collect(Collectors.joining(", "));
+        String original = behind.stream()
+                .map(work -> work.title().full())
+                .filter(title -> !title.equals(edition.title().full()))
+                .distinct()
+                .collect(Collectors.joining(", "));
+
+        return new Row(filing(edition.title().main()), """
+                <li class="entry" data-id="edition:%s">
+                  <a class="title" href="editions/%s.html">%s</a>
+                  <p class="meta">%s · %s</p>
+                  <p class="holdings">%s%s</p>
                 </li>
                 """.formatted(
-                        Escape.html(work.id().value()),
-                        Escape.html(work.id().value()),
-                        Escape.html(work.title().full()),
-                        Escape.html(work.byline()),
-                        Escape.html(work.created().display()),
-                        Escape.html(work.form().label()),
-                        Escape.html(holdingsSummary(work))));
+                        Escape.html(edition.id().value()),
+                        Escape.html(edition.id().value()),
+                        Escape.html(edition.title().full()),
+                        byline.isEmpty() ? "Anonymous" : Escape.html(byline),
+                        Escape.html(edition.imprint(agents)),
+                        original.isEmpty() ? "" : Escape.html(original) + " · ",
+                        Escape.html(copiesSummary(edition))));
+    }
+
+    /** The works an edition embodies — several, when it is an omnibus. */
+    private List<Work> worksBehind(Manifestation edition) {
+        return edition.embodies().stream()
+                .map(reference -> catalog.work(reference.work()))
+                .flatMap(Optional::stream)
+                .distinct()
+                .toList();
+    }
+
+    private String copiesSummary(Manifestation edition) {
+        int copies = catalog.copiesOf(edition.id()).size();
+        return copies == 0 ? "not held" : count(copies, "copy", "copies");
     }
 
     private Row agentRow(Agent agent) {
@@ -178,7 +213,11 @@ public final class SiteGenerator {
 
     /** "1 work", "12 works" — a catalogue holding one of something should not read as a bug. */
     private static String count(int n, String noun) {
-        return n + " " + noun + (n == 1 ? "" : "s");
+        return count(n, noun, noun + "s");
+    }
+
+    private static String count(int n, String one, String many) {
+        return n + " " + (n == 1 ? one : many);
     }
 
     /**
@@ -278,6 +317,87 @@ public final class SiteGenerator {
         return roles.isEmpty() ? agent.kind().label() : String.join(", ", roles);
     }
 
+    /**
+     * One page per edition: what was printed, by whom, in what shape, and which copies of it are on the shelf.
+     *
+     * <p>The expressions it embodies are listed rather than folded away, because that list is the whole reason a
+     * Manifestation is its own aggregate root — an omnibus embodies expressions of several works and cannot belong to
+     * any one of them. Each links up to the work behind it.
+     */
+    private String editionPage(Manifestation edition) {
+        String contents = edition.embodies().stream()
+                .map(reference -> catalog.work(reference.work())
+                        .flatMap(work -> work.expression(reference).map(expression -> """
+                                <li>
+                                  <a href="../works/%s.html">%s</a>
+                                  <span class="detail">%s</span>
+                                </li>
+                                """.formatted(
+                                        Escape.html(work.id().value()),
+                                        Escape.html(work.title().full()),
+                                        Escape.html(expression.describe()))))
+                        .orElse(""))
+                .collect(Collectors.joining());
+
+        // The components, not the imprint: the imprint is the same facts run together for a
+        // one-line summary, and printing both would say everything twice.
+        String publisher =
+                edition.publisher().flatMap(agents::find).map(Agent::name).orElse("");
+        String facts = Stream.of(
+                        fact("Publisher", publisher),
+                        fact("Published", edition.published().display()),
+                        fact("Carrier", edition.carrier().label()),
+                        fact("Extent", edition.extent().display()),
+                        fact("Series", edition.series().map(s -> s.display()).orElse("")),
+                        fact("Identifier", edition.identifier().display()))
+                .filter(row -> !row.isEmpty())
+                .collect(Collectors.joining());
+
+        List<Item> copies = catalog.copiesOf(edition.id());
+        String held = copies.isEmpty()
+                ? "<p class=\"none\">No copy of this edition is held.</p>"
+                : copies.stream()
+                        .map(copy -> """
+                                <p class="copy">%s · %s%s</p>
+                                """.formatted(
+                                Escape.html(copy.reading().display()),
+                                Escape.html(copy.location().display()),
+                                copy.notes().map(n -> " · " + Escape.html(n)).orElse("")))
+                        .collect(Collectors.joining());
+
+        // The byline, which the facts table has no row for: the author belongs beside the title,
+        // the way it sits on a cover.
+        String byline =
+                worksBehind(edition).stream().map(this::bylineLinks).distinct().collect(Collectors.joining(", "));
+
+        return shell(edition.title().main(), "..", """
+                <p class="crumb"><a href="../index.html">The library</a></p>
+                <h1>%s</h1>
+                <p class="meta">%s</p>
+                <table class="facts"><tbody>%s</tbody></table>
+                <section class="as">
+                  <h2>%s</h2>
+                  <ul class="works">%s</ul>
+                </section>
+                <section class="as">
+                  <h2>On the shelf</h2>
+                  %s
+                </section>
+                """.formatted(
+                        Escape.html(edition.title().full()),
+                        byline.isEmpty() ? "Anonymous" : byline,
+                        facts,
+                        edition.embodies().size() == 1 ? "What it is" : "What it collects",
+                        contents,
+                        held));
+    }
+
+    private static String fact(String name, String value) {
+        return value == null || value.isBlank() ? "" : """
+                <tr><th scope="row">%s</th><td>%s</td></tr>
+                """.formatted(Escape.html(name), Escape.html(value));
+    }
+
     private String workPage(Work work) {
         String expressions = work.expressions().stream()
                 .map(expression -> """
@@ -358,10 +478,12 @@ public final class SiteGenerator {
         List<Manifestation> published = catalog.publishedBy(agent.id());
         if (!published.isEmpty()) {
             String editions = published.stream()
-                    .map(edition ->
-                            """
-                    <li>%s <span class="detail">%s</span></li>
-                    """.formatted(Escape.html(edition.title().full()), Escape.html(edition.imprint(agents))))
+                    .map(edition -> """
+                    <li><a href="../editions/%s.html">%s</a> <span class="detail">%s</span></li>
+                    """.formatted(
+                                    Escape.html(edition.id().value()),
+                                    Escape.html(edition.title().full()),
+                                    Escape.html(edition.imprint(agents))))
                     .collect(Collectors.joining());
             sections.append("""
                     <section class="as"><h2>published</h2><ul class="works">%s</ul></section>
@@ -395,11 +517,12 @@ public final class SiteGenerator {
         return editions.stream()
                 .map(edition -> """
                 <div class="edition">
-                  <p class="imprint">%s%s</p>
+                  <p class="imprint"><a href="../editions/%s.html">%s</a>%s</p>
                   %s
                   %s
                 </div>
                 """.formatted(
+                        Escape.html(edition.id().value()),
                         Escape.html(edition.imprint(agents)),
                         edition.identifier().display().isEmpty()
                                 ? ""
@@ -441,44 +564,54 @@ public final class SiteGenerator {
     // ------------------------------------------------------------ search
 
     /**
-     * One entry per Work, carrying every string a reader might search by — including the translator, publisher and
-     * shelf of copies below it, so that "Grossman" or "Penguin" finds the Work even though neither word appears in its
-     * title.
+     * One entry per edition, carrying every string a reader might search by — the work behind it, its author, the
+     * translator of the expression it embodies, the publisher, the series, the ISBN, and the shelf its copies sit on.
+     * So "Grossman" or "Penguin" finds the edition even though neither word is on its title page, and the work's
+     * original title finds the printing that renamed it.
      *
      * <p>Every alias an agent is registered under goes in too: someone who knows the author as "U. K. Le Guin" should
      * not have to guess the form the catalogue prefers.
      */
     private String searchIndex() {
-        String workEntries = catalog.works().stream()
-                .map(work -> {
+        String editionEntries = catalog.manifestations().stream()
+                .map(edition -> {
                     Set<String> terms = new LinkedHashSet<>();
-                    terms.add(work.title().full());
-                    terms.add(work.byline());
-                    terms.add(work.form().label());
-                    terms.add(work.created().display());
-                    terms.addAll(work.subjects());
-                    work.creators().forEach(c -> addAgent(terms, c.agent()));
-                    for (Expression expression : work.expressions()) {
-                        terms.add(expression.language().displayName());
-                        terms.add(expression.describe());
-                        expression.contributors().forEach(c -> addAgent(terms, c.agent()));
-                        for (Manifestation edition : catalog.manifestationsOf(expression.id())) {
-                            terms.add(edition.title().full());
-                            edition.publisher().ifPresent(publisher -> addAgent(terms, publisher));
-                            edition.series().ifPresent(s -> terms.add(s.display()));
-                            terms.add(edition.identifier().display());
-                            terms.add(edition.carrier().label());
-                            catalog.copiesOf(edition.id()).forEach(copy -> {
-                                terms.add(copy.location().display());
-                                terms.add(copy.reading().display());
+                    terms.add(edition.title().full());
+                    edition.publisher().ifPresent(publisher -> addAgent(terms, publisher));
+                    edition.series().ifPresent(s -> terms.add(s.display()));
+                    terms.add(edition.identifier().display());
+                    terms.add(edition.carrier().label());
+                    terms.add(edition.published().display());
+                    for (var reference : edition.embodies()) {
+                        catalog.work(reference.work()).ifPresent(work -> {
+                            terms.add(work.title().full());
+                            terms.add(work.byline());
+                            terms.add(work.form().label());
+                            terms.add(work.created().display());
+                            terms.addAll(work.subjects());
+                            work.creators().forEach(c -> addAgent(terms, c.agent()));
+                            work.expression(reference).ifPresent(expression -> {
+                                terms.add(expression.language().displayName());
+                                terms.add(expression.describe());
+                                expression.contributors().forEach(c -> addAgent(terms, c.agent()));
                             });
-                        }
+                        });
                     }
+                    catalog.copiesOf(edition.id()).forEach(copy -> {
+                        terms.add(copy.location().display());
+                        terms.add(copy.reading().display());
+                    });
                     return """
                     {"id":%s,"title":%s,"text":%s}""".formatted(
-                                    json("work:" + work.id().value()),
-                                    json(work.title().full().toLowerCase(Locale.ROOT)),
-                                    json(String.join(" ", terms).toLowerCase(Locale.ROOT)));
+                            json("edition:" + edition.id().value()),
+                            // The work's title counts as a heading match too: someone searching
+                            // "The Eye of the World" means this book, whatever the cover calls it.
+                            json((edition.title().full() + " "
+                                            + worksBehind(edition).stream()
+                                                    .map(work -> work.title().full())
+                                                    .collect(Collectors.joining(" ")))
+                                    .toLowerCase(Locale.ROOT)),
+                            json(String.join(" ", terms).toLowerCase(Locale.ROOT)));
                 })
                 .collect(Collectors.joining(",\n  "));
 
@@ -510,7 +643,9 @@ public final class SiteGenerator {
                 })
                 .collect(Collectors.joining(",\n  "));
 
-        String all = agentEntries.isEmpty() ? workEntries : workEntries + ",\n  " + agentEntries;
+        String all = Stream.of(editionEntries, agentEntries)
+                .filter(part -> !part.isEmpty())
+                .collect(Collectors.joining(",\n  "));
         return "[\n  " + all + "\n]\n";
     }
 

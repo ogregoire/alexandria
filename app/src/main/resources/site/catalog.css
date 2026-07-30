@@ -4,9 +4,10 @@
  * enrichment: none — typography only · motion: none (Index-First is motion-off; Almanac is 0.85x)
  * pre-emit critique: P5 H5 E4 S5 R5 V4
  *
- * The page opens as a search field and nothing else. Works and agents share one
- * alphabetical list — a catalogue is as much a directory of who made things as a list of
- * the things — and the list is revealed by typing, ranked so a heading match leads.
+ * The page opens as a search field and nothing else. Editions and agents share one
+ * alphabetical list — the shelf holds printings, not abstractions, and a catalogue is as
+ * much a directory of who made things as a list of the things. The list is revealed by
+ * typing, ranked so a heading match leads.
  * The counts live on their own page; a reader looking at a book does not need to be told
  * how many books there are.
  */
@@ -344,6 +345,32 @@ h3 {
   .entry {
     padding: var(--space-lg) 0;
   }
+}
+
+/* ------------------------------------------------------------------ edition facts */
+
+/* Publisher, date, carrier, extent, series, ISBN — a spec sheet, so the label column is
+ * narrow and quiet and the values line up down a single edge. */
+.facts {
+  width: 100%;
+  margin: 0 0 var(--space-lg);
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.facts th {
+  width: 9rem;
+  padding: var(--space-2xs) var(--space-md) var(--space-2xs) 0;
+  color: var(--color-muted);
+  font-weight: 400;
+  font-size: var(--text-sm);
+  text-align: left;
+  vertical-align: baseline;
+}
+
+.facts td {
+  padding: var(--space-2xs) 0;
+  vertical-align: baseline;
 }
 
 /* ------------------------------------------------------------------ statistics */
