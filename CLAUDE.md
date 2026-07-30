@@ -34,14 +34,18 @@ Java 25 or newer, enforced against the JVM Maven itself runs on — the app is l
 `exec:java`, so that JVM is the one it runs on.
 
 ```sh
-./mvnw verify                    # 101 tests
-./mvnw install && ./mvnw site    # two commands, never `install site` in one
+./mvnw verify                                          # 137 tests
+./mvnw install -DskipTests && ./mvnw alexandria:catalog  # publishes to target/site
 ```
 
-The site is two invocations because the catalogue report comes from
-`alexandria-maven-plugin`, built in this same reactor: it has to reach the local repository
-before the site lifecycle can resolve it. `install site` would reach the parent's site phase
-first and fail.
+Two invocations because the goal comes from `alexandria-maven-plugin`, built in this same
+reactor: it has to reach the local repository before it can be resolved.
+
+**Do not bind that goal to a lifecycle phase.** The plugin depends on the `alexandria` module,
+so a build-plugin declaration anywhere in this reactor is a cycle Maven refuses
+(`ProjectCycleException`). `<reporting>` avoids the cycle but forces Maven to add a report
+index, a skin and project-information pages — which is exactly what was removed. There is no
+`maven-site-plugin` and no `src/site`; publishing writes only the catalogue.
 
 `maven-plugin-plugin` has a pinned ASM override (`asm.version` in the parent POM); its
 bundled ASM cannot read Java 25 bytecode. Do not remove it.

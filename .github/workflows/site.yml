@@ -29,14 +29,15 @@ jobs:
       - name: Verify
         run: ./mvnw --batch-mode verify
 
-      # The catalogue report comes from a plugin built in this same reactor, so it has to
-      # be in the local repository before the site lifecycle can resolve it. Two steps, not
-      # `install site` in one command.
+      # The catalogue is written by a plugin built in this same reactor, so it has to be in
+      # the local repository before the goal can be resolved. Two steps, and not the Maven
+      # site lifecycle: that would wrap the library in a report index, a skin and a set of
+      # project-information pages.
       - name: Install
         run: ./mvnw --batch-mode install -DskipTests
 
-      - name: Generate the site
-        run: ./mvnw --batch-mode site
+      - name: Publish the catalogue
+        run: ./mvnw --batch-mode alexandria:catalog
 
       - uses: actions/upload-pages-artifact@v3
         with:

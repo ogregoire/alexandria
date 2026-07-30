@@ -50,11 +50,19 @@ Other options:
 | `./alexandria --data examples/library` | open the sample library instead of your own |
 | `./alexandria --offline` | never contact an ISBN lookup service |
 | `./mvnw verify` | run the tests |
-| `./mvnw install && ./mvnw site` | build the full Maven site, catalogue included |
+| `./mvnw install -DskipTests && ./mvnw alexandria:catalog` | publish the catalogue to `target/site` |
 
-The site is two commands rather than one because the report comes from
+Publishing is two commands rather than one because the goal comes from
 `alexandria-maven-plugin`, built in this same reactor: it has to reach the local repository
-before the site lifecycle can resolve it.
+before it can be resolved. It cannot be bound to a lifecycle phase either — the plugin
+depends on the `alexandria` module, so declaring it as a build plugin in this reactor is a
+cycle Maven refuses.
+
+There is no Maven site. The catalogue was a `MavenReport` once, and being one meant Maven
+wrapped it in a report index, a skin and a set of project-information pages — an *About* page
+was what answered at the published address. What gets published now is the library and
+nothing else: an index, a page per work, a page per agent, a stylesheet, a script and the
+search index.
 
 ## Adding a book from its ISBN
 
