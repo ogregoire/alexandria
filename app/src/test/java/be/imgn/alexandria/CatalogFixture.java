@@ -105,10 +105,9 @@ public final class CatalogFixture {
         return new Item(
                 MY_COPY,
                 ECCO,
-                new Acquisition.Purchased(
-                        LocalDate.of(2019, 4, 12), Optional.of(Money.of("28.50", "EUR")), Optional.of("De Slegte")),
+                Acquisition.Purchased.on(LocalDate.of(2019, 4, 12), Money.of("28.50", "EUR"), "De Slegte"),
                 new Location.Shelf("living room", Optional.of("shelf 3")),
-                new ReadingProgress.Finished(LocalDate.of(2020, 1, 6), Optional.of(Rating.of(5))),
+                ReadingProgress.Finished.on(LocalDate.of(2020, 1, 6), Rating.of(5)),
                 Condition.VERY_GOOD,
                 Optional.of("Spine sunned."));
     }

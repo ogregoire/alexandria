@@ -62,6 +62,33 @@ class JsonCatalogTest {
     }
 
     @Test
+    void omitsProvenanceThatWasNeverRecorded(@TempDir Path root) throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+        catalog.save(new be.imgn.alexandria.domain.item.Item(
+                be.imgn.alexandria.domain.item.ItemId.of("a-gift"),
+                CatalogFixture.ECCO,
+                be.imgn.alexandria.domain.item.Acquisition.Gift.unattributed(),
+                be.imgn.alexandria.domain.item.Location.shelf("study"),
+                be.imgn.alexandria.domain.item.ReadingProgress.Finished.undated(),
+                be.imgn.alexandria.domain.item.Condition.UNGRADED,
+                java.util.Optional.empty()));
+
+        String json = Files.readString(root.resolve("items/a-gift.json"));
+
+        assertThat(json)
+                .as("the kind is still stated")
+                .contains("\"type\" : \"gift\"")
+                .contains("\"type\" : \"finished\"")
+                .as("but nothing is invented to fill the gaps")
+                .doesNotContain("date")
+                .doesNotContain("from")
+                .doesNotContain("null");
+        assertThat(new JsonCatalog(root).item(
+                be.imgn.alexandria.domain.item.ItemId.of("a-gift")).orElseThrow().reading().display())
+                .isEqualTo("read");
+    }
+
+    @Test
     void deletesRemoveTheFile(@TempDir Path root) {
         JsonCatalog catalog = CatalogFixture.writeInto(root);
 

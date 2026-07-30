@@ -3,7 +3,6 @@ package be.imgn.alexandria.domain.item;
 import be.imgn.alexandria.domain.shared.Guard;
 
 import java.time.LocalDate;
-import java.util.Objects;
 import java.util.Optional;
 
 /** Where the copy currently is. */
@@ -47,15 +46,20 @@ public sealed interface Location {
         }
     }
 
-    record LentTo(String person, LocalDate since) implements Location {
+    /** The borrower is required: an unnamed borrower is a lost book, not a loan. */
+    record LentTo(String person, Optional<LocalDate> since) implements Location {
         public LentTo {
             Guard.notBlank(person, "person");
-            Objects.requireNonNull(since, "since");
+            since = since == null ? Optional.empty() : since;
+        }
+
+        public static LentTo to(String person, LocalDate since) {
+            return new LentTo(person, Optional.ofNullable(since));
         }
 
         @Override
         public String display() {
-            return "lent to " + person + " since " + since;
+            return "lent to " + person + since.map(date -> " since " + date).orElse("");
         }
 
         @Override

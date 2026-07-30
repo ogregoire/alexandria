@@ -277,6 +277,93 @@ class ImportPagesTest {
     }
 
     @Test
+    void datesTheTranslationSeparatelyFromTheWork() throws Exception {
+        Map<String, String> form = filledForm(false);
+        form.put("created.type", "between");
+        form.put("created.between.from", "1605");
+        form.put("created.between.to", "1615");
+        form.remove("created.year.value");
+        form.put("expressions[0].realised.type", "year");
+        form.put("expressions[0].realised.year.value", "2003");
+
+        assertThat(post("/import/save", form).statusCode()).isEqualTo(303);
+
+        var work = catalog.work(WorkId.of("cervantes-don-quijote")).orElseThrow();
+        assertThat(work.created().display()).isEqualTo("1605-1615");
+        assertThat(work.expressions()).singleElement().satisfies(expression ->
+                assertThat(expression.realised().display())
+                        .as("the translation is dated on its own, not borrowed from the work")
+                        .isEqualTo("2003"));
+    }
+
+    @Test
+    void offersARealisedDateForTheExpression() throws Exception {
+        String page = post("/import", Map.of("isbn", "9780060188702")).body();
+
+        assertThat(page)
+                .contains("name=\"expressions[0].realised.type\"")
+                .as("a translation's date cannot be inferred, so it is left blank")
+                .contains("value=\"unknown\" selected");
+    }
+
+    @Test
+    void derivesIdentifiersFromTheSurnameEvenWhenTheProviderInvertsTheName() throws Exception {
+        // A library catalogue hands out "Tolkien, John Ronald Reuel"; the surname is Tolkien.
+        BookDraft inverted = BookDraft.of("Le seigneur des anneaux", ISBN, "Stub Library")
+                .authors(List.of("Tolkien, John Ronald Reuel"))
+                .translators(List.of("Lauzon, Daniel"))
+                .publisher("Christian Bourgois éditeur")
+                .publishedYear(Optional.of(2023))
+                .language(Optional.of(new Language("fr")))
+                .build();
+        Editor other = new Editor(new CatalogService(catalog), stub(inverted));
+        String otherBase = "http://127.0.0.1:" + other.start(0);
+        try {
+            String page = postTo(otherBase, "/import", Map.of("isbn", "9780060188702")).body();
+
+            assertThat(page)
+                    .as("the work files under Tolkien, not Reuel")
+                    .contains("value=\"tolkien-le-seigneur-des-anneaux\"")
+                    .as("the expression under Lauzon, not Daniel")
+                    .contains("value=\"lauzon-fr\"")
+                    .as("the edition under Bourgois, not éditeur")
+                    .contains("value=\"le-seigneur-des-anneaux-bourgois-2023\"")
+                    .as("and the name field shows the form a title page would use")
+                    .contains("value=\"John Ronald Reuel Tolkien\"")
+                    .contains("value=\"Daniel Lauzon\"");
+        } finally {
+            other.stop();
+        }
+    }
+
+    @Test
+    void registersANewAgentUnderItsSurname() throws Exception {
+        Map<String, String> form = filledForm(false);
+        form.put("creators[0].name", "Le Guin, Ursula K.");
+        form.put("id", "le-guin-a-book");
+
+        assertThat(post("/import/save", form).statusCode()).isEqualTo(303);
+
+        var agent = catalog.agents().stream()
+                .filter(a -> a.name().equals("Ursula K. Le Guin"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(agent.sortName()).isEqualTo("Le Guin, Ursula K.");
+    }
+
+    @Test
+    void savesAFinishedBookWithNoFinishedDate() throws Exception {
+        Map<String, String> form = filledForm(true);
+        form.put("item.reading.type", "finished");
+        // no item.reading.finished.on at all
+
+        assertThat(post("/import/save", form).statusCode()).isEqualTo(303);
+
+        assertThat(catalog.items()).anySatisfy(item ->
+                assertThat(item.reading().display()).isEqualTo("read"));
+    }
+
+    @Test
     void declaresTheClientSideChecksTheBrowserShouldApply() throws Exception {
         String page = post("/import", Map.of("isbn", "9780060188702")).body();
 
@@ -302,6 +389,8 @@ class ImportPagesTest {
         form.put("expressions[0].language", "en");
         form.put("expressions[0].kind.type", "translation");
         form.put("expressions[0].kind.translation.from", "es");
+        form.put("expressions[0].realised.type", "year");
+        form.put("expressions[0].realised.year.value", "2003");
         form.put("expressions[0].contributors[0].name", "Edith Grossman");
         form.put("expressions[0].contributors[0].kind", "person");
         form.put("expressions[0].contributors[0].role", "translator");
@@ -333,11 +422,16 @@ class ImportPagesTest {
     }
 
     private HttpResponse<String> post(String path, Map<String, String> form) throws Exception {
+        return postTo(base, path, form);
+    }
+
+    private HttpResponse<String> postTo(String at, String path, Map<String, String> form)
+            throws Exception {
         String body = form.entrySet().stream()
                 .map(e -> encode(e.getKey()) + "=" + encode(e.getValue()))
                 .collect(Collectors.joining("&"));
         return HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build().send(
-                HttpRequest.newBuilder(URI.create(base + path))
+                HttpRequest.newBuilder(URI.create(at + path))
                         .header("Content-Type", "application/x-www-form-urlencoded")
                         .POST(HttpRequest.BodyPublishers.ofString(body))
                         .build(),

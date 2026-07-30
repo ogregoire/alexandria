@@ -274,34 +274,38 @@ public final class VariantForms {
         Map<String, String> payloads = new LinkedHashMap<>();
         payloads.put("purchased",
                 Html.dateField(f(name, "purchased", "date"), "Date",
-                        current instanceof Acquisition.Purchased(LocalDate on, var ignoredPrice, var ignoredFrom)
-                                ? on.toString() : "")
+                        current instanceof Acquisition.Purchased(Optional<LocalDate> on, var p1, var p2)
+                                ? on.map(LocalDate::toString).orElse("") : "")
                         + Html.textField(f(name, "purchased", "price"), "Price (e.g. 28.50 EUR)",
-                        current instanceof Acquisition.Purchased(var ignoredOn, Optional<Money> price, var ignored2)
+                        current instanceof Acquisition.Purchased(var p3, Optional<Money> price, var p4)
                                 ? price.map(Money::text).orElse("") : "")
                         + Html.textField(f(name, "purchased", "from"), "Bought from",
-                        current instanceof Acquisition.Purchased(var ignoredOn2, var ignored3, Optional<String> from)
+                        current instanceof Acquisition.Purchased(var p5, var p6, Optional<String> from)
                                 ? from.orElse("") : ""));
         payloads.put("gift",
                 Html.dateField(f(name, "gift", "date"), "Date",
-                        current instanceof Acquisition.Gift(LocalDate on, var ignored) ? on.toString() : "")
+                        current instanceof Acquisition.Gift(Optional<LocalDate> on, var g1)
+                                ? on.map(LocalDate::toString).orElse("") : "")
                         + Html.textField(f(name, "gift", "from"), "From",
-                        current instanceof Acquisition.Gift(var ignoredOn, String from) ? from : ""));
+                        current instanceof Acquisition.Gift(var g2, Optional<String> from)
+                                ? from.orElse("") : ""));
         payloads.put("inherited",
                 Html.dateField(f(name, "inherited", "date"), "Date",
-                        current instanceof Acquisition.Inherited(LocalDate on, var ignored) ? on.toString() : "")
+                        current instanceof Acquisition.Inherited(Optional<LocalDate> on, var i1)
+                                ? on.map(LocalDate::toString).orElse("") : "")
                         + Html.textField(f(name, "inherited", "from"), "From",
-                        current instanceof Acquisition.Inherited(var ignoredOn, String from) ? from : ""));
+                        current instanceof Acquisition.Inherited(var i2, Optional<String> from)
+                                ? from.orElse("") : ""));
         payloads.put("borrowed",
                 Html.textField(f(name, "borrowed", "from"), "Lender",
-                        current instanceof Acquisition.Borrowed(String from, var ignored1, var ignored2)
+                        current instanceof Acquisition.Borrowed(String from, var b1, var b2)
                                 ? from : "")
                         + Html.dateField(f(name, "borrowed", "since"), "Since",
-                        current instanceof Acquisition.Borrowed(var ignoredFrom, LocalDate since, var ignored3)
-                                ? since.toString() : "")
+                        current instanceof Acquisition.Borrowed(var b3, Optional<LocalDate> since, var b4)
+                                ? since.map(LocalDate::toString).orElse("") : "")
                         + Html.dateField(f(name, "borrowed", "due"), "Due back",
-                        current instanceof Acquisition.Borrowed(var ignoredFrom2, var ignored4,
-                                Optional<LocalDate> due) ? due.map(LocalDate::toString).orElse("") : ""));
+                        current instanceof Acquisition.Borrowed(var b5, var b6, Optional<LocalDate> due)
+                                ? due.map(LocalDate::toString).orElse("") : ""));
         payloads.put("unrecorded", "");
         return Html.variantField(name, label, variants, selected(current, "unrecorded"), payloads);
     }
@@ -311,11 +315,12 @@ public final class VariantForms {
         FormData in = form.in(name, variant);
         return switch (variant) {
             case "purchased" -> new Acquisition.Purchased(
-                    in.requiredDate("date"), in.optional("price").map(Money::parse), in.optional("from"));
-            case "gift" -> new Acquisition.Gift(in.requiredDate("date"), in.required("from"));
-            case "inherited" -> new Acquisition.Inherited(in.requiredDate("date"), in.required("from"));
+                    in.optionalDate("date"), in.optional("price").map(Money::parse), in.optional("from"));
+            case "gift" -> new Acquisition.Gift(in.optionalDate("date"), in.optional("from"));
+            case "inherited" -> new Acquisition.Inherited(in.optionalDate("date"), in.optional("from"));
+            // The lender stays required; everything else about a loan may be forgotten.
             case "borrowed" -> new Acquisition.Borrowed(
-                    in.required("from"), in.requiredDate("since"), in.optionalDate("due"));
+                    in.required("from"), in.optionalDate("since"), in.optionalDate("due"));
             case "unrecorded" -> Acquisition.UNRECORDED;
             default -> throw unknown("acquisition", variant);
         };
@@ -343,8 +348,8 @@ public final class VariantForms {
                 Html.textField(f(name, "lent-to", "person"), "Borrower",
                         current instanceof Location.LentTo(String person, var ignored) ? person : "")
                         + Html.dateField(f(name, "lent-to", "since"), "Since",
-                        current instanceof Location.LentTo(var ignoredPerson, LocalDate since)
-                                ? since.toString() : ""));
+                        current instanceof Location.LentTo(var l1, Optional<LocalDate> since)
+                                ? since.map(LocalDate::toString).orElse("") : ""));
         payloads.put("device", Html.textField(f(name, "device", "name"), "Device or library",
                 current instanceof Location.Device(String value) ? value : ""));
         payloads.put("missing", "");
@@ -357,7 +362,7 @@ public final class VariantForms {
         return switch (variant) {
             case "shelf" -> new Location.Shelf(in.required("name"), in.optional("position"));
             case "box" -> new Location.Box(in.required("label"));
-            case "lent-to" -> new Location.LentTo(in.required("person"), in.requiredDate("since"));
+            case "lent-to" -> new Location.LentTo(in.required("person"), in.optionalDate("since"));
             case "device" -> new Location.Device(in.required("name"));
             case "missing" -> Location.MISSING;
             default -> throw unknown("location", variant);
@@ -376,22 +381,22 @@ public final class VariantForms {
         payloads.put("unread", "");
         payloads.put("reading",
                 Html.dateField(f(name, "reading", "since"), "Started",
-                        current instanceof ReadingProgress.Reading(LocalDate since, var ignored)
-                                ? since.toString() : "")
+                        current instanceof ReadingProgress.Reading(Optional<LocalDate> since, var ignored)
+                                ? since.map(LocalDate::toString).orElse("") : "")
                         + Html.numberField(f(name, "reading", "page"), "Page",
                         current instanceof ReadingProgress.Reading(var ignoredSince, Optional<Integer> page)
                                 ? page.map(String::valueOf).orElse("") : ""));
         payloads.put("finished",
                 Html.dateField(f(name, "finished", "on"), "Finished",
-                        current instanceof ReadingProgress.Finished(LocalDate on, var ignored)
-                                ? on.toString() : "")
+                        current instanceof ReadingProgress.Finished(Optional<LocalDate> on, var ignored)
+                                ? on.map(LocalDate::toString).orElse("") : "")
                         + Html.select(f(name, "finished", "rating"), "Rating", ratings(),
                         current instanceof ReadingProgress.Finished(var ignoredOn, Optional<Rating> rating)
                                 ? rating.map(r -> String.valueOf(r.stars())).orElse("") : ""));
         payloads.put("abandoned",
                 Html.dateField(f(name, "abandoned", "on"), "Given up",
-                        current instanceof ReadingProgress.Abandoned(LocalDate on, var ignored1, var ignored2)
-                                ? on.toString() : "")
+                        current instanceof ReadingProgress.Abandoned(Optional<LocalDate> on, var ignored1, var ignored2)
+                                ? on.map(LocalDate::toString).orElse("") : "")
                         + Html.numberField(f(name, "abandoned", "atPage"), "At page",
                         current instanceof ReadingProgress.Abandoned(var ignoredOn, Optional<Integer> atPage,
                                 var ignored3) ? atPage.map(String::valueOf).orElse("") : "")
@@ -401,16 +406,18 @@ public final class VariantForms {
         return Html.variantField(name, label, variants, selected(current, "unread"), payloads);
     }
 
+    /** A form that says nothing about reading means the copy is unread, not that it is invalid. */
     public static ReadingProgress readReading(FormData form, String name) {
-        String variant = form.variant(name);
+        String variant = form.variantOr(name, "unread");
         FormData in = form.in(name, variant);
         return switch (variant) {
             case "unread" -> ReadingProgress.UNREAD;
-            case "reading" -> new ReadingProgress.Reading(in.requiredDate("since"), in.optionalInt("page"));
+            case "reading" -> new ReadingProgress.Reading(
+                    in.optionalDate("since"), in.optionalInt("page"));
             case "finished" -> new ReadingProgress.Finished(
-                    in.requiredDate("on"), in.optionalInt("rating").map(Rating::of));
+                    in.optionalDate("on"), in.optionalInt("rating").map(Rating::of));
             case "abandoned" -> new ReadingProgress.Abandoned(
-                    in.requiredDate("on"), in.optionalInt("atPage"), in.required("why"));
+                    in.optionalDate("on"), in.optionalInt("atPage"), in.required("why"));
             default -> throw unknown("reading progress", variant);
         };
     }

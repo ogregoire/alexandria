@@ -6,6 +6,7 @@ import be.imgn.alexandria.application.lookup.BookLookup;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentId;
 import be.imgn.alexandria.domain.agent.AgentResolution;
+import be.imgn.alexandria.domain.agent.NameForm;
 import be.imgn.alexandria.domain.item.Condition;
 import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
@@ -112,7 +113,7 @@ final class ImportPages {
                   </fieldset>
                   %s
                   <fieldset><legend>Expression — this language, this translation</legend>
-                    %s%s%s%s
+                    %s%s%s%s%s
                   </fieldset>
                   <fieldset><legend>Manifestation — this edition</legend>
                     %s%s%s%s%s%s%s%s%s%s
@@ -120,7 +121,7 @@ final class ImportPages {
                   <fieldset><legend>Item — your copy</legend>
                     <label class="check"><input type="checkbox" name="addItem" value="yes"%s>
                       <span>Record a copy of this edition</span></label>
-                    %s%s%s%s%s
+                    %s%s%s%s%s%s
                   </fieldset>
                   <button type="submit">Save the book</button>
                 </form>
@@ -142,6 +143,8 @@ final class ImportPages {
                 Html.input(state, "expressions[0].id", "Expression identifier (slug)", "text", "required slug"),
                 Html.input(state, "expressions[0].language", "Language code", "text", "required language"),
                 SumTypeForms.render(state, "expressions[0].kind", "Kind", SumTypeForms.EXPRESSION_KIND),
+                SumTypeForms.render(state, "expressions[0].realised",
+                        "Realised — when this text or translation was made", SumTypeForms.DATE),
                 contributors(state, "expressions[0].contributors", "Translator and others", agents),
 
                 Html.input(state, "manifestation.id", "Edition identifier (slug)", "text", "required slug"),
@@ -160,6 +163,7 @@ final class ImportPages {
                 Html.input(state, "item.id", "Copy identifier (slug, blank to derive)", "text", "slug"),
                 SumTypeForms.render(state, "item.acquisition", "Acquired", SumTypeForms.ACQUISITION),
                 SumTypeForms.render(state, "item.location", "Location", SumTypeForms.LOCATION),
+                SumTypeForms.render(state, "item.reading", "Reading", SumTypeForms.READING),
                 Html.choice(state, "item.condition", "Condition",
                         SumTypeForms.conditions(), Condition.UNGRADED.name()),
                 Html.area(state, "item.notes", "Notes")));
@@ -206,6 +210,8 @@ final class ImportPages {
         labels.put("expressions[0].language", "Language code");
         labels.putAll(SumTypeForms.fieldLabels("expressions[0].kind", "Kind",
                 SumTypeForms.EXPRESSION_KIND));
+        labels.putAll(SumTypeForms.fieldLabels("expressions[0].realised", "Realised",
+                SumTypeForms.DATE));
         labels.put("expressions[0].contributors", "Contributors");
         labels.put("manifestation.id", "Edition identifier");
         labels.put("manifestation.publisher", "Publisher");
@@ -218,6 +224,7 @@ final class ImportPages {
         labels.put("item.id", "Copy identifier");
         labels.putAll(SumTypeForms.fieldLabels("item.acquisition", "Acquired", SumTypeForms.ACQUISITION));
         labels.putAll(SumTypeForms.fieldLabels("item.location", "Location", SumTypeForms.LOCATION));
+        labels.putAll(SumTypeForms.fieldLabels("item.reading", "Reading", SumTypeForms.READING));
         labels.put("item.condition", "Condition");
         return labels;
     }
@@ -243,8 +250,11 @@ final class ImportPages {
             return values;
         }
         BookDraft draft = found.get();
-        String author = draft.authors().stream().findFirst().orElse("");
-        String translator = draft.translators().stream().findFirst().orElse("");
+        // Providers hand out filing forms; a form field wants the form a title page uses.
+        String author = draft.authors().stream().findFirst().map(NameForm::ofPerson)
+                .map(NameForm::display).orElse("");
+        String translator = draft.translators().stream().findFirst().map(NameForm::ofPerson)
+                .map(NameForm::display).orElse("");
         boolean translated = draft.looksTranslated();
         Language language = draft.language().orElse(null);
 
@@ -266,6 +276,15 @@ final class ImportPages {
             values.put("expressions[0].language", language.code());
         }
         values.put("expressions[0].kind.type", translated ? "translation" : "original");
+        // An original text is realised with its work, so the work's year carries over. A
+        // translation's date is its own and no provider reports it — left blank rather than
+        // guessed at from the printing in hand.
+        if (!translated) {
+            draft.originalYear().ifPresent(year -> {
+                values.put("expressions[0].realised.type", "year");
+                values.put("expressions[0].realised.year.value", String.valueOf(year));
+            });
+        }
         if (!translator.isBlank()) {
             values.put("expressions[0].contributors[0].name", translator);
             values.put("expressions[0].contributors[0].kind", "person");
@@ -322,6 +341,8 @@ final class ImportPages {
                 () -> new Language(expressionFields.required("language")));
         var kind = problems.read("expressions[0].kind.type",
                 () -> VariantForms.readExpressionKind(expressionFields, "kind"));
+        var realised = problems.read("expressions[0].realised.type",
+                () -> VariantForms.readDate(expressionFields, "realised"));
         var contributors = problems.read("expressions[0].contributors",
                 () -> VariantForms.readContributions(expressionFields, "contributors", agents));
 
@@ -345,13 +366,15 @@ final class ImportPages {
                         () -> new Series(name, edition.optional("series.number"))));
 
         if (problems.any() || workId.isEmpty() || localId.isEmpty() || language.isEmpty()
-                || kind.isEmpty() || editionId.isEmpty()) {
+                || kind.isEmpty() || realised.isEmpty() || editionId.isEmpty()) {
             return new Outcome.Rejected(FormState.submitted(form, problems));
         }
 
         ExpressionId expressionId = new ExpressionId(workId.get(), localId.get());
+        // The expression has its own date: a 2014 translation of a 1949 novel is the normal
+        // case, so borrowing the work's date here would quietly falsify it.
         Optional<Expression> expression = problems.read("expressions[0].id", () -> new Expression(
-                expressionId, kind.get(), language.get(), contributors.orElse(List.of()), created.get()));
+                expressionId, kind.get(), language.get(), contributors.orElse(List.of()), realised.get()));
 
         Set<String> subjects = form.optional("subjects").stream()
                 .flatMap(value -> java.util.Arrays.stream(value.split(",")))
@@ -381,7 +404,7 @@ final class ImportPages {
                     owner,
                     VariantForms.readAcquisition(item, "acquisition"),
                     VariantForms.readLocation(item, "location"),
-                    ReadingProgress.UNREAD,
+                    VariantForms.readReading(item, "reading"),
                     Condition.valueOf(item.optional("condition").orElse(Condition.UNGRADED.name())),
                     item.optional("notes")));
             if (copy.isEmpty()) {
@@ -401,7 +424,9 @@ final class ImportPages {
         if (title.isBlank()) {
             return "";
         }
-        String surname = author.isBlank() ? "" : Slug.of(lastWord(author)) + "-";
+        String surname = author.isBlank()
+                ? ""
+                : Slug.of(NameForm.ofPerson(author).filingWord()) + "-";
         return surname + Slug.of(title);
     }
 
@@ -409,7 +434,7 @@ final class ImportPages {
     private static String suggestExpressionId(String translator, Language language, boolean translated) {
         String code = language == null ? "xx" : language.code();
         if (translated && !translator.isBlank()) {
-            return Slug.of(lastWord(translator)) + "-" + code;
+            return Slug.of(NameForm.ofPerson(translator).filingWord()) + "-" + code;
         }
         return (translated ? "translation-" : "original-") + code;
     }
@@ -419,13 +444,10 @@ final class ImportPages {
         if (!title.isBlank()) {
             parts.add(Slug.of(title));
         }
-        draft.publisher().ifPresent(publisher -> parts.add(Slug.of(lastWord(publisher))));
+        draft.publisher().ifPresent(publisher ->
+                parts.add(Slug.of(NameForm.ofOrganisation(publisher).filingWord())));
         draft.publishedYear().ifPresent(year -> parts.add(String.valueOf(year)));
         return parts.isEmpty() ? "" : String.join("-", parts);
     }
 
-    private static String lastWord(String value) {
-        String[] words = value.trim().split("\\s+");
-        return words[words.length - 1];
-    }
 }

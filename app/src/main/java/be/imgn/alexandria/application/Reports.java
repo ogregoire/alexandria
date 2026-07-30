@@ -256,9 +256,10 @@ public final class Reports {
                     Map<Bucket, Long> copies = new TreeMap<>();
                     for (Item item : catalog.items()) {
                         if (item.acquisition() instanceof Acquisition.Purchased(
-                                LocalDate on, Optional<Money> price, var ignored)
-                                && price.isPresent()) {
-                            Bucket bucket = new Bucket(on.getYear(), price.get().currency().getCurrencyCode());
+                                Optional<LocalDate> on, Optional<Money> price, var ignored)
+                                && price.isPresent() && on.isPresent()) {
+                            Bucket bucket = new Bucket(
+                                    on.get().getYear(), price.get().currency().getCurrencyCode());
                             spent.merge(bucket, price.get().amount(), BigDecimal::add);
                             copies.merge(bucket, 1L, Long::sum);
                         }
@@ -302,8 +303,8 @@ public final class Reports {
     }
 
     private static Optional<LocalDate> finished(Item item) {
-        return item.reading() instanceof ReadingProgress.Finished(LocalDate on, var ignored)
-                ? Optional.of(on)
+        return item.reading() instanceof ReadingProgress.Finished(Optional<LocalDate> on, var ignored)
+                ? on
                 : Optional.empty();
     }
 

@@ -77,6 +77,16 @@ public final class FormData {
         return required(field + ".type");
     }
 
+    /**
+     * The variant chosen, or a default when the field was not submitted at all.
+     *
+     * <p>Only for sum types whose default carries no payload, so that omitting the field
+     * entirely is a meaningful state rather than a missing answer.
+     */
+    public String variantOr(String field, String fallback) {
+        return optional(field + ".type").orElse(fallback);
+    }
+
     /** Reads a payload field of the chosen variant: {@code acquisition.purchased.date}. */
     public FormData in(String field, String variant) {
         return scope(field + "." + variant + ".");

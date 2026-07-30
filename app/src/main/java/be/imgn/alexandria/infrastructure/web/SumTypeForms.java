@@ -163,8 +163,8 @@ final class SumTypeForms {
                     "purchased", List.of(Field.date("date", "Date"),
                             Field.text("price", "Price (e.g. 28.50 EUR)", "money"),
                             Field.text("from", "Bought from")),
-                    "gift", List.of(Field.date("date", "Date"), Field.text("from", "From", "required")),
-                    "inherited", List.of(Field.date("date", "Date"), Field.text("from", "From", "required")),
+                    "gift", List.of(Field.date("date", "Date"), Field.text("from", "From")),
+                    "inherited", List.of(Field.date("date", "Date"), Field.text("from", "From")),
                     "borrowed", List.of(Field.text("from", "Lender", "required"),
                             Field.date("since", "Since"), Field.date("due", "Due back")),
                     "unrecorded", List.of()));

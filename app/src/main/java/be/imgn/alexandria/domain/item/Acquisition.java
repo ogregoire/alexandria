@@ -4,10 +4,19 @@ import be.imgn.alexandria.domain.shared.Guard;
 import be.imgn.alexandria.domain.shared.Money;
 
 import java.time.LocalDate;
-import java.util.Objects;
 import java.util.Optional;
 
-/** How a copy entered the library — and, decisively, whether it is yours to keep. */
+/**
+ * How a copy entered the library — and, decisively, whether it is yours to keep.
+ *
+ * <p>Dates and provenance are optional throughout. That a book was a gift is worth recording
+ * even when the occasion and the giver are long forgotten, and demanding them would either
+ * block the record or invite an invented one.
+ *
+ * <p>{@link Borrowed#from} is the exception and stays required: a copy you cannot name the
+ * owner of is not one you can give back, and {@link #owned()} returning false would be an
+ * assertion with nothing behind it.
+ */
 public sealed interface Acquisition {
 
     /** False only for copies that must go back to someone. */
@@ -15,13 +24,19 @@ public sealed interface Acquisition {
 
     Optional<LocalDate> on();
 
-    record Purchased(LocalDate date, Optional<Money> price, Optional<String> from) implements Acquisition {
+    record Purchased(Optional<LocalDate> date, Optional<Money> price, Optional<String> from)
+            implements Acquisition {
         public Purchased {
-            Objects.requireNonNull(date, "date");
+            date = date == null ? Optional.empty() : date;
             price = price == null ? Optional.empty() : price;
             from = from == null ? Optional.empty() : from.filter(s -> !s.isBlank());
         }
 
+        public static Purchased on(LocalDate date, Money price, String from) {
+            return new Purchased(Optional.ofNullable(date), Optional.ofNullable(price),
+                    Optional.ofNullable(from));
+        }
+
         @Override
         public boolean owned() {
             return true;
@@ -29,14 +44,23 @@ public sealed interface Acquisition {
 
         @Override
         public Optional<LocalDate> on() {
-            return Optional.of(date);
+            return date;
         }
     }
 
-    record Gift(LocalDate date, String from) implements Acquisition {
+    record Gift(Optional<LocalDate> date, Optional<String> from) implements Acquisition {
         public Gift {
-            Objects.requireNonNull(date, "date");
-            Guard.notBlank(from, "from");
+            date = date == null ? Optional.empty() : date;
+            from = from == null ? Optional.empty() : from.filter(s -> !s.isBlank());
+        }
+
+        /** A gift, with neither the occasion nor the giver recorded. */
+        public static Gift unattributed() {
+            return new Gift(Optional.empty(), Optional.empty());
+        }
+
+        public static Gift from(String giver, LocalDate date) {
+            return new Gift(Optional.ofNullable(date), Optional.ofNullable(giver));
         }
 
         @Override
@@ -46,14 +70,18 @@ public sealed interface Acquisition {
 
         @Override
         public Optional<LocalDate> on() {
-            return Optional.of(date);
+            return date;
         }
     }
 
-    record Inherited(LocalDate date, String from) implements Acquisition {
+    record Inherited(Optional<LocalDate> date, Optional<String> from) implements Acquisition {
         public Inherited {
-            Objects.requireNonNull(date, "date");
-            Guard.notBlank(from, "from");
+            date = date == null ? Optional.empty() : date;
+            from = from == null ? Optional.empty() : from.filter(s -> !s.isBlank());
+        }
+
+        public static Inherited from(String previousOwner, LocalDate date) {
+            return new Inherited(Optional.ofNullable(date), Optional.ofNullable(previousOwner));
         }
 
         @Override
@@ -63,17 +91,21 @@ public sealed interface Acquisition {
 
         @Override
         public Optional<LocalDate> on() {
-            return Optional.of(date);
+            return date;
         }
     }
 
-    /** On loan to you. The copy belongs to someone else and is expected back. */
-    record Borrowed(String from, LocalDate since, Optional<LocalDate> due) implements Acquisition {
+    /**
+     * On loan to you. The copy belongs to someone else and is expected back, so the lender is
+     * the one piece of provenance that cannot be left out.
+     */
+    record Borrowed(String from, Optional<LocalDate> since, Optional<LocalDate> due)
+            implements Acquisition {
         public Borrowed {
             Guard.notBlank(from, "from");
-            Objects.requireNonNull(since, "since");
+            since = since == null ? Optional.empty() : since;
             due = due == null ? Optional.empty() : due;
-            if (due.isPresent() && due.get().isBefore(since)) {
+            if (since.isPresent() && due.isPresent() && due.get().isBefore(since.get())) {
                 throw new IllegalArgumentException("due date must not precede the loan date");
             }
         }
@@ -85,7 +117,7 @@ public sealed interface Acquisition {
 
         @Override
         public Optional<LocalDate> on() {
-            return Optional.of(since);
+            return since;
         }
     }
 

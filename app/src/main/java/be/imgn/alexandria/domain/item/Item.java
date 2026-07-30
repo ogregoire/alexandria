@@ -31,7 +31,7 @@ public record Item(
         Objects.requireNonNull(condition, "condition");
         notes = notes == null ? Optional.empty() : notes.filter(n -> !n.isBlank());
 
-        if (!acquisition.owned() && location instanceof Location.LentTo(String person, LocalDate ignored)) {
+        if (!acquisition.owned() && location instanceof Location.LentTo(String person, var ignored)) {
             throw new IllegalArgumentException(
                     "cannot lend " + id + " to " + person + ": it is itself on loan to you");
         }
@@ -43,29 +43,32 @@ public record Item(
     }
 
     public Item startReading(LocalDate on) {
-        return withReading(new ReadingProgress.Reading(on, Optional.empty()));
+        return withReading(new ReadingProgress.Reading(Optional.ofNullable(on), Optional.empty()));
     }
 
     public Item reachedPage(int page) {
-        if (!(reading instanceof ReadingProgress.Reading(LocalDate since, Optional<Integer> ignored))) {
+        if (!(reading instanceof ReadingProgress.Reading(Optional<LocalDate> since, var ignored))) {
             throw new IllegalStateException("item " + id + " is not currently being read");
         }
         return withReading(new ReadingProgress.Reading(since, Optional.of(page)));
     }
 
+    /** A null date records that it was read without claiming to know when. */
     public Item finishReading(LocalDate on, Rating rating) {
-        return withReading(new ReadingProgress.Finished(on, Optional.ofNullable(rating)));
+        return withReading(new ReadingProgress.Finished(
+                Optional.ofNullable(on), Optional.ofNullable(rating)));
     }
 
     public Item abandonReading(LocalDate on, String why) {
-        Optional<Integer> atPage = reading instanceof ReadingProgress.Reading(LocalDate ignored, Optional<Integer> page)
-                ? page
-                : Optional.empty();
-        return withReading(new ReadingProgress.Abandoned(on, atPage, why));
+        Optional<Integer> atPage =
+                reading instanceof ReadingProgress.Reading(var ignored, Optional<Integer> page)
+                        ? page
+                        : Optional.empty();
+        return withReading(new ReadingProgress.Abandoned(Optional.ofNullable(on), atPage, why));
     }
 
     public Item lendTo(String person, LocalDate on) {
-        return withLocation(new Location.LentTo(person, on));
+        return withLocation(Location.LentTo.to(person, on));
     }
 
     public Item shelveAt(String shelf) {

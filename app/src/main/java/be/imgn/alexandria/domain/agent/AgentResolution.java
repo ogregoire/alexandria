@@ -45,7 +45,9 @@ public final class AgentResolution {
         if (alreadyMinted != null) {
             return alreadyMinted.id();
         }
-        Agent fresh = new Agent(freeId(typed), kindIfNew, typed, sortNameFor(typed, kindIfNew), java.util.Set.of());
+        NameForm parsed = NameForm.of(typed, kindIfNew);
+        Agent fresh = new Agent(freeId(typed), kindIfNew,
+                parsed.display(), parsed.sortName(), java.util.Set.of());
         minted.put(key, fresh);
         return fresh.id();
     }
@@ -59,30 +61,14 @@ public final class AgentResolution {
         return minted.isEmpty();
     }
 
-    private AgentId freeId(String name) {
-        AgentId candidate = directory.freeId(name);
+    /** The id derives from the whole name, so two Tolkiens do not collide on the surname. */
+    private AgentId freeId(String wholeName) {
+        AgentId candidate = directory.freeId(wholeName);
         List<AgentId> taken = new ArrayList<>(minted.values().stream().map(Agent::id).toList());
         int suffix = 2;
         while (taken.contains(candidate)) {
-            candidate = AgentId.of(AgentId.forName(name).value() + "-" + suffix++);
+            candidate = AgentId.of(AgentId.forName(wholeName).value() + "-" + suffix++);
         }
         return candidate;
-    }
-
-    /**
-     * Guesses a filing form for a new person: "Ursula K. Le Guin" files as
-     * "Le Guin, Ursula K." only when the trailing word is unambiguous, which it is not, so
-     * the last whitespace-separated token is used and the result is left for the user to
-     * correct on the agent page. Organisations file under their own name.
-     */
-    private static String sortNameFor(String name, AgentKind kind) {
-        if (!(kind instanceof AgentKind.Person)) {
-            return name;
-        }
-        int lastSpace = name.lastIndexOf(' ');
-        if (lastSpace <= 0) {
-            return name;
-        }
-        return name.substring(lastSpace + 1) + ", " + name.substring(0, lastSpace);
     }
 }

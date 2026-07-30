@@ -200,7 +200,8 @@ class EditorTest {
         Item borrowed = new Item(
                 ItemId.of("borrowed-copy"),
                 CatalogFixture.ECCO,
-                new Acquisition.Borrowed("Marie", LocalDate.of(2024, 3, 1),
+                new Acquisition.Borrowed("Marie",
+                        java.util.Optional.of(LocalDate.of(2024, 3, 1)),
                         java.util.Optional.of(LocalDate.of(2024, 4, 1))),
                 Location.shelf("desk"),
                 be.imgn.alexandria.domain.item.ReadingProgress.UNREAD,
