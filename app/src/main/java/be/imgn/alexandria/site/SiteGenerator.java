@@ -168,7 +168,7 @@ public final class SiteGenerator {
                 filing(edition.title().main()),
                 Template.of("""
                         <li class="entry" data-id="edition:{id}">
-                          <a class="title" href="editions/{id}.html">{title}</a>
+                          <a class="title" href="editions/{id}">{title}</a>
                           <p class="meta">{byline} · {imprint}</p>
                           <p class="holdings">{original}{copies}</p>
                         </li>
@@ -199,7 +199,7 @@ public final class SiteGenerator {
     private Row agentRow(Agent agent) {
         return new Row(filing(agent.sortName()), """
                 <li class="entry person" data-id="agent:%s">
-                  <a class="title" href="agents/%s.html">%s</a>
+                  <a class="title" href="agents/%s">%s</a>
                   <p class="meta">%s</p>
                 </li>
                 """.formatted(
@@ -290,7 +290,7 @@ public final class SiteGenerator {
                                 copy -> VariantNames.of(copy.reading()), TreeMap::new, Collectors.counting())));
 
         return shell("Statistics", ".", """
-                <p class="crumb"><a href="index.html">The library</a></p>
+                <p class="crumb"><a href="./">The library</a></p>
                 <h1>What is in it</h1>
                 <ul class="tallies">%s</ul>
                 %s
@@ -356,7 +356,7 @@ public final class SiteGenerator {
                 .map(reference -> catalog.work(reference.work())
                         .flatMap(work -> work.expression(reference).map(expression -> """
                                 <li>
-                                  <a href="../works/%s.html">%s</a>
+                                  <a href="../works/%s">%s</a>
                                   <span class="detail">%s</span>
                                 </li>
                                 """.formatted(
@@ -394,7 +394,7 @@ public final class SiteGenerator {
                 edition.title().main(),
                 "..",
                 Template.of("""
-                <p class="crumb"><a href="../index.html">The library</a></p>
+                <p class="crumb"><a href="../">The library</a></p>
                 <h1>{title}</h1>
                 <p class="meta">{byline}</p>
                 <table class="facts"><tbody>{facts}</tbody></table>
@@ -460,7 +460,7 @@ public final class SiteGenerator {
                         .collect(Collectors.joining(" ")));
 
         return shell(work.title().main(), "..", """
-                <p class="crumb"><a href="../index.html">The library</a></p>
+                <p class="crumb"><a href="../">The library</a></p>
                 <h1>%s</h1>
                 <p class="meta">%s · %s · %s</p>
                 %s
@@ -487,7 +487,7 @@ public final class SiteGenerator {
             String works = credits.stream()
                     .sorted(Comparator.comparing(c -> c.work().title().main()))
                     .map(credit -> """
-                            <li><a href="../works/%s.html">%s</a>
+                            <li><a href="../works/%s">%s</a>
                               <span class="detail">%s · %s</span></li>
                             """.formatted(
                                     Escape.html(credit.work().id().value()),
@@ -518,7 +518,7 @@ public final class SiteGenerator {
         if (!published.isEmpty()) {
             String editions = published.stream()
                     .map(edition -> """
-                    <li><a href="../editions/%s.html">%s</a> <span class="detail">%s</span></li>
+                    <li><a href="../editions/%s">%s</a> <span class="detail">%s</span></li>
                     """.formatted(
                                     Escape.html(edition.id().value()),
                                     Escape.html(titleOf(edition)),
@@ -539,7 +539,7 @@ public final class SiteGenerator {
                 """.formatted(Escape.html(String.join(", ", agent.aliases())));
 
         return shell(agent.name(), "..", """
-                <p class="crumb"><a href="../index.html">The library</a></p>
+                <p class="crumb"><a href="../">The library</a></p>
                 <h1>%s</h1>
                 <p class="meta">%s</p>
                 %s
@@ -556,7 +556,7 @@ public final class SiteGenerator {
         return editions.stream()
                 .map(edition -> Template.of("""
                         <div class="edition">
-                          <p class="edition-title"><a href="../editions/{id}.html">{title}</a></p>
+                          <p class="edition-title"><a href="../editions/{id}">{title}</a></p>
                           <p class="imprint">{imprint}{identifier}</p>
                           {series}
                           {copies}
@@ -718,7 +718,7 @@ public final class SiteGenerator {
         if (agents.find(agent).isEmpty()) {
             return Escape.html(publishedAs);
         }
-        return "<a href=\"../agents/" + Escape.html(agent.value()) + ".html\">" + Escape.html(publishedAs) + "</a>";
+        return "<a href=\"../agents/" + Escape.html(agent.value()) + "\">" + Escape.html(publishedAs) + "</a>";
     }
 
     /** Adds every name the agent answers to: preferred form, filing form and aliases. */
@@ -781,7 +781,7 @@ public final class SiteGenerator {
                 </head>
                 <body>
                   <header class="mast">
-                    <{wordmark} class="mast-name"><a href="{root}/index.html">Alexandria</a></{wordmark}>
+                    <{wordmark} class="mast-name"><a href="{root}/">Alexandria</a></{wordmark}>
                     <hr class="mast-rule" aria-hidden="true">
                   </header>
                   <main>
@@ -789,7 +789,7 @@ public final class SiteGenerator {
                   </main>
                   <footer class="colophon">
                     <p>A personal catalogue after IFLA-LRM, kept as JSON and rendered without a
-                       database. <a href="{root}/statistics.html">What is in it</a>.</p>
+                       database. <a href="{root}/statistics">What is in it</a>.</p>
                   </footer>
                 </body>
                 </html>

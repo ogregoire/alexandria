@@ -5,6 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -48,7 +52,7 @@ class SiteGeneratorTest {
 
         assertThat(index)
                 .as("the index links every agent page the generator wrote")
-                .contains("agents/edith-grossman.html");
+                .contains("agents/edith-grossman\"");
         assertThat(search)
                 .as("and searching a translator's name matches the translator, not only the book")
                 .contains("\"agent:edith-grossman\"");
@@ -64,15 +68,15 @@ class SiteGeneratorTest {
 
         assertThat(index)
                 .as("the shelf is editions and agents")
-                .contains("editions/quixote-ecco-2003-hb.html")
-                .contains("agents/edith-grossman.html")
+                .contains("editions/quixote-ecco-2003-hb\"")
+                .contains("agents/edith-grossman\"")
                 .as("not the abstractions behind them")
                 .doesNotContain("href=\"works/");
 
         // One list, alphabetical across both kinds: Cervantes files under C, his Don Quixote
         // edition under D.
-        int cervantes = index.indexOf("agents/miguel-de-cervantes.html");
-        int quixote = index.indexOf("editions/quixote-ecco-2003-hb.html");
+        int cervantes = index.indexOf("agents/miguel-de-cervantes\"");
+        int quixote = index.indexOf("editions/quixote-ecco-2003-hb\"");
         assertThat(cervantes).isNotNegative();
         assertThat(quixote).isNotNegative();
         assertThat(cervantes).as("interleaved, not editions-then-agents").isLessThan(quixote);
@@ -96,7 +100,7 @@ class SiteGeneratorTest {
                 .contains("hardcover")
                 .contains("940 pp.")
                 .as("the expression it embodies, linked up to its work")
-                .contains("works/cervantes-don-quixote.html")
+                .contains("works/cervantes-don-quixote\"")
                 .contains("English, translated from Spanish by Edith Grossman")
                 .as("and the copy on the shelf")
                 .contains("living room (shelf 3)");
@@ -158,6 +162,45 @@ class SiteGeneratorTest {
                 .contains("El Ingenioso Hidalgo")
                 .as("and the imprint stays, as the detail beneath it")
                 .contains("Ecco, 2003. hardcover, 940 pp.");
+    }
+
+    /**
+     * Pages are linked without their {@code .html}, which GitHub Pages resolves for us. Two things can go wrong: a link
+     * that keeps the suffix, and a link that resolves to nothing. This walks every page and checks every link the way
+     * the host would — {@code /foo} as {@code foo.html}, a directory as its {@code index.html}.
+     */
+    @Test
+    void linksEveryPageWithoutItsSuffixAndBreaksNone(@TempDir Path root, @TempDir Path output) throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+
+        new SiteGenerator(catalog).generateInto(output);
+
+        List<String> broken = new ArrayList<>();
+        List<String> suffixed = new ArrayList<>();
+        try (var pages = Files.walk(output)) {
+            for (Path page : pages.filter(p -> p.toString().endsWith(".html")).toList()) {
+                Matcher link = Pattern.compile("href=\"([^\"]+)\"").matcher(Files.readString(page));
+                while (link.find()) {
+                    String href = link.group(1);
+                    if (href.startsWith("http") || href.startsWith("#")) {
+                        continue;
+                    }
+                    if (href.endsWith(".html")) {
+                        suffixed.add(page.getFileName() + " -> " + href);
+                    }
+                    Path target = page.getParent().resolve(href).normalize();
+                    boolean resolves = Files.isRegularFile(target)
+                            || Files.isRegularFile(Path.of(target + ".html"))
+                            || Files.isRegularFile(target.resolve("index.html"));
+                    if (!resolves) {
+                        broken.add(page.getFileName() + " -> " + href);
+                    }
+                }
+            }
+        }
+
+        assertThat(suffixed).as("a page link should carry no .html").isEmpty();
+        assertThat(broken).as("and every link should still find its page").isEmpty();
     }
 
     @Test
