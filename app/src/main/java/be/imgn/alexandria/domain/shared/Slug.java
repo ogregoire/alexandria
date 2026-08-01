@@ -30,16 +30,21 @@ public final class Slug {
      * through its own locale comes out with its vowels deleted. One neutral table has no such edge, and needs no
      * language — which this model does not record for a Work in any case.
      *
-     * <p>What it does give up is the local convention: German files ä under ae and Swedish under a. Both come out as a
-     * here. That is a filing preference rather than a loss of information, and it can grow a language-aware branch the
-     * day the model knows what language a work is in.
+     * <p>Membership is not a matter of taste: a letter belongs here only if it has no decomposition. That is why å is
+     * absent — it is a plus a ring, so decomposition already answers for it — while æ and ø are present, having no
+     * answer of their own. Danish and Norwegian spell all three out together, æ ø å as ae oe aa, so a Danish reader
+     * would want aa; Swedish spells the same å as a. The rule above picks the one decomposition gives, which is a.
+     *
+     * <p>That is the shape of everything left undecided here. Where a letter has no fallback the spelling is the
+     * language's own — ß as ss, ø as oe, þ as th — and where it has one, the fallback wins and the local convention is
+     * given up: German files ä under ae, and this files it under a. Those are filing preferences rather than lost
+     * information, and they can grow a language-aware branch the day the model knows what language a work is in.
      */
     private static final Map<Character, String> STANDS_ALONE = Map.ofEntries(
             Map.entry('ß', "ss"),
             Map.entry('æ', "ae"),
             Map.entry('œ', "oe"),
-            Map.entry('ø', "o"),
-            Map.entry('å', "a"),
+            Map.entry('ø', "oe"),
             Map.entry('ł', "l"),
             Map.entry('þ', "th"),
             Map.entry('ð', "d"),

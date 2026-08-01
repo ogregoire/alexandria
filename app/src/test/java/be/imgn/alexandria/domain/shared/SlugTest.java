@@ -22,7 +22,7 @@ class SlugTest {
     void spellsOutTheLettersThatCarryNoAccentToStrip() {
         assertThat(Slug.of("Der Prozeß")).isEqualTo("der-prozess");
         assertThat(Slug.of("Straße")).isEqualTo("strasse");
-        assertThat(Slug.of("Øst")).isEqualTo("ost");
+        assertThat(Slug.of("Øst")).isEqualTo("oest");
         assertThat(Slug.of("Łódź")).isEqualTo("lodz");
         assertThat(Slug.of("Þingvellir")).isEqualTo("thingvellir");
         assertThat(Slug.of("Œuvres")).isEqualTo("oeuvres");
@@ -38,12 +38,27 @@ class SlugTest {
     }
 
     /**
+     * Danish and Norwegian spell æ ø å out together as ae oe aa, and the two with no decomposition follow that. The
+     * third does decompose, so it takes the a decomposition gives — which is what Swedish would write anyway.
+     */
+    @Test
+    void spellsTheScandinavianLettersTheWayTheirLanguagesDo() {
+        assertThat(Slug.of("Ærø")).isEqualTo("aeroe");
+        assertThat(Slug.of("Nørrebro")).isEqualTo("noerrebro");
+        assertThat(Slug.of("Smørrebrød")).isEqualTo("smoerrebroed");
+        assertThat(Slug.of("Åse"))
+                .as("å decomposes, so the table leaves it alone")
+                .isEqualTo("ase");
+    }
+
+    /**
      * Deleting a letter is worse than replacing it: two titles that differ only by one would otherwise land on the same
      * identifier, and identifiers here are file names.
      */
     @Test
     void keepsTitlesApartThatDifferOnlyBySuchALetter() {
         assertThat(Slug.of("Øst")).isNotEqualTo(Slug.of("St"));
+        assertThat(Slug.of("Øst")).isNotEqualTo(Slug.of("Ost"));
         assertThat(Slug.of("Łódź")).isNotEqualTo(Slug.of("Odz"));
     }
 
