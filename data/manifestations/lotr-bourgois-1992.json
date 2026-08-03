@@ -1,5 +1,5 @@
 {
-  "id" : "lotr-bourgois-2002",
+  "id" : "lotr-bourgois-1992",
   "embodies" : [
     "tolkien-the-lord-of-the-rings/ledoux-fr"
   ],
@@ -8,11 +8,11 @@
   },
   "publisher" : "christian-bourgois-editeur",
   "published" : {
-    "type" : "exact",
-    "date" : "2002-10-16"
+    "type" : "year",
+    "value" : 1992
   },
   "carrier" : {
-    "type" : "paperback"
+    "type" : "hardcover"
   },
   "identifier" : {
     "type" : "isbn13",
@@ -20,6 +20,6 @@
   },
   "extent" : {
     "type" : "pages",
-    "count" : 1280
+    "count" : 1278
   }
 }

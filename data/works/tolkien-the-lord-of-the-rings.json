@@ -67,6 +67,13 @@
             "type" : "translator"
           },
           "publishedAs" : "Francis Ledoux"
+        },
+        {
+          "agent" : "alan-lee",
+          "role" : {
+            "type" : "illustrator"
+          },
+          "publishedAs" : "Alan Lee"
         }
       ],
       "realised" : {

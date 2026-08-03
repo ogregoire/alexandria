@@ -1,0 +1,9 @@
+{
+  "id" : "alan-lee",
+  "kind" : {
+    "type" : "person"
+  },
+  "name" : "Alan Lee",
+  "sortName" : "Lee, Alan",
+  "aliases" : [ ]
+}
