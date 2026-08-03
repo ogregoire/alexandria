@@ -47,7 +47,19 @@ public record Expression(
     }
 
     /** A one-line rendering used by the editor and the generated site. */
+    /**
+     * How this realisation reads on a page: the language, how it came to be, and who made it.
+     *
+     * <p>The illustrator is named alongside the translator because illustrations are part of a realisation rather than
+     * of a printing — a text illustrated is a different expression from the text alone. Two editions of one
+     * translation, one illustrated and one not, are two expressions, and without the illustrator in this line they
+     * would describe themselves identically.
+     */
     public String describe() {
+        return realisation() + agentSuffix(Role.ILLUSTRATOR, ", illustrated by ");
+    }
+
+    private String realisation() {
         return switch (kind) {
             case ExpressionKind.Original() -> language.displayName() + " (original)";
             case ExpressionKind.Translation(Language from) ->
@@ -64,6 +76,10 @@ public record Expression(
     }
 
     private String agentSuffix(Role role) {
-        return contributorIn(role).map(c -> " by " + c.publishedAs()).orElse("");
+        return agentSuffix(role, " by ");
+    }
+
+    private String agentSuffix(Role role, String lead) {
+        return contributorIn(role).map(c -> lead + c.publishedAs()).orElse("");
     }
 }
