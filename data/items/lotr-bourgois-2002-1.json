@@ -1,0 +1,15 @@
+{
+  "id" : "lotr-bourgois-2002-1",
+  "embodiedIn" : "lotr-bourgois-2002",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

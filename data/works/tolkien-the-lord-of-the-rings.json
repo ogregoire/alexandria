@@ -52,6 +52,28 @@
         "from" : 2014,
         "to" : 2016
       }
+    },
+    {
+      "id" : "tolkien-the-lord-of-the-rings/ledoux-fr",
+      "kind" : {
+        "type" : "translation",
+        "from" : "en"
+      },
+      "language" : "fr",
+      "contributors" : [
+        {
+          "agent" : "francis-ledoux",
+          "role" : {
+            "type" : "translator"
+          },
+          "publishedAs" : "Francis Ledoux"
+        }
+      ],
+      "realised" : {
+        "type" : "between",
+        "from" : 1972,
+        "to" : 1973
+      }
     }
   ]
 }
