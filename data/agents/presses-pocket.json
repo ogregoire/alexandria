@@ -1,0 +1,9 @@
+{
+  "id" : "presses-pocket",
+  "kind" : {
+    "type" : "organisation"
+  },
+  "name" : "Presses Pocket",
+  "sortName" : "Presses Pocket",
+  "aliases" : [ ]
+}

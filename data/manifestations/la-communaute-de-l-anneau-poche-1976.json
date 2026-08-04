@@ -1,0 +1,29 @@
+{
+  "id" : "la-communaute-de-l-anneau-poche-1976",
+  "embodies" : [
+    "tolkien-the-lord-of-the-rings/ledoux-fr"
+  ],
+  "title" : {
+    "main" : "La Communauté de l'anneau"
+  },
+  "publisher" : "le-livre-de-poche",
+  "published" : {
+    "type" : "year",
+    "value" : 1976
+  },
+  "carrier" : {
+    "type" : "mass-market"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782253011392"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 605
+  },
+  "series" : {
+    "name" : "Le Seigneur des anneaux",
+    "number" : "1"
+  }
+}

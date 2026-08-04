@@ -1,0 +1,15 @@
+{
+  "id" : "le-retour-du-roi-1",
+  "embodiedIn" : "le-retour-du-roi-pocket-1979",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

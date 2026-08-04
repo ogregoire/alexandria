@@ -1,0 +1,28 @@
+{
+  "id" : "le-retour-du-roi-pocket-1979",
+  "embodies" : [
+    "tolkien-the-lord-of-the-rings/ledoux-fr"
+  ],
+  "title" : {
+    "main" : "Le Retour du roi"
+  },
+  "publisher" : "presses-pocket",
+  "published" : {
+    "type" : "year",
+    "value" : 1979
+  },
+  "carrier" : {
+    "type" : "mass-market"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782266026574"
+  },
+  "extent" : {
+    "type" : "unspecified"
+  },
+  "series" : {
+    "name" : "Le Seigneur des anneaux",
+    "number" : "3"
+  }
+}

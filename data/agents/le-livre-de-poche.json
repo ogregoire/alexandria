@@ -1,0 +1,9 @@
+{
+  "id" : "le-livre-de-poche",
+  "kind" : {
+    "type" : "organisation"
+  },
+  "name" : "Le Livre de Poche",
+  "sortName" : "Le Livre de Poche",
+  "aliases" : [ ]
+}

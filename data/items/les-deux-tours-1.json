@@ -1,0 +1,15 @@
+{
+  "id" : "les-deux-tours-1",
+  "embodiedIn" : "les-deux-tours-poche-1976",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}

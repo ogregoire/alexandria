@@ -1,0 +1,29 @@
+{
+  "id" : "les-deux-tours-poche-1976",
+  "embodies" : [
+    "tolkien-the-lord-of-the-rings/ledoux-fr"
+  ],
+  "title" : {
+    "main" : "Les Deux Tours"
+  },
+  "publisher" : "le-livre-de-poche",
+  "published" : {
+    "type" : "year",
+    "value" : 1976
+  },
+  "carrier" : {
+    "type" : "mass-market"
+  },
+  "identifier" : {
+    "type" : "isbn13",
+    "digits" : "9782253012085"
+  },
+  "extent" : {
+    "type" : "pages",
+    "count" : 575
+  },
+  "series" : {
+    "name" : "Le Seigneur des anneaux",
+    "number" : "2"
+  }
+}

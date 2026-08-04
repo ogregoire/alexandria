@@ -1,0 +1,15 @@
+{
+  "id" : "la-communaute-de-l-anneau-1",
+  "embodiedIn" : "la-communaute-de-l-anneau-poche-1976",
+  "acquisition" : {
+    "type" : "unrecorded"
+  },
+  "location" : {
+    "type" : "shelf",
+    "name" : "1"
+  },
+  "reading" : {
+    "type" : "unread"
+  },
+  "condition" : "UNGRADED"
+}
