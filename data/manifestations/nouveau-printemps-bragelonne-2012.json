@@ -5,7 +5,7 @@
   ],
   "title" : {
     "main" : "Nouveau Printemps",
-    "subtitle" : "La Préquelle de La Roue du temps"
+    "subtitle" : "La Préquelle de la Roue du temps"
   },
   "publisher" : "bragelonne",
   "published" : {
@@ -25,5 +25,14 @@
   },
   "series" : {
     "name" : "La Roue du temps"
-  }
+  },
+  "contributors" : [
+    {
+      "agent" : "lee-gibbons",
+      "role" : {
+        "type" : "cover-artist"
+      },
+      "publishedAs" : "Lee Gibbons"
+    }
+  ]
 }

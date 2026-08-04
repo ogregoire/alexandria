@@ -25,5 +25,14 @@
   "series" : {
     "name" : "La Roue du temps",
     "number" : "2"
-  }
+  },
+  "contributors" : [
+    {
+      "agent" : "lee-gibbons",
+      "role" : {
+        "type" : "cover-artist"
+      },
+      "publishedAs" : "Lee Gibbons"
+    }
+  ]
 }
