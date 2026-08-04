@@ -63,6 +63,8 @@ public final class ReferentialIntegrity {
                     .filter(publisher -> !agents.contains(publisher.value()))
                     .ifPresent(publisher -> violations.add(
                             new Violation("manifestation " + manifestation.id(), "unknown publisher " + publisher)));
+            checkAgents(
+                    violations, "manifestation " + manifestation.id(), manifestation.contributors(), agents, directory);
             for (ExpressionId reference : manifestation.embodies()) {
                 if (!expressions.contains(reference.qualified())) {
                     violations.add(new Violation(

@@ -16,6 +16,7 @@ import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentKind;
 import be.imgn.alexandria.domain.catalog.Catalog;
+import be.imgn.alexandria.domain.catalog.Credit;
 import be.imgn.alexandria.domain.item.Acquisition;
 import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.Location;
@@ -133,7 +134,7 @@ public final class Reports {
                 "people",
                 "People",
                 "Everyone in the registry and what they did, aliases included.",
-                List.of("Files under", "Name", "Roles", "Works", "Aliases"),
+                List.of("Files under", "Name", "Roles", "Credited on", "Aliases"),
                 catalog -> catalog.agents().stream()
                         .filter(agent -> agent.kind() instanceof AgentKind.Person)
                         .map(agent -> {
@@ -143,8 +144,10 @@ public final class Reports {
                                     .distinct()
                                     .sorted()
                                     .collect(Collectors.joining(", "));
+                            // Counted by what the credit names rather than by work: a cover artist is
+                            // credited on a printing, which belongs to no single work.
                             long works = credits.stream()
-                                    .map(c -> c.work().id())
+                                    .map(Credit::subject)
                                     .distinct()
                                     .count();
                             return List.of(

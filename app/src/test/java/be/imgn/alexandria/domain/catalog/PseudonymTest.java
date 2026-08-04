@@ -63,7 +63,7 @@ class PseudonymTest {
     @Test
     void gathersTheWholeOutputUnderOneAgent() {
         assertThat(catalog.creditsOf(HOBB.id()))
-                .extracting(credit -> credit.work().title().main())
+                .extracting(Credit::subject)
                 .containsExactlyInAnyOrder("Assassin's Apprentice", "Royal Assassin", "Wizard of the Pigeons");
     }
 
@@ -73,11 +73,9 @@ class PseudonymTest {
 
         assertThat(byName.keySet()).containsExactly("Robin Hobb", "Megan Lindholm");
         assertThat(byName.get("Robin Hobb"))
-                .extracting(credit -> credit.work().title().main())
+                .extracting(Credit::subject)
                 .containsExactlyInAnyOrder("Assassin's Apprentice", "Royal Assassin");
-        assertThat(byName.get("Megan Lindholm"))
-                .extracting(credit -> credit.work().title().main())
-                .containsExactly("Wizard of the Pigeons");
+        assertThat(byName.get("Megan Lindholm")).extracting(Credit::subject).containsExactly("Wizard of the Pigeons");
     }
 
     @Test
@@ -119,7 +117,8 @@ class PseudonymTest {
                         BibliographicDate.year(2007)))));
 
         var authorCredit = store.creditsOf(HOBB.id()).stream()
-                .filter(credit -> credit.work().id().equals(id))
+                .filter(credit -> credit instanceof Credit.OnWork(Work work, var role, var as)
+                        && work.id().equals(id))
                 .findFirst()
                 .orElseThrow();
         var translatorCredit =

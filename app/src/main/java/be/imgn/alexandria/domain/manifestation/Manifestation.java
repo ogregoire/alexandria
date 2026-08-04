@@ -6,6 +6,7 @@ import java.util.Objects;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentId;
 import be.imgn.alexandria.domain.shared.BibliographicDate;
+import be.imgn.alexandria.domain.shared.Contribution;
 import be.imgn.alexandria.domain.shared.Guard;
 import be.imgn.alexandria.domain.shared.Title;
 import be.imgn.alexandria.domain.work.ExpressionId;
@@ -27,7 +28,8 @@ public record Manifestation(
         Identifier identifier,
         Extent extent,
         Series series,
-        EditionStatement editionStatement) {
+        EditionStatement editionStatement,
+        List<Contribution> contributors) {
 
     public Manifestation {
         Objects.requireNonNull(id, "id");
@@ -40,6 +42,8 @@ public record Manifestation(
         publisher = publisher == null ? Publisher.UNRECORDED : publisher;
         series = series == null ? Series.STANDALONE : series;
         editionStatement = editionStatement == null ? EditionStatement.UNSTATED : editionStatement;
+        // Whoever made this printing rather than the text: a cover artist, a typographer.
+        contributors = contributors == null ? List.of() : List.copyOf(contributors);
 
         if (embodies.size() != embodies.stream().distinct().count()) {
             throw new IllegalArgumentException("duplicate expression reference in manifestation " + id);
@@ -68,7 +72,8 @@ public record Manifestation(
                 identifier,
                 extent,
                 Series.STANDALONE,
-                EditionStatement.UNSTATED);
+                EditionStatement.UNSTATED,
+                List.of());
     }
 
     public boolean embodies(ExpressionId expressionId) {
@@ -91,7 +96,8 @@ public record Manifestation(
                 identifier,
                 extent,
                 newSeries == null ? Series.STANDALONE : newSeries,
-                editionStatement);
+                editionStatement,
+                contributors);
     }
 
     /** Imprint line: "Ecco, 2003. Hardcover, 940 pp." */

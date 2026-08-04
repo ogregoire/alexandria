@@ -94,6 +94,11 @@ public interface Catalog {
                                 c -> credits.add(new Credit.OnExpression(work, expression, c.role(), c.publishedAs())));
             }
         }
+        for (Manifestation edition : manifestations()) {
+            edition.contributors().stream()
+                    .filter(c -> c.agent().equals(agent))
+                    .forEach(c -> credits.add(new Credit.OnEdition(edition, c.role(), c.publishedAs())));
+        }
         return List.copyOf(credits);
     }
 

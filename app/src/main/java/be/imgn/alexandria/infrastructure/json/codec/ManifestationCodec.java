@@ -36,6 +36,11 @@ public final class ManifestationCodec {
                 out.object("series", nested -> series(nested, manifestation.series()));
             }
             out.numberIfAny("editionStatement", manifestation.editionStatement().stored());
+            // Written only when there are any, so an edition that credits nobody but its
+            // publisher stays exactly as it was on disk.
+            if (!manifestation.contributors().isEmpty()) {
+                out.objects("contributors", manifestation.contributors(), SharedCodec::contribution);
+            }
         });
     }
 
@@ -55,7 +60,8 @@ public final class ManifestationCodec {
                 identifier(in.object("identifier")),
                 extent(in.object("extent")),
                 in.optionalObject("series").map(ManifestationCodec::series).orElse(Series.STANDALONE),
-                EditionStatement.parse(in.numberOrBlank("editionStatement")));
+                EditionStatement.parse(in.numberOrBlank("editionStatement")),
+                SharedCodec.contributions(in, "contributors"));
     }
 
     // ------------------------------------------------------------------ carrier

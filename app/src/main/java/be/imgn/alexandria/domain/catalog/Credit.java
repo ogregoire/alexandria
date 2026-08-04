@@ -3,23 +3,23 @@ package be.imgn.alexandria.domain.catalog;
 import java.util.Objects;
 import java.util.Optional;
 
+import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.shared.BibliographicDate;
 import be.imgn.alexandria.domain.shared.Role;
+import be.imgn.alexandria.domain.shared.TitleFormat;
 import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.Work;
 
 /**
- * One appearance of an agent in the catalogue: which work, in what capacity, under which name — and, when the credit is
- * for a particular realisation rather than the work itself, which expression.
+ * One appearance of an agent in the catalogue: what they are credited on, in what capacity, and under which name.
  *
- * <p>Two shapes, because a credit is on one level or the other and never both. Keeping them apart matters because the
- * levels are dated differently: Tolkien created <em>The Lord of the Rings</em> between 1937 and 1949; Daniel Lauzon
- * translated it between 2014 and 2016. A credit that forgot which level it belonged to would date the translator by the
- * author's dates, which is how this type came to exist in the first place.
+ * <p>One shape per WEMI level a credit can sit on, because it sits on exactly one and never on two at once. Keeping
+ * them apart matters because the levels are dated differently: Tolkien created <em>The Lord of the Rings</em> between
+ * 1937 and 1949, Daniel Lauzon translated it between 2014 and 2016, and Bragelonne printed it in 2014. A credit that
+ * forgot which level it belonged to would date the translator by the author's dates, which is how this type came to
+ * exist in the first place.
  */
 public sealed interface Credit {
-
-    Work work();
 
     Role role();
 
@@ -39,6 +39,9 @@ public sealed interface Credit {
      */
     Optional<String> realisation();
 
+    /** What the credit is on, as it should read on a page. */
+    String subject();
+
     record OnWork(Work work, Role role, String publishedAs) implements Credit {
 
         public OnWork {
@@ -55,6 +58,11 @@ public sealed interface Credit {
         @Override
         public Optional<String> realisation() {
             return Optional.empty();
+        }
+
+        @Override
+        public String subject() {
+            return TitleFormat.isbd(work.title());
         }
     }
 
@@ -75,6 +83,42 @@ public sealed interface Credit {
         @Override
         public Optional<String> realisation() {
             return Optional.of(expression.language().displayName());
+        }
+
+        @Override
+        public String subject() {
+            return TitleFormat.isbd(work.title());
+        }
+    }
+
+    /**
+     * A credit on the printing rather than on the text: the artist who painted a cover, the hand that set the type.
+     *
+     * <p>It carries no Work, and that is the point — an omnibus embodies expressions of several works, so there is no
+     * one work a cover belongs to. Anything that wants a work from a credit has to say which shape it is looking at,
+     * which is what the sum is for.
+     */
+    record OnEdition(Manifestation edition, Role role, String publishedAs) implements Credit {
+
+        public OnEdition {
+            Objects.requireNonNull(edition, "edition");
+            Objects.requireNonNull(role, "role");
+            Objects.requireNonNull(publishedAs, "publishedAs");
+        }
+
+        @Override
+        public BibliographicDate when() {
+            return edition.published();
+        }
+
+        @Override
+        public Optional<String> realisation() {
+            return Optional.empty();
+        }
+
+        @Override
+        public String subject() {
+            return TitleFormat.isbd(edition.title());
         }
     }
 }

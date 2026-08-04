@@ -101,7 +101,8 @@ public final class CatalogFixture {
                 Identifier.isbn("9780060188702"),
                 Extent.pages(940),
                 Series.of("Ecco Classics"),
-                EditionStatement.of(1));
+                EditionStatement.of(1),
+                List.of());
     }
 
     public static Item item() {

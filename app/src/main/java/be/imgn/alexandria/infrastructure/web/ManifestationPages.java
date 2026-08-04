@@ -106,6 +106,12 @@ final class ManifestationPages {
                     <p class="hint">More than one for an omnibus or a bilingual edition.</p>
                     {expressions}
                   </fieldset>
+                  <fieldset><legend>Made this printing</legend>
+                    <p class="hint">Whoever made this edition rather than the text: the artist who
+                       painted the cover, the hand that set the type. Someone who illustrated the
+                       text itself belongs on the expression, not here.</p>
+                    {contributors}
+                  </fieldset>
                   <button type="submit">Save</button>
                 </form>
                 {delete}
@@ -222,6 +228,13 @@ final class ManifestationPages {
                                                         .editionStatement()
                                                         .stored()))
                         .withMarkup("expressions", expressionCheckboxes(chosen))
+                        .withMarkup(
+                                "contributors",
+                                VariantForms.contributions(
+                                        "contributors",
+                                        "Cover and printing",
+                                        manifestation == null ? List.of() : manifestation.contributors(),
+                                        agents))
                         .withMarkup("delete", deleteButton)
                         .render());
     }
@@ -265,6 +278,7 @@ final class ManifestationPages {
                 VariantForms.readIdentifier(form, "identifier"),
                 VariantForms.readExtent(form, "extent"),
                 series,
-                EditionStatement.parse(form.orEmpty("edition")));
+                EditionStatement.parse(form.orEmpty("edition")),
+                VariantForms.readContributions(form, "contributors", agents));
     }
 }

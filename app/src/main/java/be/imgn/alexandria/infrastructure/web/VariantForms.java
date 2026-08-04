@@ -652,6 +652,7 @@ public final class VariantForms {
             case "translator" -> Role.TRANSLATOR;
             case "editor" -> Role.EDITOR;
             case "illustrator" -> Role.ILLUSTRATOR;
+            case "cover-artist" -> Role.COVER_ARTIST;
             case "narrator" -> Role.NARRATOR;
             case "publisher" -> Role.PUBLISHER;
             case "" -> Role.AUTHOR;
@@ -675,6 +676,7 @@ public final class VariantForms {
                 "translator", "Translator",
                 "editor", "Editor",
                 "illustrator", "Illustrator",
+                "cover-artist", "Cover artist",
                 "narrator", "Narrator",
                 "publisher", "Publisher");
     }

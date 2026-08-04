@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 import be.imgn.alexandria.application.CatalogService;
 import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentId;
+import be.imgn.alexandria.domain.catalog.Credit;
+import be.imgn.alexandria.domain.manifestation.Manifestation;
+import be.imgn.alexandria.domain.work.Work;
 import be.imgn.alexandria.infrastructure.Template;
 import be.imgn.alexandria.infrastructure.VariantNames;
 
@@ -113,6 +116,20 @@ final class AgentPages {
     }
 
     /**
+     * Where a credit points in the editor: a credit on the text goes to its work, one on a printing to that edition.
+     */
+    private static String creditPath(Credit credit) {
+        return switch (credit) {
+            case Credit.OnWork(Work work, var ignoredRole, var ignoredAs) ->
+                "/works/" + work.id().value();
+            case Credit.OnExpression(Work work, var ignoredExpr, var ignoredRole, var ignoredAs) ->
+                "/works/" + work.id().value();
+            case Credit.OnEdition(Manifestation edition, var ignoredRole, var ignoredAs) ->
+                "/manifestations/" + edition.id().value();
+        };
+    }
+
+    /**
      * The bibliography, split by the name each book was published under. One agent, so the whole output is here; one
      * section per pseudonym, so each book is still credited the way it was issued.
      */
@@ -131,11 +148,9 @@ final class AgentPages {
                     .append(name.equals(preferred) ? "" : " <span class=\"hint\">(other name)</span>")
                     .append("</h2><ul>");
             credits.stream()
-                    .sorted(Comparator.comparing(c -> c.work().title().main()))
+                    .sorted(Comparator.comparing(Credit::subject))
                     .forEach(credit -> out.append("<li>")
-                            .append(Html.link(
-                                    "/works/" + credit.work().id().value(),
-                                    credit.work().title().main()))
+                            .append(Html.link(creditPath(credit), credit.subject()))
                             .append(" <span class=\"hint\">")
                             .append(Html.escape(credit.role().label()))
                             .append(credit.realisation()

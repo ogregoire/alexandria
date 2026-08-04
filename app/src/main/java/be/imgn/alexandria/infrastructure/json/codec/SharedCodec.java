@@ -74,6 +74,7 @@ final class SharedCodec {
             case Role.Translator() -> out.text("type", "translator");
             case Role.Editor() -> out.text("type", "editor");
             case Role.Illustrator() -> out.text("type", "illustrator");
+            case Role.CoverArtist() -> out.text("type", "cover-artist");
             case Role.Narrator() -> out.text("type", "narrator");
             case Role.Publisher() -> out.text("type", "publisher");
             case Role.Other(String label) -> out.text("type", "other").text("label", label);
@@ -86,6 +87,7 @@ final class SharedCodec {
             case "translator" -> Role.TRANSLATOR;
             case "editor" -> Role.EDITOR;
             case "illustrator" -> Role.ILLUSTRATOR;
+            case "cover-artist" -> Role.COVER_ARTIST;
             case "narrator" -> Role.NARRATOR;
             case "publisher" -> Role.PUBLISHER;
             case "other" -> new Role.Other(in.text("label"));

@@ -212,8 +212,12 @@ public final class Template {
                         return nested;
                     }
                 } else if (node instanceof Node.Branch(var ignored, List<Node> whenTrue, List<Node> whenFalse)) {
-                    Optional<List<Node>> found = loopBody(whenTrue, name);
-                    return found.isPresent() ? found : loopBody(whenFalse, name);
+                    // Look inside, but keep looking afterwards: a branch that does not hold the
+                    // loop is not the end of the search, it is one node that did not have it.
+                    Optional<List<Node>> inBranch = loopBody(whenTrue, name).or(() -> loopBody(whenFalse, name));
+                    if (inBranch.isPresent()) {
+                        return inBranch;
+                    }
                 }
             }
             return Optional.empty();

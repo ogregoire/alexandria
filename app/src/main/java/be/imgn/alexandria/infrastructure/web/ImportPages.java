@@ -291,6 +291,7 @@ final class ImportPages {
         options.put("translator", "Translator");
         options.put("editor", "Editor");
         options.put("illustrator", "Illustrator");
+        options.put("cover-artist", "Cover artist");
         options.put("narrator", "Narrator");
         options.put("publisher", "Publisher");
         return options;
@@ -532,7 +533,9 @@ final class ImportPages {
                         identifier.get(),
                         extent.get(),
                         series,
-                        EditionStatement.parse(edition.orEmpty("edition"))));
+                        EditionStatement.parse(edition.orEmpty("edition")),
+                        // No provider reports a cover artist, so this is left for the edition page.
+                        List.of()));
 
         Optional<Item> copy = Optional.empty();
         if (form.checked("addItem") && manifestation.isPresent()) {

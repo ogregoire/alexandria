@@ -29,10 +29,23 @@ public sealed interface Role {
         }
     }
 
+    /** Illustrated the text itself. Plates bound with a text make a new Expression of it, not a new printing. */
     record Illustrator() implements Role {
         @Override
         public String label() {
             return "illustrator";
+        }
+    }
+
+    /**
+     * Painted the cover of one printing. Distinct from {@link Illustrator} on purpose: a jacket is a property of the
+     * Manifestation, so the same translation reissued behind new art is the same Expression and a different
+     * Manifestation. Collapsing the two would credit a cover artist with having illustrated a text they never touched.
+     */
+    record CoverArtist() implements Role {
+        @Override
+        public String label() {
+            return "cover artist";
         }
     }
 
@@ -60,6 +73,7 @@ public sealed interface Role {
     Role TRANSLATOR = new Translator();
     Role EDITOR = new Editor();
     Role ILLUSTRATOR = new Illustrator();
+    Role COVER_ARTIST = new CoverArtist();
     Role NARRATOR = new Narrator();
     Role PUBLISHER = new Publisher();
 }

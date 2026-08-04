@@ -153,6 +153,31 @@ class TemplateTest {
         assertThat(page).isEqualTo("<h2>desk</h2><ul><li>Quixote</li></ul><h2>attic</h2><ul></ul>");
     }
 
+    /**
+     * A branch that does not hold the loop is one node that did not have it, not the end of the search. Looking inside
+     * a branch and then giving up hid every block that came after one.
+     */
+    @Test
+    void findsABlockThatSitsAfterABranchNotHoldingIt() {
+        String page = Template.of("{#if flag}<p>x</p>{/if}<ul>{#each rows}<li>{name}</li>{/each}</ul>")
+                .when("flag", false)
+                .each("rows", List.of("a", "b"), (row, name) -> row.with("name", name))
+                .render();
+
+        assertThat(page).isEqualTo("<ul><li>a</li><li>b</li></ul>");
+    }
+
+    /** And the same for a branch nested inside another branch. */
+    @Test
+    void findsABlockNestedInsideABranch() {
+        String page = Template.of("{#if outer}{#each rows}<li>{name}</li>{/each}{/if}")
+                .when("outer", true)
+                .each("rows", List.of("a"), (row, name) -> row.with("name", name))
+                .render();
+
+        assertThat(page).isEqualTo("<li>a</li>");
+    }
+
     @Test
     void refusesToRenderALoopNobodyBound() {
         assertThatThrownBy(() -> Template.of("{#each rows}<li>{x}</li>{/each}").render())

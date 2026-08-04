@@ -153,7 +153,8 @@ class SiteGeneratorTest {
                 original.identifier(),
                 original.extent(),
                 original.series(),
-                original.editionStatement()));
+                original.editionStatement(),
+                original.contributors()));
 
         new SiteGenerator(catalog).generateInto(output);
 

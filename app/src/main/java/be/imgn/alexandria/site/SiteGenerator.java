@@ -24,6 +24,7 @@ import be.imgn.alexandria.domain.agent.Agent;
 import be.imgn.alexandria.domain.agent.AgentDirectory;
 import be.imgn.alexandria.domain.agent.AgentId;
 import be.imgn.alexandria.domain.catalog.Catalog;
+import be.imgn.alexandria.domain.catalog.Credit;
 import be.imgn.alexandria.domain.catalog.ReferentialIntegrity;
 import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
@@ -398,6 +399,7 @@ public final class SiteGenerator {
                 <h1>{title}</h1>
                 <p class="meta">{byline}</p>
                 <table class="facts"><tbody>{facts}</tbody></table>
+                {#if credited}{madeIt}{/if}
                 <section class="as">
                   <h2>{contentsHeading}</h2>
                   <ul class="works">{contents}</ul>
@@ -412,6 +414,9 @@ public final class SiteGenerator {
                         .with("title", titleOf(edition))
                         .withMarkup("byline", byline.isEmpty() ? "Anonymous" : byline)
                         .withMarkup("facts", facts)
+                        // Whoever made this printing rather than the text — a cover artist.
+                        .when("credited", !edition.contributors().isEmpty())
+                        .withMarkup("madeIt", contributors(edition.contributors()))
                         .with("contentsHeading", edition.embodies().size() == 1 ? "What it is" : "What it collects")
                         .withMarkup("contents", contents)
                         .when("held", !copies.isEmpty())
@@ -475,6 +480,21 @@ public final class SiteGenerator {
     }
 
     /**
+     * Where a credit points. One on a work or on an expression of it goes to the work; one on a printing goes to that
+     * edition, because a cover belongs to the printing and an omnibus has no single work to send it to.
+     */
+    private static String creditHref(Credit credit) {
+        return switch (credit) {
+            case Credit.OnWork(Work work, var ignoredRole, var ignoredAs) ->
+                "../works/" + Escape.html(work.id().value());
+            case Credit.OnExpression(Work work, var ignoredExpression, var ignoredRole, var ignoredAs) ->
+                "../works/" + Escape.html(work.id().value());
+            case Credit.OnEdition(Manifestation edition, var ignoredRole, var ignoredAs) ->
+                "../editions/" + Escape.html(edition.id().value());
+        };
+    }
+
+    /**
      * One page per agent, listing everything they are credited on, sectioned by the name each book was published under
      * — so arriving here from "Megan Lindholm" shows both the Lindholm books and the Robin Hobb ones, and arriving from
      * "Robin Hobb" shows the same page.
@@ -485,13 +505,13 @@ public final class SiteGenerator {
 
         byName.forEach((name, credits) -> {
             String works = credits.stream()
-                    .sorted(Comparator.comparing(c -> c.work().title().main()))
+                    .sorted(Comparator.comparing(Credit::subject))
                     .map(credit -> """
-                            <li><a href="../works/%s">%s</a>
+                            <li><a href="%s">%s</a>
                               <span class="detail">%s · %s</span></li>
                             """.formatted(
-                                    Escape.html(credit.work().id().value()),
-                                    Escape.html(TitleFormat.isbd(credit.work().title())),
+                                    creditHref(credit),
+                                    Escape.html(credit.subject()),
                                     Escape.html(credit.role().label()
                                             + credit.realisation()
                                                     .map(language -> " · " + language)
@@ -679,7 +699,7 @@ public final class SiteGenerator {
                     terms.add(standingOf(agent));
                     // The titles they are credited on, so "who translated the Ring" reaches the person too.
                     catalog.creditsOf(agent.id()).forEach(credit -> {
-                        terms.add(TitleFormat.isbd(credit.work().title()));
+                        terms.add(credit.subject());
                         terms.add(credit.publishedAs());
                         credit.realisation().ifPresent(terms::add);
                     });
