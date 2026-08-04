@@ -568,6 +568,27 @@ public final class SiteGenerator {
                         Escape.html(agent.name()), Escape.html(agent.kind().label()), otherNames, sections));
     }
 
+    /**
+     * The titles a credit was actually sold under.
+     *
+     * <p>A work is catalogued under the title it was written as and sold under the one on the cover, and for a
+     * translation those are different sentences: "New Spring" against "Nouveau Printemps : La Préquelle de la Roue du
+     * temps". Indexing an agent by the catalogued title alone meant searching the words on the cover reached the
+     * publisher and the cover artist — whose credits happen to sit on the printing — while the author and the
+     * translator, whose credits sit above it, were missing from their own book.
+     */
+    private Stream<String> soldAs(Credit credit) {
+        return switch (credit) {
+            case Credit.OnWork(Work work, var ignoredRole, var ignoredAs) ->
+                work.expressions().stream()
+                        .flatMap(expression -> catalog.manifestationsOf(expression.id()).stream())
+                        .map(this::titleOf);
+            case Credit.OnExpression(var ignoredWork, Expression expression, var ignoredRole, var ignoredAs) ->
+                catalog.manifestationsOf(expression.id()).stream().map(this::titleOf);
+            case Credit.OnEdition(Manifestation edition, var ignoredRole, var ignoredAs) -> Stream.of(titleOf(edition));
+        };
+    }
+
     private String editionsOf(Expression expression) {
         List<Manifestation> editions = catalog.manifestationsOf(expression.id());
         if (editions.isEmpty()) {
@@ -702,6 +723,7 @@ public final class SiteGenerator {
                         terms.add(credit.subject());
                         terms.add(credit.publishedAs());
                         credit.realisation().ifPresent(terms::add);
+                        soldAs(credit).forEach(terms::add);
                     });
                     catalog.publishedBy(agent.id()).forEach(edition -> terms.add(titleOf(edition)));
                     return """

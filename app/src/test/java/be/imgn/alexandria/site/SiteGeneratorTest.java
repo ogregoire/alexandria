@@ -166,6 +166,52 @@ class SiteGeneratorTest {
     }
 
     /**
+     * Searching the words on a cover reached the publisher and the cover artist, whose credits sit on the printing, but
+     * not the author or the translator, whose credits sit above it — so a French edition's own author was missing from
+     * a search for its French title.
+     */
+    @Test
+    void findsEveryoneBehindAnEditionByTheTitleItWasSoldUnder(@TempDir Path root, @TempDir Path output)
+            throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+        Manifestation original = CatalogFixture.manifestation();
+        catalog.save(new Manifestation(
+                original.id(),
+                original.embodies(),
+                Title.of("El Ingenioso Hidalgo"),
+                original.publisher(),
+                original.published(),
+                original.carrier(),
+                original.identifier(),
+                original.extent(),
+                original.series(),
+                original.editionStatement(),
+                original.contributors()));
+
+        new SiteGenerator(catalog).generateInto(output);
+        String index = Files.readString(output.resolve("search-index.json"));
+
+        assertThat(entryFor(index, "agent:miguel-de-cervantes"))
+                .as("the author, credited on the work")
+                .contains("el ingenioso hidalgo");
+        assertThat(entryFor(index, "agent:edith-grossman"))
+                .as("the translator, credited on the expression")
+                .contains("el ingenioso hidalgo");
+        assertThat(entryFor(index, "agent:miguel-de-cervantes"))
+                .as("and the catalogued title still finds him too")
+                .contains("don quixote");
+    }
+
+    /** The one line of the search index belonging to that entry. Entries are written one per line. */
+    private static String entryFor(String searchIndex, String id) {
+        return searchIndex
+                .lines()
+                .filter(line -> line.contains("\"" + id + "\""))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no search entry for " + id));
+    }
+
+    /**
      * Pages are linked without their {@code .html}, which GitHub Pages resolves for us. Two things can go wrong: a link
      * that keeps the suffix, and a link that resolves to nothing. This walks every page and checks every link the way
      * the host would — {@code /foo} as {@code foo.html}, a directory as its {@code index.html}.
