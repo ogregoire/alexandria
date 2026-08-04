@@ -28,8 +28,10 @@ import be.imgn.alexandria.domain.catalog.Credit;
 import be.imgn.alexandria.domain.catalog.ReferentialIntegrity;
 import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
+import be.imgn.alexandria.domain.manifestation.Series;
 import be.imgn.alexandria.domain.shared.Contribution;
 import be.imgn.alexandria.domain.shared.Role;
+import be.imgn.alexandria.domain.shared.Slug;
 import be.imgn.alexandria.domain.shared.TitleFormat;
 import be.imgn.alexandria.domain.work.Expression;
 import be.imgn.alexandria.domain.work.Work;
@@ -72,6 +74,7 @@ public final class SiteGenerator {
             Files.createDirectories(output.resolve("works"));
             Files.createDirectories(output.resolve("editions"));
             Files.createDirectories(output.resolve("agents"));
+            Files.createDirectories(output.resolve("series"));
             written.add(write(output.resolve("index.html"), indexPage()));
             written.add(write(output.resolve("statistics.html"), statisticsPage()));
             written.add(write(output.resolve("search-index.json"), searchIndex()));
@@ -87,6 +90,14 @@ public final class SiteGenerator {
             for (Agent agent : catalog.agents()) {
                 written.add(write(output.resolve("agents/" + agent.id().value() + ".html"), agentPage(agent)));
             }
+            for (var entry : series().entrySet()) {
+                Optional<String> slug = seriesSlug(entry.getKey());
+                if (slug.isPresent()) {
+                    written.add(write(
+                            output.resolve("series/" + slug.get() + ".html"),
+                            seriesPage(entry.getKey(), entry.getValue())));
+                }
+            }
         } catch (IOException e) {
             throw new UncheckedIOException("cannot generate the site into " + output, e);
         }
@@ -96,14 +107,16 @@ public final class SiteGenerator {
     // ------------------------------------------------------------- pages
 
     /**
-     * The index is the whole site: one search field over one alphabetical list holding editions and agents together.
+     * The index is the whole site: one search field over one alphabetical list holding editions, agents and series
+     * together.
      *
      * <p>Editions rather than works, because an edition is the thing on the shelf — a personal catalogue is a record of
      * what was bought and read, not of abstractions. The work is still reachable, from the edition that embodies it.
      *
-     * <p>Agents are listed beside them rather than beneath, because "who translated this" is as good a way into a
-     * catalogue as "what do I own" — and because an agent page nothing links to may as well not have been generated.
-     * Interleaving the two is what makes one field enough: there is no track to choose first.
+     * <p>Agents and series are listed beside them rather than beneath, because "who translated this" and "what else is
+     * in this set" are as good a way into a catalogue as "what do I own" — and because a page nothing links to may as
+     * well not have been generated. Interleaving them is what makes one field enough: there is no track to choose
+     * first.
      *
      * <p>The list is delivered whole and hidden by the stylesheet until something is typed — hidden by the stylesheet
      * and not by the script, so it is never painted and then snatched away. Delivering it rather than building rows
@@ -112,9 +125,11 @@ public final class SiteGenerator {
      * in order.
      */
     private String indexPage() {
-        String rows = Stream.concat(
+        String rows = Stream.of(
                         catalog.manifestations().stream().map(this::editionRow),
-                        catalog.agents().stream().map(this::agentRow))
+                        catalog.agents().stream().map(this::agentRow),
+                        series().entrySet().stream().flatMap(entry -> seriesRow(entry.getKey(), entry.getValue())))
+                .flatMap(rowsOfOneKind -> rowsOfOneKind)
                 .sorted(Comparator.comparing(Row::filing))
                 .map(Row::html)
                 .collect(Collectors.joining());
@@ -183,6 +198,44 @@ public final class SiteGenerator {
                         .render());
     }
 
+    /**
+     * The name of the series an edition belongs to, when it belongs to one.
+     *
+     * <p>A {@link Series.Standalone} has no name to give, which is the whole reason the type has three shapes rather
+     * than a nullable string.
+     */
+    private static Optional<String> seriesName(Manifestation edition) {
+        return switch (edition.series()) {
+            case Series.Standalone() -> Optional.empty();
+            case Series.Unnumbered(String name) -> Optional.of(name);
+            case Series.Numbered(String name, var ignoredNumber) -> Optional.of(name);
+        };
+    }
+
+    /**
+     * Every series in the catalogue, each with its volumes in reading order.
+     *
+     * <p>Keyed by name, because that is all a series is here: there is no Series aggregate, only the name printed on
+     * each spine. Two books claiming the same series are in the same series, which is the same rule a reader uses.
+     */
+    private Map<String, List<Manifestation>> series() {
+        Map<String, List<Manifestation>> byName = new TreeMap<>(Comparator.comparing(SiteGenerator::filing));
+        for (Manifestation edition : catalog.manifestations()) {
+            seriesName(edition)
+                    .ifPresent(name -> byName.computeIfAbsent(name, ignored -> new ArrayList<>())
+                            .add(edition));
+        }
+        byName.values().forEach(volumes -> volumes.sort(inReadingOrder()));
+        return byName;
+    }
+
+    /** Volumes as they are meant to be read: by the number on the spine, then by title for whatever carries none. */
+    private Comparator<Manifestation> inReadingOrder() {
+        return Comparator.comparingInt(
+                        (Manifestation edition) -> edition.series().position())
+                .thenComparing(this::titleOf);
+    }
+
     /** The works an edition embodies — several, when it is an omnibus. */
     private List<Work> worksBehind(Manifestation edition) {
         return edition.embodies().stream()
@@ -195,6 +248,30 @@ public final class SiteGenerator {
     private String copiesSummary(Manifestation edition) {
         int copies = catalog.copiesOf(edition.id()).size();
         return copies == 0 ? "not held" : count(copies, "copy", "copies");
+    }
+
+    /**
+     * A series in the index, beside the editions and the agents.
+     *
+     * <p>It earns its line by the same argument the agents do: a page nothing links to may as well not have been
+     * generated, and "the Wheel of Time" is as good a way into a catalogue as any one of its fourteen volumes.
+     *
+     * <p>A stream rather than a row, because a name that yields no slug has no page to link to and so has no line.
+     */
+    private Stream<Row> seriesRow(String name, List<Manifestation> volumes) {
+        return seriesSlug(name).stream()
+                .map(slug -> new Row(
+                        filing(name),
+                        Template.of("""
+                                <li class="entry series" data-id="series:{slug}">
+                                  <a class="title" href="series/{slug}">{name}</a>
+                                  <p class="meta">series · {count}</p>
+                                </li>
+                                """)
+                                .with("slug", slug)
+                                .with("name", name)
+                                .with("count", count(volumes.size(), "volume", "volumes"))
+                                .render()));
     }
 
     private Row agentRow(Agent agent) {
@@ -379,7 +456,7 @@ public final class SiteGenerator {
                         fact("Published", edition.published().display()),
                         fact("Carrier", edition.carrier().label()),
                         fact("Extent", edition.extent().display()),
-                        fact("Series", edition.series().display()),
+                        seriesFact(edition),
                         fact("Identifier", edition.identifier().display()))
                 .filter(row -> !row.isEmpty())
                 .collect(Collectors.joining());
@@ -437,9 +514,28 @@ public final class SiteGenerator {
     }
 
     private static String fact(String name, String value) {
-        return value == null || value.isBlank() ? "" : """
+        return value == null || value.isBlank() ? "" : factMarkup(name, Escape.html(value));
+    }
+
+    private static String factMarkup(String name, String markup) {
+        return markup == null || markup.isBlank() ? "" : """
                 <tr><th scope="row">%s</th><td>%s</td></tr>
-                """.formatted(Escape.html(name), Escape.html(value));
+                """.formatted(Escape.html(name), markup);
+    }
+
+    /**
+     * The series row, linked to the series page when there is one to link to.
+     *
+     * <p>The number stays beside the name, because the row is answering "what is this book" and "the eighth of
+     * fourteen" is part of that answer.
+     */
+    private static String seriesFact(Manifestation edition) {
+        String printed = edition.series().display();
+        return seriesName(edition)
+                .flatMap(SiteGenerator::seriesSlug)
+                .map(slug -> factMarkup(
+                        "Series", "<a href=\"../series/" + Escape.html(slug) + "\">" + Escape.html(printed) + "</a>"))
+                .orElseGet(() -> fact("Series", printed));
     }
 
     private String workPage(Work work) {
@@ -569,6 +665,82 @@ public final class SiteGenerator {
     }
 
     /**
+     * One series, its volumes in reading order.
+     *
+     * <p>The one view the rest of the site cannot give: the index files each volume under its own title, so a set
+     * scatters across the alphabet — <em>L'Œil du monde</em> opens <em>La Roue du temps</em> and files under O. Here
+     * the order is the author's rather than the alphabet's, and a gap in the numbering is a gap on the shelf.
+     *
+     * <p>Volumes carrying no number come last, under their own heading rather than silently appended: a prequel belongs
+     * to the series without taking a place in its count, and saying so is more honest than guessing whether it is read
+     * first or last.
+     */
+    private String seriesPage(String name, List<Manifestation> volumes) {
+        List<Manifestation> numbered = volumes.stream()
+                .filter(v -> v.series().position() != Series.UNPLACED)
+                .toList();
+        List<Manifestation> unnumbered = volumes.stream()
+                .filter(v -> v.series().position() == Series.UNPLACED)
+                .toList();
+
+        return shell(
+                name,
+                "..",
+                Template.of("""
+                <p class="crumb"><a href="../">The library</a></p>
+                <h1>{name}</h1>
+                <p class="meta">{summary}</p>
+                <section class="as">
+                  <ul class="works">{#each volumes}<li>
+                    <span class="detail">{number}</span>
+                    <a href="../editions/{id}">{title}</a>
+                    <span class="detail">{imprint}{held}</span>
+                  </li>{/each}</ul>
+                </section>
+                {#if hasUnnumbered}<section class="as">
+                  <h2>In the series, outside its numbering</h2>
+                  <ul class="works">{#each extras}<li>
+                    <a href="../editions/{id}">{title}</a>
+                    <span class="detail">{imprint}{held}</span>
+                  </li>{/each}</ul>
+                </section>{/if}
+                """)
+                        .with("name", name)
+                        .with("summary", count(volumes.size(), "volume", "volumes") + " held")
+                        .each(
+                                "volumes",
+                                numbered,
+                                (row, volume) -> row.with("number", numberOn(volume))
+                                        .with("id", volume.id().value())
+                                        .with("title", titleOf(volume))
+                                        .with("imprint", volume.imprint(agents))
+                                        .with("held", copiesOnShelf(volume)))
+                        .when("hasUnnumbered", !unnumbered.isEmpty())
+                        .each(
+                                "extras",
+                                unnumbered,
+                                (row, volume) -> row.with("id", volume.id().value())
+                                        .with("title", titleOf(volume))
+                                        .with("imprint", volume.imprint(agents))
+                                        .with("held", copiesOnShelf(volume)))
+                        .render());
+    }
+
+    /** The number as it is printed on the spine — "IV" stays "IV", however it was read for sorting. */
+    private static String numberOn(Manifestation volume) {
+        return volume.series() instanceof Series.Numbered(var ignoredName, String number) ? number : "";
+    }
+
+    private String copiesOnShelf(Manifestation edition) {
+        return catalog.copiesOf(edition.id()).isEmpty() ? " · not held" : "";
+    }
+
+    /** A series is filed and linked by its name, which is all a series is here. */
+    private static Optional<String> seriesSlug(String name) {
+        return Slug.candidate(name);
+    }
+
+    /**
      * The titles a credit was actually sold under.
      *
      * <p>A work is catalogued under the title it was written as and sold under the one on the cover, and for a
@@ -596,9 +768,7 @@ public final class SiteGenerator {
         }
         return editions.stream()
                 // Reading order, which is not alphabetical order and not the order they were catalogued in.
-                .sorted(Comparator.comparingInt(
-                                (Manifestation edition) -> edition.series().position())
-                        .thenComparing(this::titleOf))
+                .sorted(inReadingOrder())
                 .map(edition -> Template.of("""
                         <div class="edition">
                           <p class="edition-title"><a href="../editions/{id}">{title}</a></p>
@@ -742,7 +912,21 @@ public final class SiteGenerator {
                 })
                 .collect(Collectors.joining(",\n  "));
 
-        String all = Stream.of(editionEntries, agentEntries)
+        String seriesEntries = series().entrySet().stream()
+                .flatMap(entry -> seriesSlug(entry.getKey()).stream().map(slug -> {
+                    Set<String> terms = new LinkedHashSet<>();
+                    terms.add(entry.getKey());
+                    terms.add("series");
+                    entry.getValue().forEach(volume -> terms.add(titleOf(volume)));
+                    return """
+                            {"id":%s,"title":%s,"text":%s}""".formatted(
+                                    json("series:" + slug),
+                                    json(entry.getKey().toLowerCase(Locale.ROOT)),
+                                    json(String.join(" ", terms).toLowerCase(Locale.ROOT)));
+                }))
+                .collect(Collectors.joining(",\n  "));
+
+        String all = Stream.of(editionEntries, agentEntries, seriesEntries)
                 .filter(part -> !part.isEmpty())
                 .collect(Collectors.joining(",\n  "));
         return "[\n  " + all + "\n]\n";

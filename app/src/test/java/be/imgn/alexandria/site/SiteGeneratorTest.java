@@ -169,14 +169,67 @@ class SiteGeneratorTest {
     }
 
     /**
-     * A series long enough to matter is exactly where text order breaks: sorted as strings, volume 10 lands between 1
-     * and 2. Unnumbered volumes go last rather than being guessed into a position.
+     * The one view the rest of the site cannot give. The index files each volume under its own title, so a set scatters
+     * across the alphabet; the series page puts it back in the author's order.
      */
     @Test
-    void listsTheVolumesOfASeriesInOrder(@TempDir Path root, @TempDir Path output) throws Exception {
+    void givesEachSeriesAPageInReadingOrder(@TempDir Path root, @TempDir Path output) throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+        volumes(catalog, "10", "II", "1", "");
+
+        new SiteGenerator(catalog).generateInto(output);
+        String page = Files.readString(output.resolve("series/don-quixote.html"));
+
+        assertThat(page)
+                .as("in order, and the prequel under its own heading rather than silently appended")
+                .containsSubsequence(
+                        "Volume 1<",
+                        "Volume II<",
+                        "Volume 10<",
+                        "In the series, outside its numbering",
+                        "Volume unnumbered<")
+                .as("the number is shown as it was printed, however it was read for sorting")
+                .contains(">II<");
+        assertThat(Files.readString(output.resolve("index.html")))
+                .as("and the series is reachable from the index, like an agent")
+                .contains("series/don-quixote\"");
+        assertThat(Files.readString(output.resolve("editions/quixote-volume-1.html")))
+                .as("and from every volume in it")
+                .contains("series/don-quixote\"");
+        assertThat(Files.readString(output.resolve("search-index.json")))
+                .as("and by searching its name")
+                .contains("\"series:don-quixote\"");
+    }
+
+    @Test
+    void saysNothingAboutASeriesForABookThatBelongsToNone(@TempDir Path root, @TempDir Path output) throws Exception {
         JsonCatalog catalog = CatalogFixture.writeInto(root);
         Manifestation original = CatalogFixture.manifestation();
-        for (String volume : List.of("10", "II", "1", "")) {
+        catalog.save(new Manifestation(
+                ManifestationId.of("quixote-standalone"),
+                original.embodies(),
+                Title.of("Don Quixote, on its own"),
+                original.publisher(),
+                original.published(),
+                original.carrier(),
+                Identifier.NONE,
+                original.extent(),
+                Series.STANDALONE,
+                original.editionStatement(),
+                original.contributors()));
+
+        new SiteGenerator(catalog).generateInto(output);
+
+        assertThat(Files.readString(output.resolve("editions/quixote-standalone.html")))
+                .as("no series row at all, rather than an empty one")
+                .doesNotContain("Series")
+                .doesNotContain("series/");
+    }
+
+    /** Volumes of one series, saved in an order that is not the reading order. */
+    private static void volumes(JsonCatalog catalog, String... numbers) {
+        Manifestation original = CatalogFixture.manifestation();
+        for (String volume : numbers) {
             catalog.save(new Manifestation(
                     ManifestationId.of(
                             "quixote-volume-" + (volume.isEmpty() ? "none" : volume.toLowerCase(Locale.ROOT))),
@@ -191,6 +244,16 @@ class SiteGeneratorTest {
                     original.editionStatement(),
                     original.contributors()));
         }
+    }
+
+    /**
+     * A series long enough to matter is exactly where text order breaks: sorted as strings, volume 10 lands between 1
+     * and 2. Unnumbered volumes go last rather than being guessed into a position.
+     */
+    @Test
+    void listsTheVolumesOfASeriesInOrder(@TempDir Path root, @TempDir Path output) throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+        volumes(catalog, "10", "II", "1", "");
 
         new SiteGenerator(catalog).generateInto(output);
         String page = Files.readString(output.resolve("works/cervantes-don-quixote.html"));
