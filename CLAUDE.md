@@ -24,6 +24,24 @@ Rules that follow from this:
 - Automated tests use `@TempDir`. They must never touch `data/` or `examples/`.
 - Before writing to any path that holds user content, check whose it is. When unsure, ask.
 
+### `data/` is never committed together with code
+
+A commit touches `data/` or it touches the rest of the repository. Never both, whatever the
+change and however tightly the two seem to belong together — a schema change and the records
+migrated onto it still go in two commits, code first.
+
+```sh
+git add app/src ; git commit    # then, separately:
+git add data    ; git commit
+```
+
+Stage paths explicitly. Never `git add -A`, never `git add .` — both sweep the library into
+whatever you were committing.
+
+The reason is that the two have nothing to do with each other. Code is the project's history
+and someone's cataloguing is theirs; mixed together, neither can be read, reverted or
+rewritten without dragging the other along. Ask before committing `data/` at all.
+
 There is no database. An H2 read model was removed once its only consumer was the reports
 page; the joining lives in `application/Holding` and the reports are streams. Do not
 reintroduce a projection without a consumer that genuinely needs one.
