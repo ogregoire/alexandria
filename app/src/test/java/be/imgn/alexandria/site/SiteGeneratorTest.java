@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,8 +21,10 @@ import be.imgn.alexandria.domain.item.Item;
 import be.imgn.alexandria.domain.item.ItemId;
 import be.imgn.alexandria.domain.item.Location;
 import be.imgn.alexandria.domain.item.ReadingProgress;
+import be.imgn.alexandria.domain.manifestation.Identifier;
 import be.imgn.alexandria.domain.manifestation.Manifestation;
 import be.imgn.alexandria.domain.manifestation.ManifestationId;
+import be.imgn.alexandria.domain.manifestation.Series;
 import be.imgn.alexandria.domain.shared.Note;
 import be.imgn.alexandria.domain.shared.Title;
 import be.imgn.alexandria.infrastructure.json.JsonCatalog;
@@ -163,6 +166,38 @@ class SiteGeneratorTest {
                 .contains("El Ingenioso Hidalgo")
                 .as("and the imprint stays, as the detail beneath it")
                 .contains("Ecco, 2003. hardcover, 940 pp.");
+    }
+
+    /**
+     * A series long enough to matter is exactly where text order breaks: sorted as strings, volume 10 lands between 1
+     * and 2. Unnumbered volumes go last rather than being guessed into a position.
+     */
+    @Test
+    void listsTheVolumesOfASeriesInOrder(@TempDir Path root, @TempDir Path output) throws Exception {
+        JsonCatalog catalog = CatalogFixture.writeInto(root);
+        Manifestation original = CatalogFixture.manifestation();
+        for (String volume : List.of("10", "II", "1", "")) {
+            catalog.save(new Manifestation(
+                    ManifestationId.of(
+                            "quixote-volume-" + (volume.isEmpty() ? "none" : volume.toLowerCase(Locale.ROOT))),
+                    original.embodies(),
+                    Title.of("Volume " + (volume.isEmpty() ? "unnumbered" : volume)),
+                    original.publisher(),
+                    original.published(),
+                    original.carrier(),
+                    Identifier.NONE,
+                    original.extent(),
+                    Series.of("Don Quixote", volume),
+                    original.editionStatement(),
+                    original.contributors()));
+        }
+
+        new SiteGenerator(catalog).generateInto(output);
+        String page = Files.readString(output.resolve("works/cervantes-don-quixote.html"));
+
+        assertThat(page)
+                .as("by the number the spine carries, Roman or Arabic, then whatever carries none")
+                .containsSubsequence("Volume 1<", "Volume II<", "Volume 10<", "Volume unnumbered<");
     }
 
     /**

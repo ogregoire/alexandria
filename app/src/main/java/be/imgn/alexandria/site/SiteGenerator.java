@@ -595,6 +595,10 @@ public final class SiteGenerator {
             return "<p class=\"none\">No edition held.</p>";
         }
         return editions.stream()
+                // Reading order, which is not alphabetical order and not the order they were catalogued in.
+                .sorted(Comparator.comparingInt(
+                                (Manifestation edition) -> edition.series().position())
+                        .thenComparing(this::titleOf))
                 .map(edition -> Template.of("""
                         <div class="edition">
                           <p class="edition-title"><a href="../editions/{id}">{title}</a></p>
